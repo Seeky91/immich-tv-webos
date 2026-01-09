@@ -1,0 +1,55 @@
+{
+	"name": "immich-tv-webos",
+	"version": "1.0.0",
+	"description": "A general template for an Enact Sandstone application for webOS TVs",
+	"author": "",
+	"main": "src/index.tsx",
+	"scripts": {
+		"serve": "enact serve",
+		"pack": "enact pack",
+		"pack-p": "enact pack -p",
+		"watch": "enact pack --watch",
+		"clean": "enact clean",
+		"lint": "enact lint .",
+		"license": "enact license",
+		"test": "enact test",
+		"test-watch": "enact test --watch"
+	},
+	"license": "UNLICENSED",
+	"private": true,
+	"repository": "",
+	"engines": {
+		"npm": ">=6.9.0"
+	},
+	"enact": {
+		"theme": "sandstone"
+	},
+	"eslintConfig": {
+		"extends": "enact-proxy"
+	},
+	"eslintIgnore": [
+		"node_modules/*",
+		"build/*",
+		"dist/*"
+	],
+	"dependencies": {
+		"@enact/core": "^4.7.8",
+		"@enact/i18n": "^4.7.8",
+		"@enact/sandstone": "^2.7.12",
+		"@enact/spotlight": "^4.7.8",
+		"@enact/ui": "^4.7.8",
+		"@enact/webos": "^4.7.8",
+		"@tanstack/react-query": "^5.90.14",
+		"ilib": "npm:ilib-webos@^14.19.0-webos1",
+		"prop-types": "^15.8.1",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"web-vitals": "^3.5.0"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"eslint-config-enact-proxy": "^1.0.7",
+		"typescript": "^5.9.3"
+	}
+}

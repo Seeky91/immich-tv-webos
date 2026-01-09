@@ -1,0 +1,64 @@
+// Brand colors
+@brand-primary: #4250af;
+@brand-gradient-start: #3b82f6;
+@brand-gradient-end: #6366f1;
+@error-color: #ef4444;
+@error-bg: rgba(239, 68, 68, 0.1);
+
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 128px;
+	min-height: 100vh;
+	padding: 0 64px;
+	background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.banner {
+	max-width: 800px;
+	width: 100%;
+	height: auto;
+}
+
+.formContainer {
+	width: 100%;
+	max-width: 1100px;
+}
+
+.layout {
+	height: 720px;
+}
+
+.tabContent {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding-left: 20px;
+}
+
+.inputGroup {
+	margin-bottom: 24px;
+	width: 100%;
+
+	> * {
+		width: 100%;
+	}
+}
+
+.errorMessage {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background-color: @error-bg;
+	color: @error-color;
+	padding: 16px 20px;
+	border-radius: 12px;
+	margin-bottom: 24px;
+}
+
+.submitButton {
+	width: 100%;
+	margin-top: 16px;
+}

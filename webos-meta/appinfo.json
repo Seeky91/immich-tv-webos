@@ -1,0 +1,12 @@
+{
+	"id": "immich-tv-webos",
+	"version": "1.0.0",
+	"vendor": "LGE-SVL",
+	"type": "web",
+	"main": "index.html",
+	"title": "Enact App Template",
+	"icon": "icon.png",
+	"miniicon": "icon-mini.png",
+	"largeIcon": "icon-large.png",
+	"uiRevision": 2
+}

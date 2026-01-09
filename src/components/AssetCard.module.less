@@ -1,0 +1,64 @@
+@brand-primary: #4250af;
+
+.assetCard {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	border-radius: 8px;
+	overflow: hidden;
+	cursor: pointer;
+	transition: transform 0.2s ease, outline 0.1s ease;
+
+	&:focus,
+	&:global(.spottable:focus) {
+		outline: 4px solid rgba(66, 80, 175, 0.8);
+		outline-offset: -4px;
+		transform: scale(1.05);
+		z-index: 5;
+	}
+}
+
+.thumbnail {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	background: #1e293b;
+	display: block;
+}
+
+.playIconOverlay {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 60px;
+	height: 60px;
+	background: rgba(0, 0, 0, 0.6);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.9;
+	transition: opacity 0.2s ease, background 0.2s ease;
+	color: #ffffff;
+	font-size: 32px;
+
+	.assetCard:hover &,
+	.assetCard:focus & {
+		opacity: 1;
+		background: rgba(66, 80, 175, 0.8);
+	}
+}
+
+.durationBadge {
+	position: absolute;
+	bottom: 8px;
+	right: 8px;
+	padding: 4px 8px;
+	background: rgba(0, 0, 0, 0.8);
+	color: #ffffff;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 4px;
+	font-family: monospace;
+}
