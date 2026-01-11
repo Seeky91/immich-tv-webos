@@ -80,6 +80,24 @@ export class ImmichAPI {
 		return this.transformColumnarResponse(columnar);
 	}
 
+	/**
+	 * Get bucket metadata (IDs and ratios) without full asset data
+	 * Used for deterministic height calculations
+	 * CRITICAL: timeBucket must be exact string from /buckets (e.g., "2026-01-01")
+	 * Do NOT add extra quotes in URL
+	 */
+	public async getBucketMetadata(timeBucket: string): Promise<{
+		ids: string[];
+		ratios: number[];
+	}> {
+		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}`);
+
+		return {
+			ids: columnar.id,
+			ratios: columnar.ratio || columnar.id.map(() => 1), // Fallback to 1:1 if missing
+		};
+	}
+
 	public async getAssets(params: GetAssetsParams = {}): Promise<ImmichAsset[]> {
 		const buckets = await this.getBuckets();
 		const recentBuckets = buckets.slice(0, 10);
@@ -177,6 +195,30 @@ export class ImmichAPI {
 		const skip = params.skip || 0;
 		const take = params.take || 5;
 
+		const pageBuckets = allBuckets.slice(skip, skip + take);
+		const bucketAssets = await Promise.all(pageBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
+		const allAssets = bucketAssets.flat();
+
+		const dailyGroups = this.groupAssetsByDay(allAssets);
+		const nonEmptyGroups = dailyGroups.filter((g) => g.count > 0);
+
+		return {
+			groups: nonEmptyGroups,
+			totalAssets: nonEmptyGroups.reduce((sum, g) => sum + g.count, 0),
+			nextCursor: skip + take < allBuckets.length ? skip + take : undefined,
+			hasMore: skip + take < allBuckets.length,
+		};
+	}
+
+	/**
+	 * Fetch a page of grouped assets using pre-fetched buckets.
+	 * This avoids calling getBuckets() on every scroll.
+	 */
+	public async getGroupedAssetsPageWithBuckets(allBuckets: TimelineBucket[], params: GetBucketsParams = {}): Promise<GroupedAssetsPage> {
+		const skip = params.skip || 0;
+		const take = params.take || 3; // Updated default to match BUCKETS_PER_PAGE
+
+		// Use provided buckets instead of fetching
 		const pageBuckets = allBuckets.slice(skip, skip + take);
 		const bucketAssets = await Promise.all(pageBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
 		const allAssets = bucketAssets.flat();

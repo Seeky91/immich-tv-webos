@@ -28,7 +28,7 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, api, onSe
 			{isVideo && (
 				<>
 					<div className={css.playIconOverlay}>
-						<Icon size="large">play</Icon>
+						<Icon size={48}>play</Icon>
 					</div>
 
 					{asset.duration && <div className={css.durationBadge}>{formatDuration(asset.duration)}</div>}

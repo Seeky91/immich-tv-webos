@@ -19,5 +19,6 @@ export const ASSETS_QUERY_CONFIG = {
 /**
  * Number of timeline buckets to fetch per page in infinite scroll.
  * Each bucket represents one day of photos/videos.
+ * Reduced from 5 to 3 for more granular loading and better performance.
  */
-export const BUCKETS_PER_PAGE = 5;
+export const BUCKETS_PER_PAGE = 3;

@@ -141,6 +141,14 @@ export interface TimelineBucket {
 	count: number; // Number of assets in this bucket
 }
 
+// Bucket Metadata (for deterministic height calculations)
+export interface BucketMetadata {
+	date: string; // timeBucket string
+	ids: string[];
+	ratios: number[]; // aspect ratio for each asset (width/height)
+	count: number;
+}
+
 // Columnar Asset Response (Immich API format)
 export interface ColumnarAssetResponse {
 	id: string[];

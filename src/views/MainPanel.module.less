@@ -1,5 +1,9 @@
 @brand-primary: #4250af;
 
+.mainPanel {
+	background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
 .contentContainer {
 	padding: 20px 40px;
 	width: 100%;
@@ -32,4 +36,11 @@
 	text-align: center;
 	padding: 40px 20px;
 	width: 100%;
+}
+
+.scrollPlaceholder {
+	width: 100%;
+	height: auto; // Set by inline style
+	visibility: hidden; // Don't show it, but takes up space
+	pointer-events: none; // Can't interact with it
 }
