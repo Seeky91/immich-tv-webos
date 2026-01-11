@@ -1,6 +1,6 @@
 import {useQuery, useInfiniteQuery} from '@tanstack/react-query';
 import {ImmichAPI} from '../api/immich';
-import {isAPIError} from '../utils/typeGuards';
+import {ASSETS_QUERY_CONFIG, BUCKETS_PER_PAGE} from './queryConfig';
 
 export const useAssets = (api: ImmichAPI | null) => {
 	return useQuery({
@@ -10,15 +10,7 @@ export const useAssets = (api: ImmichAPI | null) => {
 			return api.getAssets({take: 500}); // Fetch 500 assets initially
 		},
 		enabled: !!api,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-		retry: (failureCount, error) => {
-			// Don't retry on 401 (auth error)
-			if (isAPIError(error) && error.status === 401) return false;
-			return failureCount < 2;
-		},
+		...ASSETS_QUERY_CONFIG,
 	});
 };
 
@@ -30,15 +22,7 @@ export const useGroupedAssets = (api: ImmichAPI | null) => {
 			return api.getGroupedAssets({take: 500});
 		},
 		enabled: !!api,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-		retry: (failureCount, error) => {
-			// Don't retry on 401 (auth error)
-			if (isAPIError(error) && error.status === 401) return false;
-			return failureCount < 2;
-		},
+		...ASSETS_QUERY_CONFIG,
 	});
 };
 
@@ -47,18 +31,11 @@ export const useInfiniteGroupedAssets = (api: ImmichAPI | null) => {
 		queryKey: ['infinite-grouped-assets'],
 		queryFn: async ({pageParam = 0}) => {
 			if (!api) throw new Error('API client not available');
-			return api.getGroupedAssetsPage({skip: pageParam, take: 2});
+			return api.getGroupedAssetsPage({skip: pageParam, take: BUCKETS_PER_PAGE});
 		},
 		enabled: !!api,
 		initialPageParam: 0,
 		getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
-		refetchOnWindowFocus: false,
-		retry: (failureCount, error) => {
-			// Don't retry on 401 (auth error)
-			if (isAPIError(error) && error.status === 401) return false;
-			return failureCount < 2;
-		},
+		...ASSETS_QUERY_CONFIG,
 	});
 };

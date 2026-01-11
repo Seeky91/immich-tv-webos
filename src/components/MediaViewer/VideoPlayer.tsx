@@ -12,15 +12,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		const video = videoRef.current;
 		if (!video) return;
 
-		// Log video details for debugging
-		console.log('Loading video from URL:', src);
-
 		const handleLoadedMetadata = () => {
-			console.log('Video metadata loaded:', {
-				duration: video.duration,
-				videoWidth: video.videoWidth,
-				videoHeight: video.videoHeight,
-			});
+			// Video metadata loaded
 		};
 
 		const handleError = (e: Event) => {
@@ -31,7 +24,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		};
 
 		const handleLoadedData = () => {
-			console.log('Video data loaded, attempting to play...');
 			video.play().catch((err) => {
 				console.warn('Video autoplay failed:', err);
 			});
@@ -49,7 +41,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 	}, [src]);
 
 	useEffect(() => {
-		// Cleanup on unmount
+		/* Cleanup on unmount */
 		const video = videoRef.current;
 		return () => {
 			if (video) {
@@ -60,13 +52,5 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		};
 	}, []);
 
-	return (
-		<video
-			ref={videoRef}
-			src={src}
-			controls
-			className={css.videoPlayer}
-			disableRemotePlayback={false}
-		/>
-	);
+	return <video ref={videoRef} src={src} controls className={css.videoPlayer} disableRemotePlayback={false} />;
 };

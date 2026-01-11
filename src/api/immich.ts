@@ -1,14 +1,6 @@
+import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage} from './types';
+import {formatBucketDate} from '../utils/dateFormatter';
 import {APIClient} from './client';
-import type {
-	ImmichAsset,
-	GetAssetsParams,
-	LoginResponse,
-	TimelineBucket,
-	ColumnarAssetResponse,
-	GroupedAssetsResponse,
-	GetBucketsParams,
-	GroupedAssetsPage,
-} from './types';
 import {AssetType} from './types';
 
 export class ImmichAPI {
@@ -18,17 +10,42 @@ export class ImmichAPI {
 		this.client = client;
 	}
 
-	// Fetch timeline buckets (date groups)
-	public async getBuckets(size: string = 'DAY'): Promise<TimelineBucket[]> {
-		return this.client.fetch<TimelineBucket[]>(
-			`/timeline/buckets?size=${size}`
-		);
+	public async getBuckets(): Promise<TimelineBucket[]> {
+		return this.client.fetch<TimelineBucket[]>(`/timeline/buckets`);
 	}
 
-	// Transform columnar response to row-based array
-	private transformColumnarResponse(
-		columnar: ColumnarAssetResponse
-	): ImmichAsset[] {
+	private getAssetDate(asset: ImmichAsset): string {
+		const date = new Date(asset.fileCreatedAt);
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	private groupAssetsByDay(assets: ImmichAsset[]): GroupedAsset[] {
+		const dayMap = new Map<string, ImmichAsset[]>();
+
+		for (const asset of assets) {
+			const dateKey = this.getAssetDate(asset);
+			if (!dayMap.has(dateKey)) {
+				dayMap.set(dateKey, []);
+			}
+			dayMap.get(dateKey)!.push(asset);
+		}
+
+		const groups: GroupedAsset[] = Array.from(dayMap.entries())
+			.sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+			.map(([date, groupAssets]) => ({
+				timeBucket: date,
+				displayDate: formatBucketDate(date),
+				assets: groupAssets,
+				count: groupAssets.length,
+			}));
+
+		return groups;
+	}
+
+	private transformColumnarResponse(columnar: ColumnarAssetResponse): ImmichAsset[] {
 		const count = columnar.id.length;
 		const assets: ImmichAsset[] = [];
 
@@ -58,62 +75,39 @@ export class ImmichAPI {
 		return assets;
 	}
 
-	// Fetch assets for a specific bucket
 	public async getBucketAssets(timeBucket: string): Promise<ImmichAsset[]> {
-		const columnar = await this.client.fetch<ColumnarAssetResponse>(
-			`/timeline/bucket?timeBucket=${timeBucket}`
-		);
+		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}`);
 		return this.transformColumnarResponse(columnar);
 	}
 
-	// Fetch all assets (orchestrates bucket fetching)
 	public async getAssets(params: GetAssetsParams = {}): Promise<ImmichAsset[]> {
-		// Step 1: Get buckets
 		const buckets = await this.getBuckets();
-
-		// Step 2: Fetch assets for first 10 buckets (most recent photos)
 		const recentBuckets = buckets.slice(0, 10);
 
-		const assetArrays = await Promise.all(
-			recentBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket))
-		);
-
-		// Step 3: Flatten and return
+		const assetArrays = await Promise.all(recentBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
 		const allAssets = assetArrays.flat();
 
-		// Apply filters if needed
 		let filteredAssets = allAssets;
 		if (params.isFavorite !== undefined) {
-			filteredAssets = filteredAssets.filter(
-				(a) => a.isFavorite === params.isFavorite
-			);
+			filteredAssets = filteredAssets.filter((a) => a.isFavorite === params.isFavorite);
 		}
 		if (params.isArchived !== undefined) {
-			filteredAssets = filteredAssets.filter(
-				(a) => a.isArchived === params.isArchived
-			);
+			filteredAssets = filteredAssets.filter((a) => a.isArchived === params.isArchived);
 		}
 
-		// Apply take limit
 		const limit = params.take || 500;
 		return filteredAssets.slice(params.skip || 0, (params.skip || 0) + limit);
 	}
 
-	// Get single asset details
 	public async getAsset(assetId: string): Promise<ImmichAsset> {
 		return this.client.fetch<ImmichAsset>(`/assets/${assetId}`);
 	}
 
-	// Login with user credentials
 	public async login(email: string, password: string): Promise<LoginResponse> {
-		const response = await this.client.fetch<LoginResponse>('/auth/login', {
-			method: 'POST',
-			body: JSON.stringify({email, password}),
-		});
+		const response = await this.client.fetch<LoginResponse>('/auth/login', {method: 'POST', body: JSON.stringify({email, password})});
 		return response;
 	}
 
-	// Validate user auth token
 	public async validateUserAuth(): Promise<boolean> {
 		try {
 			await this.client.fetch('/users/me');
@@ -123,7 +117,6 @@ export class ImmichAPI {
 		}
 	}
 
-	// Validate API connection
 	public async validateConnection(): Promise<boolean> {
 		try {
 			await this.client.fetch('/server/ping');
@@ -133,78 +126,32 @@ export class ImmichAPI {
 		}
 	}
 
-	// Get thumbnail URL (convenience method)
 	public getThumbnailUrl(assetId: string): string {
 		return this.client.getThumbnailUrl(assetId, 'thumbnail');
 	}
 
-	// Get preview URL (higher quality for viewer)
 	public getPreviewUrl(assetId: string): string {
 		return this.client.getThumbnailUrl(assetId, 'preview');
 	}
 
-	// Get original asset URL
 	public getOriginalUrl(assetId: string): string {
 		return this.client.getAssetUrl(assetId);
 	}
 
-	// Format bucket date to human-readable string
-	private formatBucketDate(timeBucket: string): string {
-		// Parse as local date (not UTC) by using Date constructor with components
-		const [year, month, day] = timeBucket.split('-').map(Number);
-		const date = new Date(year, month - 1, day); // Month is 0-indexed
-
-		const today = new Date();
-		today.setHours(0, 0, 0, 0); // Normalize to midnight for comparison
-
-		const yesterday = new Date(today);
-		yesterday.setDate(yesterday.getDate() - 1);
-
-		const dateNormalized = new Date(date);
-		dateNormalized.setHours(0, 0, 0, 0);
-
-		// Compare timestamps (avoids toDateString timezone issues)
-		if (dateNormalized.getTime() === today.getTime()) return 'Today';
-		if (dateNormalized.getTime() === yesterday.getTime()) return 'Yesterday';
-
-		return date.toLocaleDateString('en-US', {
-			weekday: 'long',
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		});
-	}
-
-	// Fetch grouped assets by date
-	public async getGroupedAssets(
-		params: GetAssetsParams = {}
-	): Promise<GroupedAssetsResponse> {
-		// Step 1: Get buckets
+	public async getGroupedAssets(params: GetAssetsParams = {}): Promise<GroupedAssetsResponse> {
 		const buckets = await this.getBuckets();
 		const recentBuckets = buckets.slice(0, 10);
+		const bucketAssets = await Promise.all(recentBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
+		const allAssets = bucketAssets.flat();
 
-		// Step 2: Fetch assets for each bucket in parallel
-		const groups = await Promise.all(
-			recentBuckets.map(async (bucket) => {
-				const assets = await this.getBucketAssets(bucket.timeBucket);
-				return {
-					timeBucket: bucket.timeBucket,
-					displayDate: this.formatBucketDate(bucket.timeBucket),
-					assets,
-					count: assets.length,
-				};
-			})
-		);
+		let filteredGroups = this.groupAssetsByDay(allAssets);
 
-		// Step 3: Apply filters
-		let filteredGroups = groups;
 		if (params.isFavorite !== undefined) {
-			filteredGroups = groups
+			filteredGroups = filteredGroups
 				.map((g) => ({
 					...g,
-					assets: g.assets.filter((a) => a.isFavorite === params.isFavorite),
-					count: g.assets.filter((a) => a.isFavorite === params.isFavorite)
-						.length,
+					assets: g.assets.filter((a: ImmichAsset) => a.isFavorite === params.isFavorite),
+					count: g.assets.filter((a: ImmichAsset) => a.isFavorite === params.isFavorite).length,
 				}))
 				.filter((g) => g.count > 0);
 		}
@@ -212,9 +159,8 @@ export class ImmichAPI {
 			filteredGroups = filteredGroups
 				.map((g) => ({
 					...g,
-					assets: g.assets.filter((a) => a.isArchived === params.isArchived),
-					count: g.assets.filter((a) => a.isArchived === params.isArchived)
-						.length,
+					assets: g.assets.filter((a: ImmichAsset) => a.isArchived === params.isArchived),
+					count: g.assets.filter((a: ImmichAsset) => a.isArchived === params.isArchived).length,
 				}))
 				.filter((g) => g.count > 0);
 		}
@@ -225,36 +171,19 @@ export class ImmichAPI {
 		};
 	}
 
-	// Fetch grouped assets page with pagination (for infinite scroll)
-	public async getGroupedAssetsPage(
-		params: GetBucketsParams = {}
-	): Promise<GroupedAssetsPage> {
-		// Step 1: Get ALL buckets (needed to know total count)
-		const allBuckets = await this.getBuckets('DAY'); // Explicitly request daily buckets
+	public async getGroupedAssetsPage(params: GetBucketsParams = {}): Promise<GroupedAssetsPage> {
+		const allBuckets = await this.getBuckets();
 
 		const skip = params.skip || 0;
-		const take = params.take || 5; // 5 buckets per page (~50 assets)
+		const take = params.take || 5;
 
-		// Step 2: Slice buckets for current page
 		const pageBuckets = allBuckets.slice(skip, skip + take);
+		const bucketAssets = await Promise.all(pageBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
+		const allAssets = bucketAssets.flat();
 
-		// Step 3: Fetch assets for each bucket in parallel
-		const groups = await Promise.all(
-			pageBuckets.map(async (bucket) => {
-				const assets = await this.getBucketAssets(bucket.timeBucket);
-				return {
-					timeBucket: bucket.timeBucket,
-					displayDate: this.formatBucketDate(bucket.timeBucket),
-					assets,
-					count: assets.length,
-				};
-			})
-		);
+		const dailyGroups = this.groupAssetsByDay(allAssets);
+		const nonEmptyGroups = dailyGroups.filter((g) => g.count > 0);
 
-		// Step 4: Filter out empty groups (edge case: deleted/archived assets)
-		const nonEmptyGroups = groups.filter((g) => g.count > 0);
-
-		// Step 5: Return page with pagination metadata
 		return {
 			groups: nonEmptyGroups,
 			totalAssets: nonEmptyGroups.reduce((sum, g) => sum + g.count, 0),

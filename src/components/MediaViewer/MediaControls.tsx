@@ -12,15 +12,7 @@ interface MediaControlsProps {
 	canGoNext: boolean;
 }
 
-export const MediaControls: React.FC<MediaControlsProps> = ({
-	currentIndex,
-	totalCount,
-	onPrev,
-	onNext,
-	onClose,
-	canGoPrev,
-	canGoNext,
-}) => {
+export const MediaControls: React.FC<MediaControlsProps> = React.memo(({currentIndex, totalCount, onPrev, onNext, onClose, canGoPrev, canGoNext}) => {
 	return (
 		<>
 			{/* Top bar with close button and counter */}
@@ -32,21 +24,10 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
 			</div>
 
 			{/* Navigation arrows */}
-			{canGoPrev && (
-				<Button
-					icon="arrowlargeleft"
-					onClick={onPrev}
-					className={`${css.navButton} ${css.navButtonLeft}`}
-				/>
-			)}
-
-			{canGoNext && (
-				<Button
-					icon="arrowlargeright"
-					onClick={onNext}
-					className={`${css.navButton} ${css.navButtonRight}`}
-				/>
-			)}
+			{canGoPrev && <Button icon="arrowlargeleft" onClick={onPrev} className={`${css.navButton} ${css.navButtonLeft}`} />}
+			{canGoNext && <Button icon="arrowlargeright" onClick={onNext} className={`${css.navButton} ${css.navButtonRight}`} />}
 		</>
 	);
-};
+});
+
+MediaControls.displayName = 'MediaControls';

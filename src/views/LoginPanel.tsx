@@ -2,8 +2,7 @@ import React, {useState, useCallback} from 'react';
 import TabLayout, {Tab} from '@enact/sandstone/TabLayout';
 import Input from '@enact/sandstone/Input';
 import Button from '@enact/sandstone/Button';
-import BodyText from '@enact/sandstone/BodyText';
-import Icon from '@enact/sandstone/Icon';
+import {ErrorMessage} from '../components/ErrorMessage';
 
 import css from './LoginPanel.module.less';
 import bannerImage from '../../immich-banner.png';
@@ -72,12 +71,7 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 								<Input size="large" placeholder="API Key" value={apiKey} onChange={handleApiKeyChange} disabled={isValidating} />
 							</div>
 
-							{apiKeyError && (
-								<BodyText className={css.errorMessage} size="small">
-									<Icon size="small">alert02</Icon>
-									{apiKeyError}
-								</BodyText>
-							)}
+							<ErrorMessage message={apiKeyError} className={css.errorMessage} />
 
 							<Button className={css.submitButton} onClick={handleApiKeySubmit} disabled={isValidating} size="large" backgroundOpacity="opaque">
 								{isValidating ? 'Connecting…' : 'Connect'}
@@ -99,12 +93,7 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 								<Input size="large" type="password" placeholder="Password" value={password} onChange={handlePasswordChange} disabled={isValidating} />
 							</div>
 
-							{credentialsError && (
-								<BodyText className={css.errorMessage} size="small">
-									<Icon size="small">alert02</Icon>
-									{credentialsError}
-								</BodyText>
-							)}
+							<ErrorMessage message={credentialsError} className={css.errorMessage} />
 
 							<Button className={css.submitButton} onClick={handleCredentialsSubmit} disabled={isValidating} size="large" backgroundOpacity="opaque">
 								{isValidating ? 'Logging in…' : 'Login'}

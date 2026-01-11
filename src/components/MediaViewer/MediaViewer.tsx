@@ -15,36 +15,22 @@ interface MediaViewerProps {
 	api: ImmichAPI;
 }
 
-export const MediaViewer: React.FC<MediaViewerProps> = ({
-	asset,
-	allAssets,
-	currentIndex,
-	onClose,
-	onNavigate,
-	api,
-}) => {
-	// WebOS key handling
+export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({asset, allAssets, currentIndex, onClose, onNavigate, api}) => {
 	useWebOSKeys({onBack: onClose});
 
-	// Memoized navigation handlers
 	const handlePrev = useCallback(() => onNavigate('prev'), [onNavigate]);
 	const handleNext = useCallback(() => onNavigate('next'), [onNavigate]);
 
-	// Keyboard navigation
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			switch (e.key) {
 				case 'ArrowLeft':
 					e.preventDefault();
-					if (currentIndex > 0) {
-						onNavigate('prev');
-					}
+					if (currentIndex > 0) onNavigate('prev');
 					break;
 				case 'ArrowRight':
 					e.preventDefault();
-					if (currentIndex < allAssets.length - 1) {
-						onNavigate('next');
-					}
+					if (currentIndex < allAssets.length - 1) onNavigate('next');
 					break;
 				case 'Escape':
 					e.preventDefault();
@@ -52,7 +38,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 					break;
 			}
 		};
-
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, [onNavigate, onClose, currentIndex, allAssets.length]);
@@ -64,14 +49,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 
 	return (
 		<div className={css.viewerOverlay}>
-			<div className={css.viewerContent}>
-				{isVideo ? (
-					<VideoPlayer src={mediaUrl} />
-				) : (
-					<img src={mediaUrl} alt="" className={css.viewerImage} />
-				)}
-			</div>
-
+			<div className={css.viewerContent}>{isVideo ? <VideoPlayer src={mediaUrl} /> : <img src={mediaUrl} alt="" className={css.viewerImage} />}</div>
 			<MediaControls
 				currentIndex={currentIndex}
 				totalCount={allAssets.length}
@@ -83,4 +61,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 			/>
 		</div>
 	);
-};
+});
+
+MediaViewer.displayName = 'MediaViewer';
