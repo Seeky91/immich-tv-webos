@@ -5,7 +5,7 @@ import Button from '@enact/sandstone/Button';
 import {ErrorMessage} from '../components/ErrorMessage';
 
 import css from './LoginPanel.module.less';
-import bannerImage from '../../immich-banner.png';
+import bannerImage from '../assets/immich-banner.png';
 
 interface LoginPanelProps {
 	isValidating: boolean;
