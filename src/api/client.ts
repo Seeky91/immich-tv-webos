@@ -42,20 +42,12 @@ export class APIClient {
 	}
 
 	private getMediaAuthParam(): {name: string; value: string} {
-		return this.authConfig.method === 'USER_CREDENTIALS'
-			? {name: 'sessionKey', value: this.authConfig.accessToken || ''}
-			: {name: 'apiKey', value: this.authConfig.apiKey};
+		return this.authConfig.method === 'USER_CREDENTIALS' ? {name: 'sessionKey', value: this.authConfig.accessToken || ''} : {name: 'apiKey', value: this.authConfig.apiKey};
 	}
 
-	public async fetch<T>(
-		endpoint: string,
-		options: RequestInit = {}
-	): Promise<T> {
+	public async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
 		const url = `${this.baseUrl}${endpoint}`;
 		const method = options.method || 'GET';
-
-		// Debug logging for TV debugging via ares-inspect
-		console.log(`[API] ${method}: ${url}`);
 
 		try {
 			const response = await fetch(url, {
@@ -64,54 +56,35 @@ export class APIClient {
 			});
 			if (!response.ok) {
 				const errorBody = await response.text();
-				console.error(
-					`[API] ${method} ${url} failed with ${response.status}: ${response.statusText}`
-				);
-				throw new APIError(
-					`API request failed: ${response.statusText}`,
-					response.status,
-					errorBody
-				);
+				console.error(`[API] ${method} ${url} failed with ${response.status}: ${response.statusText}`);
+				throw new APIError(`API request failed: ${response.statusText}`, response.status, errorBody);
 			}
 
 			const text = await response.text();
-			console.log(`[API] ${method} ${url} → ${response.status} OK`);
 			return text ? JSON.parse(text) : ({} as T);
 		} catch (error) {
 			if (error instanceof APIError) {
 				throw error;
 			}
 			console.error(`[API] ${method} ${url} network error:`, error);
-			throw new APIError(
-				`Network error: ${
-					error instanceof Error ? error.message : 'Unknown error'
-				}`
-			);
+			throw new APIError(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 
 	public async fetchBlob(endpoint: string): Promise<Blob> {
 		const url = `${this.baseUrl}${endpoint}`;
 		const {name, value} = this.getMediaAuthParam();
-		const urlWithAuth = url.includes('?')
-			? `${url}&${name}=${value}`
-			: `${url}?${name}=${value}`;
+		const urlWithAuth = url.includes('?') ? `${url}&${name}=${value}` : `${url}?${name}=${value}`;
 
 		const response = await fetch(urlWithAuth);
 		if (!response.ok) {
-			throw new APIError(
-				`Failed to fetch blob: ${response.statusText}`,
-				response.status
-			);
+			throw new APIError(`Failed to fetch blob: ${response.statusText}`, response.status);
 		}
 
 		return response.blob();
 	}
 
-	public getThumbnailUrl(
-		assetId: string,
-		size: 'preview' | 'thumbnail' = 'thumbnail'
-	): string {
+	public getThumbnailUrl(assetId: string, size: 'preview' | 'thumbnail' = 'thumbnail'): string {
 		const {name, value} = this.getMediaAuthParam();
 		return `${this.baseUrl}/assets/${assetId}/thumbnail?size=${size}&${name}=${value}`;
 	}

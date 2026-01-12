@@ -1,7 +1,8 @@
 import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage} from './types';
-import {formatBucketDate} from '../utils/dateFormatter';
+import FormattingService from '../utils/FormattingService';
 import {APIClient} from './client';
 import {AssetType} from './types';
+import {BUCKETS_PER_PAGE} from '../hooks/queryConfig';
 
 export class ImmichAPI {
 	private client: APIClient;
@@ -37,7 +38,7 @@ export class ImmichAPI {
 			.sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
 			.map(([date, groupAssets]) => ({
 				timeBucket: date,
-				displayDate: formatBucketDate(date),
+				displayDate: FormattingService.formatBucketDate(date),
 				assets: groupAssets,
 				count: groupAssets.length,
 			}));
@@ -46,33 +47,26 @@ export class ImmichAPI {
 	}
 
 	private transformColumnarResponse(columnar: ColumnarAssetResponse): ImmichAsset[] {
-		const count = columnar.id.length;
-		const assets: ImmichAsset[] = [];
-
-		for (let i = 0; i < count; i++) {
-			assets.push({
-				id: columnar.id[i],
-				deviceAssetId: columnar.id[i], // Use id as deviceAssetId
-				ownerId: columnar.ownerId[i],
-				deviceId: '', // Not provided in columnar response
-				type: columnar.isImage[i] ? AssetType.IMAGE : AssetType.VIDEO,
-				originalPath: '', // Not provided in columnar response
-				originalFileName: '', // Not provided in columnar response
-				resized: true, // Assume true
-				thumbhash: columnar.thumbhash[i],
-				fileCreatedAt: columnar.fileCreatedAt[i],
-				fileModifiedAt: columnar.fileCreatedAt[i], // Use fileCreatedAt as fallback
-				updatedAt: columnar.fileCreatedAt[i], // Use fileCreatedAt as fallback
-				isFavorite: columnar.isFavorite[i],
-				isArchived: columnar.isTrashed[i],
-				mimeType: columnar.isImage[i] ? 'image/jpeg' : 'video/mp4', // Approximate
-				duration: columnar.duration[i],
-				livePhotoVideoId: columnar.livePhotoVideoId[i],
-				tags: [],
-			});
-		}
-
-		return assets;
+		return columnar.id.map((id, i) => ({
+			id: id,
+			deviceAssetId: id, // Use id as deviceAssetId
+			ownerId: columnar.ownerId[i],
+			deviceId: '', // Not provided in columnar response
+			type: columnar.isImage[i] ? AssetType.IMAGE : AssetType.VIDEO,
+			originalPath: '', // Not provided in columnar response
+			originalFileName: '', // Not provided in columnar response
+			resized: true, // Assume true
+			thumbhash: columnar.thumbhash[i],
+			fileCreatedAt: columnar.fileCreatedAt[i],
+			fileModifiedAt: columnar.fileCreatedAt[i], // Use fileCreatedAt as fallback
+			updatedAt: columnar.fileCreatedAt[i], // Use fileCreatedAt as fallback
+			isFavorite: columnar.isFavorite[i],
+			isArchived: columnar.isTrashed[i],
+			mimeType: columnar.isImage[i] ? 'image/jpeg' : 'video/mp4', // Approximate
+			duration: columnar.duration[i],
+			livePhotoVideoId: columnar.livePhotoVideoId[i],
+			tags: [],
+		}));
 	}
 
 	public async getBucketAssets(timeBucket: string): Promise<ImmichAsset[]> {
@@ -80,22 +74,9 @@ export class ImmichAPI {
 		return this.transformColumnarResponse(columnar);
 	}
 
-	/**
-	 * Get bucket metadata (IDs and ratios) without full asset data
-	 * Used for deterministic height calculations
-	 * CRITICAL: timeBucket must be exact string from /buckets (e.g., "2026-01-01")
-	 * Do NOT add extra quotes in URL
-	 */
-	public async getBucketMetadata(timeBucket: string): Promise<{
-		ids: string[];
-		ratios: number[];
-	}> {
+	public async getBucketMetadata(timeBucket: string): Promise<{ids: string[]; ratios: number[]}> {
 		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}`);
-
-		return {
-			ids: columnar.id,
-			ratios: columnar.ratio || columnar.id.map(() => 1), // Fallback to 1:1 if missing
-		};
+		return {ids: columnar.id, ratios: columnar.ratio || columnar.id.map(() => 1)};
 	}
 
 	public async getAssets(params: GetAssetsParams = {}): Promise<ImmichAsset[]> {
@@ -127,21 +108,11 @@ export class ImmichAPI {
 	}
 
 	public async validateUserAuth(): Promise<boolean> {
-		try {
-			await this.client.fetch('/users/me');
-			return true;
-		} catch {
-			return false;
-		}
+		return this.client.fetch('/users/me').then(() => true).catch(() => false);
 	}
 
 	public async validateConnection(): Promise<boolean> {
-		try {
-			await this.client.fetch('/server/ping');
-			return true;
-		} catch {
-			return false;
-		}
+		return this.client.fetch('/server/ping').then(() => true).catch(() => false);
 	}
 
 	public getThumbnailUrl(assetId: string): string {
@@ -164,29 +135,23 @@ export class ImmichAPI {
 
 		let filteredGroups = this.groupAssetsByDay(allAssets);
 
-		if (params.isFavorite !== undefined) {
-			filteredGroups = filteredGroups
-				.map((g) => ({
-					...g,
-					assets: g.assets.filter((a: ImmichAsset) => a.isFavorite === params.isFavorite),
-					count: g.assets.filter((a: ImmichAsset) => a.isFavorite === params.isFavorite).length,
-				}))
+		const applyFilter = (groups: GroupedAsset[], predicate: (asset: ImmichAsset) => boolean): GroupedAsset[] => {
+			return groups
+				.map((g) => {
+					const assets = g.assets.filter(predicate);
+					return {...g, assets, count: assets.length};
+				})
 				.filter((g) => g.count > 0);
+		};
+
+		if (params.isFavorite !== undefined) {
+			filteredGroups = applyFilter(filteredGroups, (a) => a.isFavorite === params.isFavorite);
 		}
 		if (params.isArchived !== undefined) {
-			filteredGroups = filteredGroups
-				.map((g) => ({
-					...g,
-					assets: g.assets.filter((a: ImmichAsset) => a.isArchived === params.isArchived),
-					count: g.assets.filter((a: ImmichAsset) => a.isArchived === params.isArchived).length,
-				}))
-				.filter((g) => g.count > 0);
+			filteredGroups = applyFilter(filteredGroups, (a) => a.isArchived === params.isArchived);
 		}
 
-		return {
-			groups: filteredGroups,
-			totalAssets: filteredGroups.reduce((sum, g) => sum + g.count, 0),
-		};
+		return {groups: filteredGroups, totalAssets: filteredGroups.reduce((sum, g) => sum + g.count, 0)};
 	}
 
 	public async getGroupedAssetsPage(params: GetBucketsParams = {}): Promise<GroupedAssetsPage> {
@@ -210,15 +175,10 @@ export class ImmichAPI {
 		};
 	}
 
-	/**
-	 * Fetch a page of grouped assets using pre-fetched buckets.
-	 * This avoids calling getBuckets() on every scroll.
-	 */
 	public async getGroupedAssetsPageWithBuckets(allBuckets: TimelineBucket[], params: GetBucketsParams = {}): Promise<GroupedAssetsPage> {
 		const skip = params.skip || 0;
-		const take = params.take || 3; // Updated default to match BUCKETS_PER_PAGE
+		const take = params.take || BUCKETS_PER_PAGE;
 
-		// Use provided buckets instead of fetching
 		const pageBuckets = allBuckets.slice(skip, skip + take);
 		const bucketAssets = await Promise.all(pageBuckets.map((bucket) => this.getBucketAssets(bucket.timeBucket)));
 		const allAssets = bucketAssets.flat();

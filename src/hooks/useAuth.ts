@@ -1,9 +1,9 @@
 import {useState, useEffect, useCallback} from 'react';
-import {storage} from '../utils/storage';
+import StorageService from '../utils/storage';
 import type {StoredAuthConfig} from '../utils/storage';
 import {APIClient} from '../api/client';
 import {ImmichAPI} from '../api/immich';
-import type {AuthConfig, UserCredentialsConfig, ApiKeyConfig} from '../api/types';
+import {type AuthConfig, type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
 
 export const useAuth = () => {
 	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(null);
@@ -12,14 +12,14 @@ export const useAuth = () => {
 	const [apiClient, setApiClient] = useState<ImmichAPI | null>(null);
 
 	const finalizeAuthSetup = useCallback((api: ImmichAPI, storedConfig: StoredAuthConfig) => {
-		storage.setAuthConfig(storedConfig);
+		StorageService.setAuthConfig(storedConfig);
 		setAuthConfig(storedConfig);
 		setApiClient(api);
 		setIsAuthenticated(true);
 	}, []);
 
 	useEffect(() => {
-		const config = storage.getAuthConfig();
+		const config = StorageService.getAuthConfig();
 		if (config) {
 			setAuthConfig(config);
 			validateAndSetup(config);
@@ -35,7 +35,7 @@ export const useAuth = () => {
 			const client = new APIClient(apiConfig);
 			const api = new ImmichAPI(client);
 
-			if (config.method === 'USER_CREDENTIALS') {
+			if (config.method === AuthMethod.USER_CREDENTIALS) {
 				const tokenValid = await api.validateUserAuth();
 				if (!tokenValid) {
 					setIsAuthenticated(false);
@@ -71,7 +71,7 @@ export const useAuth = () => {
 			try {
 				const tempConfig: UserCredentialsConfig = {
 					baseUrl,
-					method: 'USER_CREDENTIALS',
+					method: AuthMethod.USER_CREDENTIALS,
 					email,
 					password,
 				};
@@ -81,9 +81,9 @@ export const useAuth = () => {
 
 				const config: UserCredentialsConfig = {
 					baseUrl,
-					method: 'USER_CREDENTIALS',
+					method: AuthMethod.USER_CREDENTIALS,
 					email,
-					password, // Will not be stored
+					password: '' /* Will not be stored */,
 					accessToken: loginResponse.accessToken,
 				};
 
@@ -92,7 +92,7 @@ export const useAuth = () => {
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
-					method: 'USER_CREDENTIALS',
+					method: AuthMethod.USER_CREDENTIALS,
 					email,
 					accessToken: loginResponse.accessToken,
 				};
@@ -114,7 +114,7 @@ export const useAuth = () => {
 			try {
 				const config: ApiKeyConfig = {
 					baseUrl,
-					method: 'API_KEY',
+					method: AuthMethod.API_KEY,
 					apiKey,
 				};
 
@@ -129,7 +129,7 @@ export const useAuth = () => {
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
-					method: 'API_KEY',
+					method: AuthMethod.API_KEY,
 					apiKey,
 				};
 				finalizeAuthSetup(api, storedConfig);
@@ -145,7 +145,7 @@ export const useAuth = () => {
 	);
 
 	const logout = useCallback(() => {
-		storage.clearAuthConfig();
+		StorageService.clearAuthConfig();
 		setAuthConfig(null);
 		setApiClient(null);
 		setIsAuthenticated(false);
@@ -163,19 +163,17 @@ export const useAuth = () => {
 };
 
 const storedConfigToAuthConfig = (stored: StoredAuthConfig): AuthConfig => {
-	if (stored.method === 'USER_CREDENTIALS') {
-		return {
-			baseUrl: stored.baseUrl,
-			method: 'USER_CREDENTIALS',
-			email: stored.email!,
-			password: '', // Never stored
-			accessToken: stored.accessToken,
-		};
-	} else {
-		return {
-			baseUrl: stored.baseUrl,
-			method: 'API_KEY',
-			apiKey: stored.apiKey!,
-		};
-	}
+	return stored.method === AuthMethod.USER_CREDENTIALS
+		? {
+				baseUrl: stored.baseUrl,
+				method: AuthMethod.USER_CREDENTIALS,
+				email: stored.email!,
+				password: '' /* Never stored */,
+				accessToken: stored.accessToken,
+		  }
+		: {
+				baseUrl: stored.baseUrl,
+				method: AuthMethod.API_KEY,
+				apiKey: stored.apiKey!,
+		  };
 };

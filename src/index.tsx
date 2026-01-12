@@ -3,7 +3,7 @@ import React from 'react';
 import {createRoot, hydrateRoot} from 'react-dom/client';
 
 import App from './App/App';
-import reportWebVitals from './reportWebVitals';
+// import reportWebVitals from './reportWebVitals';
 
 const appElement = <App />;
 
@@ -25,4 +25,4 @@ export default appElement;
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint.
 // Learn more: https://github.com/enactjs/cli/blob/master/docs/measuring-performance.md
-reportWebVitals();
+// reportWebVitals();

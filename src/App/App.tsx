@@ -1,17 +1,16 @@
-import React from 'react';
-import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
 import Panels from '@enact/sandstone/Panels';
+import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import React from 'react';
 
-import MainPanel from '../views/MainPanel';
-import LoginPanel from '../views/LoginPanel';
 import {useAuth} from '../hooks/useAuth';
+import LoginPanel from '../views/LoginPanel';
+import MainPanel from '../views/MainPanel';
 
 import './attachErrorHandler';
 
 import css from './App.module.less';
 
-// Create a client for React Query
 const queryClient = new QueryClient();
 
 const AppBase: React.FC = () => {

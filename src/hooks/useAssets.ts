@@ -28,10 +28,6 @@ export const useGroupedAssets = (api: ImmichAPI | null) => {
 	});
 };
 
-/**
- * Hook to fetch and cache the complete list of timeline buckets.
- * This is shared across all infinite scroll pages to avoid re-fetching.
- */
 export const useBuckets = (api: ImmichAPI | null) => {
 	return useQuery({
 		queryKey: ['timeline-buckets'],
@@ -51,17 +47,12 @@ export const useBuckets = (api: ImmichAPI | null) => {
 	});
 };
 
-/**
- * Pre-fetch metadata (IDs + ratios) for all buckets
- * Returns lightweight metadata for height calculations
- */
 export const useBucketMetadataMap = (api: ImmichAPI | null, allBuckets: TimelineBucket[]) => {
 	return useQuery({
 		queryKey: ['bucket-metadata-map', allBuckets.length],
 		queryFn: async () => {
 			if (!api || !allBuckets.length) return new Map<string, BucketMetadata>();
 
-			// Batch fetch in chunks of 10 to avoid overwhelming server
 			const BATCH_SIZE = 10;
 			const metadataMap = new Map<string, BucketMetadata>();
 
@@ -78,7 +69,6 @@ export const useBucketMetadataMap = (api: ImmichAPI | null, allBuckets: Timeline
 							};
 						} catch (error) {
 							console.error(`Failed to fetch metadata for ${bucket.timeBucket}:`, error);
-							// Return fallback with 1:1 ratios
 							return {
 								date: bucket.timeBucket,
 								ids: Array(bucket.count).fill(''),
@@ -95,13 +85,12 @@ export const useBucketMetadataMap = (api: ImmichAPI | null, allBuckets: Timeline
 			return metadataMap;
 		},
 		enabled: !!api && allBuckets.length > 0,
-		staleTime: 10 * 60 * 1000, // 10 minutes
-		gcTime: 30 * 60 * 1000, // 30 minutes
+		staleTime: 10 * 60 * 1000,
+		gcTime: 30 * 60 * 1000,
 	});
 };
 
 export const useInfiniteGroupedAssets = (api: ImmichAPI | null) => {
-	// Get cached buckets
 	const {data: allBuckets, isLoading: isBucketsLoading} = useBuckets(api);
 
 	const infiniteQuery = useInfiniteQuery({
@@ -110,11 +99,7 @@ export const useInfiniteGroupedAssets = (api: ImmichAPI | null) => {
 			if (!api) throw new Error('API client not available');
 			if (!allBuckets) throw new Error('Buckets not loaded');
 
-			// Pass buckets to avoid re-fetching
-			return api.getGroupedAssetsPageWithBuckets(allBuckets, {
-				skip: pageParam,
-				take: BUCKETS_PER_PAGE,
-			});
+			return api.getGroupedAssetsPageWithBuckets(allBuckets, {skip: pageParam, take: BUCKETS_PER_PAGE});
 		},
 		enabled: !!api && !!allBuckets && !isBucketsLoading,
 		initialPageParam: 0,
@@ -122,8 +107,6 @@ export const useInfiniteGroupedAssets = (api: ImmichAPI | null) => {
 		...ASSETS_QUERY_CONFIG,
 	});
 
-	// Return both the query result AND the buckets data
-	// Combine loading states: show loading if buckets are loading OR infinite query is loading
 	return {
 		...infiniteQuery,
 		isLoading: isBucketsLoading || infiniteQuery.isLoading,

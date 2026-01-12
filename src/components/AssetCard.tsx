@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo} from 'react';
 import Icon from '@enact/sandstone/Icon';
-import {formatDuration} from '../utils/formatters';
+import FormattingService from '../utils/FormattingService';
 import type {ImmichAsset} from '../api/types';
 import type {ImmichAPI} from '../api/immich';
 import css from './AssetCard.module.less';
@@ -31,7 +31,7 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, api, onSe
 						<Icon size={48}>play</Icon>
 					</div>
 
-					{asset.duration && <div className={css.durationBadge}>{formatDuration(asset.duration)}</div>}
+					{asset.duration && <div className={css.durationBadge}>{FormattingService.formatDuration(asset.duration)}</div>}
 				</>
 			)}
 		</div>

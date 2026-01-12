@@ -49,6 +49,7 @@
 	"devDependencies": {
 		"@types/react": "^18.2.0",
 		"@types/react-dom": "^18.2.0",
+		"baseline-browser-mapping": "^2.9.14",
 		"eslint-config-enact-proxy": "^1.0.7",
 		"typescript": "^5.9.3"
 	}
