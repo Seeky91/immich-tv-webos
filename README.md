@@ -32,7 +32,7 @@
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or v20 recommended)
 * [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ```bash npm install -g @enact/cli ```
-* [webOS CLI (Ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/): ```bash npm install -g @webosose/ares-cli ```
+* [webOS CLI (Ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/): ```bash npm install -g @webos-tools/cli ```
 
 ### Project Setup
 ```bash
@@ -76,5 +76,6 @@ make launch
 This is an unofficial third-party client. It is not affiliated with the official Immich development team. The application is provided "as is," optimized for personal use on LG Smart TVs.
 
 ---
+
 
 **Built with ❤️ for the Immich community.**
