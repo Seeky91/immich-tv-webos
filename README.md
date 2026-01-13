@@ -31,8 +31,8 @@
 
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or v20 recommended)
-* [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ```bash npm install -g @enact/cli ```
-* [webOS CLI (Ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/): ```bash npm install -g @webos-tools/cli ```
+* [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ``` npm install -g @enact/cli ```
+* [webOS CLI (Ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/): ``` npm install -g @webos-tools/cli ```
 
 ### Project Setup
 ```bash
@@ -79,3 +79,4 @@ This is an unofficial third-party client. It is not affiliated with the official
 
 
 **Built with ❤️ for the Immich community.**
+
