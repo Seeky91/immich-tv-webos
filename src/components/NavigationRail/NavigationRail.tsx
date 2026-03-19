@@ -1,9 +1,8 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import Icon from '@enact/sandstone/Icon';
+import type {View} from '../../types/navigation';
 import css from './NavigationRail.module.less';
-
-type View = 'photos' | 'albums' | 'search';
 
 interface NavigationRailProps {
 	activeView: View;
@@ -38,12 +37,24 @@ const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, 
 		}, 50);
 	}, []);
 
-	const railClass = [css.rail, isExpanded ? css.expanded : ''].filter(Boolean).join(' ');
+	useEffect(() => {
+		return () => {
+			if (blurTimerRef.current !== null) {
+				clearTimeout(blurTimerRef.current);
+			}
+		};
+	}, []);
 
-	const makeNavHandler = useCallback(
-		(view: View) => () => onNavigate(view),
+	const navHandlers = useMemo(
+		() =>
+			NAV_ITEMS.reduce<Record<string, () => void>>(
+				(acc, {view}) => ({...acc, [view]: () => onNavigate(view)}),
+				{}
+			),
 		[onNavigate]
 	);
+
+	const railClass = [css.rail, isExpanded ? css.expanded : ''].filter(Boolean).join(' ');
 
 	return (
 		<RailContainer
@@ -55,7 +66,7 @@ const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, 
 				<button
 					key={view}
 					className={[css.navItem, activeView === view ? css.active : ''].filter(Boolean).join(' ')}
-					onClick={makeNavHandler(view)}
+					onClick={navHandlers[view]}
 				>
 					<Icon>{icon}</Icon>
 					<span className={css.label}>{label}</span>
