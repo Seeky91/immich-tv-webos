@@ -1,14 +1,3 @@
-/* Floating Pill NavigationRail — Aerate & Scale
-   ─────────────────────────────────────────────────────────────────────────────
-   Collapsed (160px rail):
-     navItem margin 16px each side  → pill = calc(100% - 32px) = 128px
-     navItem padding 24px each side → content = 128 - 48 = 80px (= iconContainer)
-     iconContainer 80×80px          → icon center = 16 + 24 + 40 = 80px = rail center ✓
-
-   Expanded (450px rail):
-     pill = 418px, same 24px left padding, iconContainer fixed → label fills right.
-   ─────────────────────────────────────────────────────────────────────────── */
-
 .rail {
   display: flex;
   flex-direction: column;
@@ -21,95 +10,77 @@
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding: 32px 0 24px;
   overflow: hidden;
-  transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
   box-sizing: border-box;
   z-index: 10;
 }
 
 .rail.expanded {
   width: 450px;
-  min-width: 450px;
 }
 
-/* ── Pill ──────────────────────────────────────────────────────────────────── */
+/* ── Pill ── */
 
 .navItem {
   display: flex;
   align-items: center;
-  width: calc(100% - 32px);
+  width: calc(100% - 32px); // Largeur de la pilule = 128px
   margin: 0 16px 12px;
-  padding: 12px 24px;
+  padding: 12px 0;         // ON ENLÈVE LE PADDING HORIZONTAL (Le secret est là)
   border-radius: 28px;
   cursor: pointer;
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.5);
   box-sizing: border-box;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease;
 
   &:focus {
     outline: none;
     background: #6366f1;
     color: white;
-    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);
   }
 }
 
-/* Selected, NOT focused (remote is on the media grid) */
 .navItem.active {
   background: rgba(99, 102, 241, 0.18);
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Selected AND focused (remote is on this rail item) */
 .navItem.active:focus {
   background: #6366f1;
   color: white;
-  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);
 }
 
-/* ── Square icon zone ────────────────────────────────────────────────────────
-   DO NOT set font-size here — it cascades into the Sandstone Icon glyph font
-   and shrinks the icon. Sandstone Icon controls its own size via its size prop.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ── Zone Icône (Sans Flex, avec largeur fixe) ── */
 
-/* Width fixed for stable collapsed centering; no height so Sandstone icon
-   renders at its natural size without being clipped. */
 .iconContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  min-width: 80px;
+  display: block;      // On repasse en block standard
+  text-align: center;  // Centrage horizontal classique
+  width: 128px;        // On prend TOUTE la largeur de la pilule (160 - 32)
+  min-width: 128px;
+  overflow: visible;   // On laisse déborder si besoin
 }
 
-/* ── Label ────────────────────────────────────────────────────────────────── */
+/* ── Label ── */
 
-/* max-width: 0 + overflow: hidden collapses the label to zero width so no
-   layout space is taken. This means .navItem needs no overflow: hidden itself,
-   which would otherwise clip the icon. */
 .label {
   max-width: 0;
   overflow: hidden;
   opacity: 0;
-  margin-left: 0;
   font-size: 28px;
   white-space: nowrap;
   pointer-events: none;
-  transition: max-width 0.3s ease, opacity 0.2s ease, margin-left 0.3s ease;
+  transition: max-width 0.3s ease, opacity 0.2s ease;
 }
 
 .expanded .label {
   max-width: 300px;
   opacity: 1;
-  margin-left: 16px;
+  margin-left: -10px; // On le ramène un peu vers l'icône car le container icône est large
 }
 
-/* ── Structure ────────────────────────────────────────────────────────────── */
-
-.spacer {
-  flex: 1;
-}
+.spacer { flex: 1; }
 
 .divider {
   width: calc(100% - 32px);
