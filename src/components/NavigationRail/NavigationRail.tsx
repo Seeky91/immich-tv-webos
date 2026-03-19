@@ -71,14 +71,18 @@ const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, 
 					className={[css.navItem, activeView === view ? css.active : ''].filter(Boolean).join(' ')}
 					onClick={navHandlers[view]}
 				>
-					<Icon>{icon}</Icon>
+					<div className={css.iconWrapper}>
+						<Icon size="large">{icon}</Icon>
+					</div>
 					<span className={css.label}>{label}</span>
 				</button>
 			))}
 			<div className={css.spacer} />
 			<div className={css.divider} />
 			<button className={css.navItem} onClick={onSignOut}>
-				<Icon>logout</Icon>
+				<div className={css.iconWrapper}>
+					<Icon size="large">logout</Icon>
+				</div>
 				<span className={css.label}>Sign Out</span>
 			</button>
 		</RailContainer>

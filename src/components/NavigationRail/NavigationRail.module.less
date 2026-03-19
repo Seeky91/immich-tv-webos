@@ -1,75 +1,83 @@
 .rail {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 120px;
-  min-width: 120px;
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 140px;
   height: 100%;
   background: #1e293b;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding: 24px 0;
   overflow: hidden;
-  transition: width 0.2s ease, min-width 0.2s ease;
+  transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out;
   box-sizing: border-box;
   z-index: 10;
 }
 
 .rail.expanded {
-  width: 320px;
-  min-width: 320px;
-  align-items: flex-start;
-  padding: 24px 16px;
+  width: 450px;
+  min-width: 450px;
 }
 
+/* Pill: 12px horizontal margin keeps background floating away from rail edges.
+   Width = calc(100% - 24px) so the pill never bleeds into the border.
+   The iconWrapper is sized to 116px (= 140 collapsed - 24px margins) so that
+   icon center = 12 + 58 = 70px from rail left = exact center of the 140px zone. */
 .navItem {
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 12px 20px;
-  border-radius: 10px;
+  justify-content: flex-start;
+  width: calc(100% - 24px);
+  margin: 8px 12px;
+  padding: 8px 0;
+  border-radius: 16px;
   cursor: pointer;
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.5);
-  font-size: 24px;
-  transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
   box-sizing: border-box;
+  transition: background 0.15s ease, color 0.15s ease;
 
   &:focus {
     outline: none;
-    background: rgba(99, 102, 241, 0.2);
+    background: #6366f1;
     color: white;
   }
 }
 
 .navItem.active {
-  background: #6366f1;
+  background: rgba(99, 102, 241, 0.2);
   color: white;
 }
 
-.rail:not(.expanded) .navItem {
+/* Focused beats active: solid indigo when the remote is on this item */
+.navItem.active:focus {
+  background: #6366f1;
+}
+
+/* iconWrapper is fixed at 116px so the icon center stays at 70px from the
+   rail left edge regardless of whether the rail is collapsed or expanded. */
+.iconWrapper {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 12px 0;
-  border-radius: 10px;
-  width: 80px;
-  margin: 0 auto;
-  gap: 0;
+  width: 116px;
+  min-width: 116px;
+  font-size: 48px;
 }
 
 .label {
+  margin-left: 24px;
+  font-size: 32px;
   opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  transition: opacity 0.15s ease, max-width 0.2s ease;
+  transition: opacity 0.2s ease;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .expanded .label {
   opacity: 1;
-  max-width: 220px;
 }
 
 .spacer {
@@ -77,13 +85,8 @@
 }
 
 .divider {
-  width: calc(100% - 32px);
+  width: calc(100% - 24px);
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 8px 16px;
-}
-
-.rail:not(.expanded) .divider {
-  width: 80px;
-  margin: 8px auto;
+  margin: 4px 12px;
 }
