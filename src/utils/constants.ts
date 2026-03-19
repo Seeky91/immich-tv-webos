@@ -5,4 +5,4 @@ export const ESTIMATED_ROW_HEIGHT_PX = 350;
 export const BUCKET_HEADER_HEIGHT_PX = 128;
 export const BUCKET_HEADER_MARGIN_PX = 40;
 export const LAYOUT_SAFETY_BUFFER_PX = 4;
-export const SIDEBAR_COLLAPSED_WIDTH = 72;
+export const SIDEBAR_COLLAPSED_WIDTH = 120;

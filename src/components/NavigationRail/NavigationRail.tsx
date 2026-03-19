@@ -11,7 +11,7 @@ interface NavigationRailProps {
 }
 
 const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
-	{view: 'photos', icon: 'image', label: 'Photos'},
+	{view: 'photos', icon: 'picture', label: 'Photos'},
 	{view: 'albums', icon: 'folder', label: 'Albums'},
 	{view: 'search', icon: 'search', label: 'Search'},
 ];
