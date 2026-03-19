@@ -1,4 +1,4 @@
-import React, {useCallback, useState, useMemo, useEffect, useRef} from 'react';
+import React, {useCallback, useState, useMemo, useRef} from 'react';
 import {Panel, Header} from '@enact/sandstone/Panels';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
@@ -88,16 +88,15 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 
 	const scrollToRef = useRef<((params: {index: number; animate?: boolean}) => void) | null>(null);
 
-	const cbScrollTo = useCallback((fn: (params: {index: number; animate?: boolean}) => void) => {
-		scrollToRef.current = fn;
-	}, []);
-
-	useEffect(() => {
-		if (initialScrollIndex !== null && initialScrollIndex > 0 && scrollToRef.current) {
-			scrollToRef.current({index: initialScrollIndex, animate: false});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []); // intentionally empty — runs once on mount only
+	const cbScrollTo = useCallback(
+		(fn: (params: {index: number; animate?: boolean}) => void) => {
+			scrollToRef.current = fn;
+			if (initialScrollIndex !== null && initialScrollIndex > 0) {
+				fn({index: initialScrollIndex, animate: false});
+			}
+		},
+		[initialScrollIndex]
+	);
 
 	const {handleScrollStop} = useScrollPagination({
 		hasNextPage: !!hasNextPage,
@@ -109,8 +108,9 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 	const handleScrollStopComposed = useCallback(
 		(event: {scrollTop: number; scrollLeft: number; moreInfo?: {firstVisibleIndex: number; lastVisibleIndex: number}}) => {
 			handleScrollStop(event);
-			const firstVisible = event.moreInfo?.firstVisibleIndex ?? 0;
-			onScrollIndexChange(firstVisible);
+			if (event.moreInfo !== undefined) {
+				onScrollIndexChange(event.moreInfo.firstVisibleIndex);
+			}
 		},
 		[handleScrollStop, onScrollIndexChange]
 	);
