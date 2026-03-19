@@ -148,6 +148,7 @@ export interface GroupedAssetsPage {
 	totalAssets: number;
 	nextCursor?: number;
 	hasMore: boolean;
+	metadataMap: Map<string, BucketMetadata>;
 }
 
 export type AuthConfig = UserCredentialsConfig | ApiKeyConfig;

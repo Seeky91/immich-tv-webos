@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback} from 'react';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
 import type {ImmichAsset} from '../../api/types';
 import type {ImmichAPI} from '../../api/immich';
@@ -16,31 +16,15 @@ interface MediaViewerProps {
 }
 
 export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({asset, allAssets, currentIndex, onClose, onNavigate, api}) => {
-	useWebOSKeys({onBack: onClose});
+	const handlePrev = useCallback(() => {
+		if (currentIndex > 0) onNavigate('prev');
+	}, [onNavigate, currentIndex]);
 
-	const handlePrev = useCallback(() => onNavigate('prev'), [onNavigate]);
-	const handleNext = useCallback(() => onNavigate('next'), [onNavigate]);
+	const handleNext = useCallback(() => {
+		if (currentIndex < allAssets.length - 1) onNavigate('next');
+	}, [onNavigate, currentIndex, allAssets.length]);
 
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			switch (e.key) {
-				case 'ArrowLeft':
-					e.preventDefault();
-					if (currentIndex > 0) onNavigate('prev');
-					break;
-				case 'ArrowRight':
-					e.preventDefault();
-					if (currentIndex < allAssets.length - 1) onNavigate('next');
-					break;
-				case 'Escape':
-					e.preventDefault();
-					onClose();
-					break;
-			}
-		};
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [onNavigate, onClose, currentIndex, allAssets.length]);
+	useWebOSKeys({onBack: onClose, onArrowLeft: handlePrev, onArrowRight: handleNext});
 
 	if (!asset) return null;
 

@@ -12,10 +12,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		const video = videoRef.current;
 		if (!video) return;
 
-		const handleLoadedMetadata = () => {
-			// Video metadata loaded
-		};
-
 		const handleError = (e: Event) => {
 			console.error('Video error:', video.error);
 			console.error('Video error code:', video.error?.code);
@@ -29,19 +25,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 			});
 		};
 
-		video.addEventListener('loadedmetadata', handleLoadedMetadata);
 		video.addEventListener('error', handleError);
 		video.addEventListener('loadeddata', handleLoadedData);
 
 		return () => {
-			video.removeEventListener('loadedmetadata', handleLoadedMetadata);
 			video.removeEventListener('error', handleError);
 			video.removeEventListener('loadeddata', handleLoadedData);
 		};
 	}, [src]);
 
 	useEffect(() => {
-		/* Cleanup on unmount */
 		const video = videoRef.current;
 		return () => {
 			if (video) {

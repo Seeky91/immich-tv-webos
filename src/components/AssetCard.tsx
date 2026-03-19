@@ -8,21 +8,23 @@ import css from './AssetCard.module.less';
 interface AssetCardProps {
 	asset: ImmichAsset;
 	api: ImmichAPI;
-	onSelect?: (asset: ImmichAsset) => void;
+	index: number;
+	onSelect?: (asset: ImmichAsset, index: number) => void;
+	style?: React.CSSProperties;
 }
 
-export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, api, onSelect}) => {
+export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, api, index, onSelect, style}) => {
 	const isVideo = asset.type === 'VIDEO';
 	const thumbnailUrl = useMemo(() => api.getThumbnailUrl(asset.id), [api, asset.id]);
 
 	const handleClick = useCallback(() => {
 		if (onSelect) {
-			onSelect(asset);
+			onSelect(asset, index);
 		}
-	}, [asset, onSelect]);
+	}, [asset, index, onSelect]);
 
 	return (
-		<div className={css.assetCard} onClick={handleClick} tabIndex={0}>
+		<div className={css.assetCard} style={style} onClick={handleClick} tabIndex={0}>
 			<img src={thumbnailUrl} alt="" className={css.thumbnail} loading="lazy" />
 
 			{isVideo && (

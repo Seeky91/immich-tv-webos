@@ -1,15 +1,16 @@
 import {useQuery, useInfiniteQuery} from '@tanstack/react-query';
+import {useMemo} from 'react';
 import {ImmichAPI} from '../api/immich';
 import {ASSETS_QUERY_CONFIG, BUCKETS_PER_PAGE} from './queryConfig';
 import {isAPIError} from '../utils/typeGuards';
-import type {BucketMetadata, TimelineBucket} from '../api/types';
+import type {BucketMetadata} from '../api/types';
 
 export const useAssets = (api: ImmichAPI | null) => {
 	return useQuery({
 		queryKey: ['assets'],
 		queryFn: async () => {
 			if (!api) throw new Error('API client not available');
-			return api.getAssets({take: 500}); // Fetch 500 assets initially
+			return api.getAssets({take: 500});
 		},
 		enabled: !!api,
 		...ASSETS_QUERY_CONFIG,
@@ -36,57 +37,14 @@ export const useBuckets = (api: ImmichAPI | null) => {
 			return api.getBuckets();
 		},
 		enabled: !!api,
-		staleTime: 10 * 60 * 1000, // 10 minutes (longer than assets)
-		gcTime: 30 * 60 * 1000, // 30 minutes
+		staleTime: 10 * 60 * 1000,
+		gcTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 		retry: (failureCount: number, error: unknown) => {
 			if (isAPIError(error) && error.status === 401) return false;
 			return failureCount < 2;
 		},
-	});
-};
-
-export const useBucketMetadataMap = (api: ImmichAPI | null, allBuckets: TimelineBucket[]) => {
-	return useQuery({
-		queryKey: ['bucket-metadata-map', allBuckets.length],
-		queryFn: async () => {
-			if (!api || !allBuckets.length) return new Map<string, BucketMetadata>();
-
-			const BATCH_SIZE = 10;
-			const metadataMap = new Map<string, BucketMetadata>();
-
-			for (let i = 0; i < allBuckets.length; i += BATCH_SIZE) {
-				const batch = allBuckets.slice(i, i + BATCH_SIZE);
-				const results = await Promise.all(
-					batch.map(async (bucket) => {
-						try {
-							const metadata = await api.getBucketMetadata(bucket.timeBucket);
-							return {
-								date: bucket.timeBucket,
-								...metadata,
-								count: bucket.count,
-							};
-						} catch (error) {
-							console.error(`Failed to fetch metadata for ${bucket.timeBucket}:`, error);
-							return {
-								date: bucket.timeBucket,
-								ids: Array(bucket.count).fill(''),
-								ratios: Array(bucket.count).fill(1),
-								count: bucket.count,
-							};
-						}
-					})
-				);
-
-				results.forEach((meta) => metadataMap.set(meta.date, meta));
-			}
-
-			return metadataMap;
-		},
-		enabled: !!api && allBuckets.length > 0,
-		staleTime: 10 * 60 * 1000,
-		gcTime: 30 * 60 * 1000,
 	});
 };
 
@@ -107,10 +65,19 @@ export const useInfiniteGroupedAssets = (api: ImmichAPI | null) => {
 		...ASSETS_QUERY_CONFIG,
 	});
 
+	const metadataMap = useMemo(() => {
+		const map = new Map<string, BucketMetadata>();
+		infiniteQuery.data?.pages.forEach((page) => {
+			page.metadataMap.forEach((meta, key) => map.set(key, meta));
+		});
+		return map;
+	}, [infiniteQuery.data?.pages]);
+
 	return {
 		...infiniteQuery,
 		isLoading: isBucketsLoading || infiniteQuery.isLoading,
 		allBuckets: allBuckets || [],
 		totalBucketCount: allBuckets?.length || 0,
+		metadataMap,
 	};
 };

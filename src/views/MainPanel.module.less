@@ -9,6 +9,8 @@
 }
 
 .dateGroup {
+	display: flex;
+	flex-direction: column;
 	margin-bottom: 40px;
 
 	&:last-child {
@@ -24,9 +26,7 @@
 }
 
 .assetsGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-	gap: 8px;
+	position: relative;
 	width: 100%;
 }
 

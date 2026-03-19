@@ -1,9 +1,14 @@
 import {useState, useEffect, useCallback} from 'react';
 import StorageService from '../utils/storage';
 import type {StoredAuthConfig} from '../utils/storage';
-import {APIClient} from '../api/client';
+import {APIClient, APIError} from '../api/client';
 import {ImmichAPI} from '../api/immich';
 import {type AuthConfig, type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
+
+export interface LoginResult {
+	success: boolean;
+	errorMessage?: string;
+}
 
 export const useAuth = () => {
 	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(null);
@@ -66,7 +71,7 @@ export const useAuth = () => {
 	};
 
 	const loginWithCredentials = useCallback(
-		async (baseUrl: string, email: string, password: string): Promise<boolean> => {
+		async (baseUrl: string, email: string, password: string): Promise<LoginResult> => {
 			setIsValidating(true);
 			try {
 				const tempConfig: UserCredentialsConfig = {
@@ -97,10 +102,16 @@ export const useAuth = () => {
 					accessToken: loginResponse.accessToken,
 				};
 				finalizeAuthSetup(api, storedConfig);
-				return true;
+				return {success: true};
 			} catch (error) {
 				console.error('Credential login failed:', error);
-				return false;
+				const errorMessage =
+					error instanceof APIError && error.status === 401
+						? 'Invalid email or password'
+						: error instanceof Error
+						? error.message
+						: 'Login failed. Check your credentials.';
+				return {success: false, errorMessage};
 			} finally {
 				setIsValidating(false);
 			}

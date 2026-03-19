@@ -33,7 +33,7 @@ export class APIClient {
 			Accept: 'application/json',
 			...(this.authConfig.method === 'USER_CREDENTIALS' &&
 				this.authConfig.accessToken && {
-					'x-immich-user-token': this.authConfig.accessToken,
+					Authorization: `Bearer ${this.authConfig.accessToken}`,
 				}),
 			...(this.authConfig.method === 'API_KEY' && {
 				'x-api-key': this.authConfig.apiKey,

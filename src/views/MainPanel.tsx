@@ -1,24 +1,32 @@
-import React, {useCallback, useState, useRef, useMemo, useEffect} from 'react';
+import React, {useCallback, useState, useMemo, useEffect} from 'react';
 import {Panel, Header} from '@enact/sandstone/Panels';
-import Scroller from '@enact/sandstone/Scroller';
+import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
 import {AssetCard} from '../components/AssetCard';
 import {DateHeader} from '../components/DateHeader';
 import {MediaViewer} from '../components/MediaViewer/MediaViewer';
-import {useInfiniteGroupedAssets, useBucketMetadataMap} from '../hooks/useAssets';
+import {ErrorBoundary} from '../components/ErrorBoundary';
+import {useInfiniteGroupedAssets} from '../hooks/useAssets';
 import {useAllAssets} from '../hooks/useAllAssets';
-import {calculateBucketHeight} from '../utils/justifiedLayout';
+import {useHeightMap} from '../hooks/useHeightMap';
+import {useScrollPagination} from '../hooks/useScrollPagination';
+import {calculateJustifiedLayout} from '../utils/justifiedLayout';
+import {ESTIMATED_ROW_HEIGHT_PX} from '../utils/constants';
+import type {JustifiedLayoutResult} from '../utils/justifiedLayout';
 import type {ImmichAPI} from '../api/immich';
-import type {ImmichAsset} from '../api/types';
+import type {ImmichAsset, GroupedAsset} from '../api/types';
 import css from './MainPanel.module.less';
 
 interface MainPanelProps {
 	api: ImmichAPI;
 }
 
+type GroupVirtualItem = GroupedAsset & {type: 'group'; globalStartIndex: number};
+type PlaceholderVirtualItem = {type: 'placeholder'; height: number; globalStartIndex: number};
+type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
+
 const MainPanel: React.FC<MainPanelProps> = ({api}) => {
-	const contentRef = useRef<HTMLDivElement>(null);
-	const {data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, allBuckets} = useInfiniteGroupedAssets(api);
+	const {data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, allBuckets, metadataMap} = useInfiniteGroupedAssets(api);
 	const [viewerState, setViewerState] = useState<{isOpen: boolean; assetIndex: number} | null>(null);
 	const allAssets = useAllAssets(data);
 	const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920);
@@ -29,53 +37,42 @@ const MainPanel: React.FC<MainPanelProps> = ({api}) => {
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
-	const {data: metadataMap} = useBucketMetadataMap(api, allBuckets);
+	const loadedGroups = useMemo(() => data?.pages.flatMap((p) => p.groups) ?? [], [data]);
 
-	const heightMap = useMemo(() => {
-		if (!metadataMap || metadataMap.size === 0) {
-			console.log('[HeightMap] Metadata not loaded yet or empty');
-			return new Map<string, number>();
-		}
+	const {heightMap, placeholderHeight} = useHeightMap({metadataMap, allBuckets, loadedGroups, viewportWidth});
 
-		const map = new Map<string, number>();
-
+	const layoutMap = useMemo(() => {
+		const map = new Map<string, JustifiedLayoutResult>();
 		metadataMap.forEach((metadata, date) => {
-			const height = calculateBucketHeight(metadata.ratios, viewportWidth);
-			map.set(date, height);
+			map.set(date, calculateJustifiedLayout(metadata.ratios, viewportWidth));
 		});
-
 		return map;
 	}, [metadataMap, viewportWidth]);
 
-	const heightMapSize = heightMap.size;
-	const exactTotalHeight = useMemo(() => Array.from(heightMap.values()).reduce((sum, h) => sum + h, 0), [heightMap]);
+	const virtualItems = useMemo<VirtualItem[]>(() => {
+		let globalStart = 0;
+		const items: VirtualItem[] = loadedGroups.map((group) => {
+			const item: GroupVirtualItem = {...group, type: 'group', globalStartIndex: globalStart};
+			globalStart += group.count;
+			return item;
+		});
+		if (placeholderHeight > 0) {
+			items.push({type: 'placeholder', height: placeholderHeight, globalStartIndex: globalStart});
+		}
+		return items;
+	}, [loadedGroups, placeholderHeight]);
 
-	const exactLoadedHeight = useMemo(() => {
-		if (!data?.pages) return 0;
-
-		const loaded = data.pages.reduce((sum, page) => {
-			return (sum + page.groups.reduce((pageSum, group) => {
-				const height = heightMap.get(group.timeBucket) || 0;
-				return pageSum + height;
-			}, 0));
-		}, 0);
-		return loaded;
-	}, [data, heightMap]);
-
-	const placeholderHeight = useMemo(() => Math.max(0, exactTotalHeight - exactLoadedHeight), [exactTotalHeight, exactLoadedHeight]);
-
-	const handleSelectAsset = useCallback(
-		(asset: ImmichAsset) => {
-			const index = allAssets.findIndex((a) => a.id === asset.id);
-			if (index !== -1) {
-				setViewerState({
-					isOpen: true,
-					assetIndex: index,
-				});
-			}
-		},
-		[allAssets]
+	const itemSizes = useMemo(
+		() =>
+			virtualItems.map((item) =>
+				item.type === 'group' ? (heightMap.get(item.timeBucket) ?? ESTIMATED_ROW_HEIGHT_PX) : item.height
+			),
+		[virtualItems, heightMap]
 	);
+
+	const handleSelectAsset = useCallback((_asset: ImmichAsset, index: number) => {
+		setViewerState({isOpen: true, assetIndex: index});
+	}, []);
 
 	const handleCloseViewer = useCallback(() => setViewerState(null), []);
 
@@ -83,48 +80,54 @@ const MainPanel: React.FC<MainPanelProps> = ({api}) => {
 		(direction: 'prev' | 'next') => {
 			setViewerState((prev) => {
 				if (!prev) return null;
-				const newIndex = direction === 'prev' ? Math.max(0, prev.assetIndex - 1) : Math.min(allAssets.length - 1, prev.assetIndex + 1);
+				const newIndex =
+					direction === 'prev'
+						? Math.max(0, prev.assetIndex - 1)
+						: Math.min(allAssets.length - 1, prev.assetIndex + 1);
 				return {...prev, assetIndex: newIndex};
 			});
 		},
 		[allAssets.length]
 	);
 
-	const placeholderHeightRef = useRef(placeholderHeight);
-	const exactTotalHeightRef = useRef(exactTotalHeight);
-	const exactLoadedHeightRef = useRef(exactLoadedHeight);
-	const heightMapSizeRef = useRef(heightMapSize);
+	const {handleScrollStop} = useScrollPagination({
+		hasNextPage: !!hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+		loadedGroupCount: loadedGroups.length,
+	});
 
-	useEffect(() => {
-		placeholderHeightRef.current = placeholderHeight;
-		exactTotalHeightRef.current = exactTotalHeight;
-		exactLoadedHeightRef.current = exactLoadedHeight;
-		heightMapSizeRef.current = heightMapSize;
-	}, [placeholderHeight, exactTotalHeight, exactLoadedHeight, heightMapSize]);
-
-	const handleScrollStop = useCallback(
-		({scrollTop}: {scrollTop: number; scrollLeft: number}) => {
-			if (!hasNextPage || isFetchingNextPage) return;
-
-			const contentElement = contentRef.current;
-			if (!contentElement) return;
-
-			const scrollerElement = contentElement.closest('.Scroller_Scroller') || contentElement.parentElement;
-			if (!scrollerElement) return;
-
-			const clientHeight = scrollerElement.clientHeight;
-			const scrollHeight = contentElement.scrollHeight;
-
-			const currentPlaceholderHeight = placeholderHeightRef.current;
-			const loadedContentHeight = scrollHeight - currentPlaceholderHeight;
-
-			const distanceFromBottom = loadedContentHeight - (scrollTop + clientHeight);
-			const threshold = clientHeight * 5;
-			if (distanceFromBottom < threshold) {
-				fetchNextPage();
+	const renderItem = useCallback(
+		({index}: {index: number}) => {
+			const item = virtualItems[index];
+			if (!item || item.type === 'placeholder') {
+				return <div aria-hidden="true" />;
 			}
+			const layout = layoutMap.get(item.timeBucket);
+			return (
+				<div className={css.dateGroup}>
+					<div className={css.dateHeaderDivider}>
+						<DateHeader displayDate={item.displayDate} count={item.count} />
+					</div>
+					<div className={css.assetsGrid} style={layout ? {height: layout.totalHeight} : undefined}>
+						{item.assets.map((asset, assetIdx) => {
+							const pos = layout?.assetLayouts[assetIdx];
+							return (
+								<AssetCard
+									key={asset.id}
+									asset={asset}
+									api={api}
+									index={item.globalStartIndex + assetIdx}
+									onSelect={handleSelectAsset}
+									style={pos ? {position: 'absolute', top: pos.top, left: pos.left, width: pos.width, height: pos.height} : undefined}
+								/>
+							);
+						})}
+					</div>
+				</div>
+			);
 		},
-		[hasNextPage, isFetchingNextPage, fetchNextPage]
+		[virtualItems, api, handleSelectAsset, layoutMap]
 	);
 
 	if (isLoading) {
@@ -152,39 +155,28 @@ const MainPanel: React.FC<MainPanelProps> = ({api}) => {
 
 	return (
 		<Panel className={css.mainPanel}>
-			<Scroller direction="vertical" onScrollStop={handleScrollStop} verticalScrollbar="visible" focusableScrollbar>
-				<div ref={contentRef} className={css.contentContainer}>
-					{/* Loaded content */}
-					{data?.pages.map((page, pageIndex) =>
-						page.groups.map((group, groupIndex) => (
-							<div key={`${pageIndex}-${groupIndex}`} className={css.dateGroup}>
-								{/* Full-width header outside grid */}
-								<div className={css.dateHeaderDivider}>
-									<DateHeader displayDate={group.displayDate} count={group.count} />
-								</div>
-
-								{/* Grid container for assets */}
-								<div className={css.assetsGrid}>
-									{group.assets.map((asset) => (
-										<AssetCard key={asset.id} asset={asset} api={api} onSelect={handleSelectAsset} />
-									))}
-								</div>
-							</div>
-						))
-					)}
-
-					{isFetchingNextPage && (
-						<div className={css.loadingIndicator}>
-							<p>Loading more…</p>
-						</div>
-					)}
-
-					{/* Placeholder for unloaded buckets - makes scrollbar reflect total timeline */}
-					{placeholderHeight > 0 && <div className={css.scrollPlaceholder} style={{height: `${placeholderHeight}px`}} aria-hidden="true" />}
-				</div>
-			</Scroller>
+			<ErrorBoundary>
+				<VirtualList
+					dataSize={virtualItems.length}
+					itemSize={virtualItems.length > 0 ? {minSize: ESTIMATED_ROW_HEIGHT_PX, size: itemSizes} : ESTIMATED_ROW_HEIGHT_PX}
+					itemRenderer={renderItem}
+					direction="vertical"
+					verticalScrollbar="visible"
+					onScrollStop={handleScrollStop}
+					style={{paddingRight: ri.scale(40)}}
+				/>
+			</ErrorBoundary>
 			{viewerState?.isOpen && (
-				<MediaViewer asset={allAssets[viewerState.assetIndex]} allAssets={allAssets} currentIndex={viewerState.assetIndex} onClose={handleCloseViewer} onNavigate={handleNavigateViewer} api={api} />
+				<ErrorBoundary>
+					<MediaViewer
+						asset={allAssets[viewerState.assetIndex]}
+						allAssets={allAssets}
+						currentIndex={viewerState.assetIndex}
+						onClose={handleCloseViewer}
+						onNavigate={handleNavigateViewer}
+						api={api}
+					/>
+				</ErrorBoundary>
 			)}
 		</Panel>
 	);

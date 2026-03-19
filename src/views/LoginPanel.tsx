@@ -3,6 +3,7 @@ import TabLayout, {Tab} from '@enact/sandstone/TabLayout';
 import Input from '@enact/sandstone/Input';
 import Button from '@enact/sandstone/Button';
 import {ErrorMessage} from '../components/ErrorMessage';
+import type {LoginResult} from '../hooks/useAuth';
 
 import css from './LoginPanel.module.less';
 import bannerImage from '../assets/immich-banner.png';
@@ -10,7 +11,7 @@ import bannerImage from '../assets/immich-banner.png';
 interface LoginPanelProps {
 	isValidating: boolean;
 	onLoginWithApiKey: (baseUrl: string, apiKey: string) => Promise<boolean>;
-	onLoginWithCredentials: (baseUrl: string, email: string, password: string) => Promise<boolean>;
+	onLoginWithCredentials: (baseUrl: string, email: string, password: string) => Promise<LoginResult>;
 }
 
 const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey, onLoginWithCredentials}) => {
@@ -49,9 +50,9 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 			setCredentialsError('Please fill in all fields');
 			return;
 		}
-		const success = await onLoginWithCredentials(credentialsUrl, email, password);
-		if (!success) {
-			setCredentialsError('Login failed. Check your credentials.');
+		const result = await onLoginWithCredentials(credentialsUrl, email, password);
+		if (!result.success) {
+			setCredentialsError(result.errorMessage ?? 'Login failed. Check your credentials.');
 		}
 	}, [credentialsUrl, email, password, onLoginWithCredentials]);
 
