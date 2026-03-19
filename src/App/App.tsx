@@ -4,8 +4,8 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import React from 'react';
 
 import {useAuth} from '../hooks/useAuth';
+import AppLayout from '../views/AppLayout';
 import LoginPanel from '../views/LoginPanel';
-import MainPanel from '../views/MainPanel';
 
 import './attachErrorHandler';
 
@@ -14,7 +14,7 @@ import css from './App.module.less';
 const queryClient = new QueryClient();
 
 const AppBase: React.FC = () => {
-	const {isAuthenticated, isValidating, apiClient, loginWithApiKey, loginWithCredentials} = useAuth();
+	const {isAuthenticated, isValidating, apiClient, loginWithApiKey, loginWithCredentials, logout} = useAuth();
 
 	if (isValidating) {
 		return (
@@ -37,9 +37,7 @@ const AppBase: React.FC = () => {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<div className={css.app}>
-				<Panels>
-					<MainPanel api={apiClient} />
-				</Panels>
+				<AppLayout api={apiClient} onSignOut={logout} />
 			</div>
 		</QueryClientProvider>
 	);

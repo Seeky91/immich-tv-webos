@@ -14,7 +14,10 @@ interface AppLayoutProps {
 	onSignOut: () => void;
 }
 
-const ViewContainer = SpotlightContainerDecorator({enterTo: 'last-focused'}, 'div');
+const ViewContainer = SpotlightContainerDecorator(
+	{enterTo: 'last-focused'},
+	'div' as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement>>
+);
 
 const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 	const [activeView, setActiveView] = useState<View>('photos');

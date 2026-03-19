@@ -16,7 +16,10 @@ const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
 	{view: 'search', icon: 'search', label: 'Search'},
 ];
 
-const RailContainer = SpotlightContainerDecorator({enterTo: 'last-focused'}, 'div');
+const RailContainer = SpotlightContainerDecorator(
+	{enterTo: 'last-focused'},
+	'div' as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement>>
+);
 
 const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, onSignOut}) => {
 	const [isExpanded, setIsExpanded] = useState(false);
