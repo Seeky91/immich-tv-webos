@@ -1,13 +1,25 @@
+/* Floating Pill NavigationRail — Aerate & Scale
+   ─────────────────────────────────────────────────────────────────────────────
+   Collapsed (160px rail):
+     navItem margin 16px each side  → pill = calc(100% - 32px) = 128px
+     navItem padding 24px each side → content = 128 - 48 = 80px (= iconContainer)
+     iconContainer 80×80px          → icon center = 16 + 24 + 40 = 80px = rail center ✓
+
+   Expanded (450px rail):
+     pill = 418px, same 24px left padding, iconContainer fixed → label fills right.
+   ─────────────────────────────────────────────────────────────────────────── */
+
 .rail {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   flex-shrink: 0;
-  width: 140px;
-  min-width: 140px;
+  width: 160px;
+  min-width: 160px;
   height: 100%;
   background: #1e293b;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 24px 0;
+  padding: 32px 0 24px;
   overflow: hidden;
   transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out;
   box-sizing: border-box;
@@ -19,74 +31,89 @@
   min-width: 450px;
 }
 
-/* Pill: 12px horizontal margin keeps background floating away from rail edges.
-   Width = calc(100% - 24px) so the pill never bleeds into the border.
-   The iconWrapper is sized to 116px (= 140 collapsed - 24px margins) so that
-   icon center = 12 + 58 = 70px from rail left = exact center of the 140px zone. */
+/* ── Pill ──────────────────────────────────────────────────────────────────── */
+
 .navItem {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  width: calc(100% - 24px);
-  margin: 8px 12px;
-  padding: 8px 0;
-  border-radius: 16px;
+  width: calc(100% - 32px);
+  margin: 0 16px 12px;
+  padding: 12px 24px;
+  border-radius: 28px;
   cursor: pointer;
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
   box-sizing: border-box;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
     background: #6366f1;
     color: white;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);
   }
 }
 
+/* Selected, NOT focused (remote is on the media grid) */
 .navItem.active {
-  background: rgba(99, 102, 241, 0.2);
-  color: white;
+  background: rgba(99, 102, 241, 0.18);
+  color: rgba(255, 255, 255, 0.7);
 }
 
-/* Focused beats active: solid indigo when the remote is on this item */
+/* Selected AND focused (remote is on this rail item) */
 .navItem.active:focus {
   background: #6366f1;
+  color: white;
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.45);
 }
 
-/* iconWrapper is fixed at 116px so the icon center stays at 70px from the
-   rail left edge regardless of whether the rail is collapsed or expanded. */
-.iconWrapper {
+/* ── Square icon zone ────────────────────────────────────────────────────────
+   DO NOT set font-size here — it cascades into the Sandstone Icon glyph font
+   and shrinks the icon. Sandstone Icon controls its own size via its size prop.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Width fixed for stable collapsed centering; no height so Sandstone icon
+   renders at its natural size without being clipped. */
+.iconContainer {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 116px;
-  min-width: 116px;
-  font-size: 48px;
+  width: 80px;
+  min-width: 80px;
 }
 
+/* ── Label ────────────────────────────────────────────────────────────────── */
+
+/* max-width: 0 + overflow: hidden collapses the label to zero width so no
+   layout space is taken. This means .navItem needs no overflow: hidden itself,
+   which would otherwise clip the icon. */
 .label {
-  margin-left: 24px;
-  font-size: 32px;
+  max-width: 0;
+  overflow: hidden;
   opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
+  margin-left: 0;
+  font-size: 28px;
   white-space: nowrap;
+  pointer-events: none;
+  transition: max-width 0.3s ease, opacity 0.2s ease, margin-left 0.3s ease;
 }
 
 .expanded .label {
+  max-width: 300px;
   opacity: 1;
+  margin-left: 16px;
 }
+
+/* ── Structure ────────────────────────────────────────────────────────────── */
 
 .spacer {
   flex: 1;
 }
 
 .divider {
-  width: calc(100% - 24px);
+  width: calc(100% - 32px);
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 4px 12px;
+  margin: 4px 16px 32px;
 }
