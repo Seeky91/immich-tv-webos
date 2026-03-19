@@ -1,4 +1,4 @@
-import React, {useCallback, useState, useMemo, useEffect} from 'react';
+import React, {useCallback, useState, useMemo, useEffect, useRef} from 'react';
 import {Panel, Header} from '@enact/sandstone/Panels';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
@@ -19,35 +19,31 @@ import css from './MainPanel.module.less';
 
 interface MainPanelProps {
 	api: ImmichAPI;
+	contentWidth: number;
+	initialScrollIndex: number | null;
+	onScrollIndexChange: (index: number) => void;
 }
 
 type GroupVirtualItem = GroupedAsset & {type: 'group'; globalStartIndex: number};
 type PlaceholderVirtualItem = {type: 'placeholder'; height: number; globalStartIndex: number};
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
-const MainPanel: React.FC<MainPanelProps> = ({api}) => {
+const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIndex, onScrollIndexChange}) => {
 	const {data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, allBuckets, metadataMap} = useInfiniteGroupedAssets(api);
 	const [viewerState, setViewerState] = useState<{isOpen: boolean; assetIndex: number} | null>(null);
 	const allAssets = useAllAssets(data);
-	const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920);
-
-	useEffect(() => {
-		const handleResize = () => setViewportWidth(window.innerWidth);
-		window.addEventListener('resize', handleResize);
-		return () => window.removeEventListener('resize', handleResize);
-	}, []);
 
 	const loadedGroups = useMemo(() => data?.pages.flatMap((p) => p.groups) ?? [], [data]);
 
-	const {heightMap, placeholderHeight} = useHeightMap({metadataMap, allBuckets, loadedGroups, viewportWidth});
+	const {heightMap, placeholderHeight} = useHeightMap({metadataMap, allBuckets, loadedGroups, viewportWidth: contentWidth});
 
 	const layoutMap = useMemo(() => {
 		const map = new Map<string, JustifiedLayoutResult>();
 		metadataMap.forEach((metadata, date) => {
-			map.set(date, calculateJustifiedLayout(metadata.ratios, viewportWidth));
+			map.set(date, calculateJustifiedLayout(metadata.ratios, contentWidth));
 		});
 		return map;
-	}, [metadataMap, viewportWidth]);
+	}, [metadataMap, contentWidth]);
 
 	const virtualItems = useMemo<VirtualItem[]>(() => {
 		let globalStart = 0;
@@ -90,12 +86,34 @@ const MainPanel: React.FC<MainPanelProps> = ({api}) => {
 		[allAssets.length]
 	);
 
+	const scrollToRef = useRef<((params: {index: number; animate?: boolean}) => void) | null>(null);
+
+	const cbScrollTo = useCallback((fn: (params: {index: number; animate?: boolean}) => void) => {
+		scrollToRef.current = fn;
+	}, []);
+
+	useEffect(() => {
+		if (initialScrollIndex !== null && initialScrollIndex > 0 && scrollToRef.current) {
+			scrollToRef.current({index: initialScrollIndex, animate: false});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // intentionally empty — runs once on mount only
+
 	const {handleScrollStop} = useScrollPagination({
 		hasNextPage: !!hasNextPage,
 		isFetchingNextPage,
 		fetchNextPage,
 		loadedGroupCount: loadedGroups.length,
 	});
+
+	const handleScrollStopComposed = useCallback(
+		(event: {scrollTop: number; scrollLeft: number; moreInfo?: {firstVisibleIndex: number; lastVisibleIndex: number}}) => {
+			handleScrollStop(event);
+			const firstVisible = event.moreInfo?.firstVisibleIndex ?? 0;
+			onScrollIndexChange(firstVisible);
+		},
+		[handleScrollStop, onScrollIndexChange]
+	);
 
 	const renderItem = useCallback(
 		({index}: {index: number}) => {
@@ -162,7 +180,8 @@ const MainPanel: React.FC<MainPanelProps> = ({api}) => {
 					itemRenderer={renderItem}
 					direction="vertical"
 					verticalScrollbar="visible"
-					onScrollStop={handleScrollStop}
+					onScrollStop={handleScrollStopComposed}
+					cbScrollTo={cbScrollTo}
 					style={{paddingRight: ri.scale(40)}}
 				/>
 			</ErrorBoundary>

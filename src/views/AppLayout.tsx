@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import {SIDEBAR_COLLAPSED_WIDTH} from '../utils/constants';
 import NavigationRail from '../components/NavigationRail/NavigationRail';
@@ -19,9 +19,7 @@ const ViewContainer = SpotlightContainerDecorator({enterTo: 'last-focused'}, 'di
 const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 	const [activeView, setActiveView] = useState<View>('photos');
 	const [photosScrollIndex, setPhotosScrollIndex] = useState<number | null>(null);
-	const [contentWidth, setContentWidth] = useState(
-		typeof window !== 'undefined' ? window.innerWidth - SIDEBAR_COLLAPSED_WIDTH : 1920 - SIDEBAR_COLLAPSED_WIDTH
-	);
+	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
 
 	useEffect(() => {
 		const handleResize = () => setContentWidth(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
@@ -29,29 +27,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
-	const handleNavigate = useCallback((view: View) => {
-		setActiveView(view);
-	}, []);
-
-	const handleScrollIndexChange = useCallback((index: number) => {
-		setPhotosScrollIndex(index);
-	}, []);
-
 	return (
 		<div className={css.layout}>
 			<NavigationRail
 				activeView={activeView}
-				onNavigate={handleNavigate}
+				onNavigate={setActiveView}
 				onSignOut={onSignOut}
 			/>
 			<ViewContainer className={css.viewContainer}>
 				{activeView === 'photos' && (
-					// @ts-expect-error — contentWidth/initialScrollIndex/onScrollIndexChange added in Task 4
 					<MainPanel
 						api={api}
 						contentWidth={contentWidth}
 						initialScrollIndex={photosScrollIndex}
-						onScrollIndexChange={handleScrollIndexChange}
+						onScrollIndexChange={setPhotosScrollIndex}
 					/>
 				)}
 				{activeView === 'albums' && <AlbumsPanel />}
