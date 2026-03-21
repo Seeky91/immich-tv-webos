@@ -152,3 +152,18 @@ export interface GroupedAssetsPage {
 }
 
 export type AuthConfig = UserCredentialsConfig | ApiKeyConfig;
+
+export interface ImmichAlbum {
+	id: string;
+	albumName: string;
+	description: string;
+	albumThumbnailAssetId: string | null;
+	assetCount: number;
+	createdAt: string;
+	updatedAt: string;
+	ownerId: string;
+}
+
+export interface ImmichAlbumDetails extends ImmichAlbum {
+	assets: ImmichAsset[];
+}

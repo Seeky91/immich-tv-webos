@@ -1,4 +1,4 @@
-import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage, BucketMetadata} from './types';
+import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage, BucketMetadata, ImmichAlbum, ImmichAlbumDetails} from './types';
 import FormattingService from '../utils/FormattingService';
 import {APIClient} from './client';
 import {AssetType} from './types';
@@ -23,7 +23,7 @@ export class ImmichAPI {
 		return `${year}-${month}-${day}`;
 	}
 
-	private groupAssetsByDay(assets: ImmichAsset[]): GroupedAsset[] {
+	public groupAssetsByDay(assets: ImmichAsset[]): GroupedAsset[] {
 		const dayMap = new Map<string, ImmichAsset[]>();
 
 		for (const asset of assets) {
@@ -128,6 +128,18 @@ export class ImmichAPI {
 
 	public getOriginalUrl(assetId: string): string {
 		return this.client.getAssetUrl(assetId);
+	}
+
+	public async getAlbums(): Promise<ImmichAlbum[]> {
+		return this.client.fetch<ImmichAlbum[]>('/albums');
+	}
+
+	public async getAlbumDetails(albumId: string): Promise<ImmichAlbumDetails> {
+		return this.client.fetch<ImmichAlbumDetails>(`/albums/${albumId}`);
+	}
+
+	public getAlbumThumbnailUrl(albumThumbnailAssetId: string): string {
+		return this.client.getThumbnailUrl(albumThumbnailAssetId, 'thumbnail');
 	}
 
 	public async getGroupedAssets(params: GetAssetsParams = {}): Promise<GroupedAssetsResponse> {

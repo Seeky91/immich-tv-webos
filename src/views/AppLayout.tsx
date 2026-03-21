@@ -21,7 +21,6 @@ const ViewContainer = SpotlightContainerDecorator(
 
 const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 	const [activeView, setActiveView] = useState<View>('photos');
-	const [photosScrollIndex, setPhotosScrollIndex] = useState<number | null>(null);
 	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
 
 	useEffect(() => {
@@ -38,16 +37,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 				onSignOut={onSignOut}
 			/>
 			<ViewContainer className={css.viewContainer}>
-				{activeView === 'photos' && (
-					<MainPanel
-						api={api}
-						contentWidth={contentWidth}
-						initialScrollIndex={photosScrollIndex}
-						onScrollIndexChange={setPhotosScrollIndex}
-					/>
+				<div className={activeView === 'photos' ? css.panelActive : css.panelHidden}>
+					<MainPanel api={api} contentWidth={contentWidth} />
+				</div>
+				{activeView === 'albums' && (
+					<div className={css.panelActive}>
+						<AlbumsPanel api={api} contentWidth={contentWidth} />
+					</div>
 				)}
-				{activeView === 'albums' && <AlbumsPanel />}
-				{activeView === 'search' && <SearchPanel />}
+				{activeView === 'search' && (
+					<div className={css.panelActive}>
+						<SearchPanel />
+					</div>
+				)}
 			</ViewContainer>
 		</div>
 	);

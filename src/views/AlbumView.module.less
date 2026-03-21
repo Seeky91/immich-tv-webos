@@ -1,0 +1,60 @@
+.view {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px 0;
+	flex-shrink: 0;
+}
+
+.title {
+	font-size: 1.4rem;
+	font-weight: 600;
+	color: #fff;
+}
+
+.count {
+	font-size: 0.9rem;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.listContainer {
+	flex: 1;
+	overflow: hidden;
+	min-height: 0;
+}
+
+.dateGroup {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 40px;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.dateHeaderDivider {
+	width: 100%;
+	margin-bottom: 16px;
+	border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+	padding-bottom: 8px;
+}
+
+.assetsGrid {
+	position: relative;
+	width: 100%;
+}
+
+.state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: rgba(255, 255, 255, 0.6);
+}

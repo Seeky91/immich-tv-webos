@@ -1,4 +1,4 @@
-import React, {useCallback, useState, useMemo, useRef} from 'react';
+import React, {useCallback, useState, useMemo} from 'react';
 import {Panel, Header} from '@enact/sandstone/Panels';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
@@ -20,15 +20,13 @@ import css from './MainPanel.module.less';
 interface MainPanelProps {
 	api: ImmichAPI;
 	contentWidth: number;
-	initialScrollIndex: number | null;
-	onScrollIndexChange: (index: number) => void;
 }
 
 type GroupVirtualItem = GroupedAsset & {type: 'group'; globalStartIndex: number};
 type PlaceholderVirtualItem = {type: 'placeholder'; height: number; globalStartIndex: number};
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
-const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIndex, onScrollIndexChange}) => {
+const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth}) => {
 	const {data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, allBuckets, metadataMap} = useInfiniteGroupedAssets(api);
 	const [viewerState, setViewerState] = useState<{isOpen: boolean; assetIndex: number} | null>(null);
 	const allAssets = useAllAssets(data);
@@ -58,14 +56,6 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 		return items;
 	}, [loadedGroups, placeholderHeight]);
 
-	const itemSizes = useMemo(
-		() =>
-			virtualItems.map((item) =>
-				item.type === 'group' ? (heightMap.get(item.timeBucket) ?? ESTIMATED_ROW_HEIGHT_PX) : item.height
-			),
-		[virtualItems, heightMap]
-	);
-
 	const handleSelectAsset = useCallback((_asset: ImmichAsset, index: number) => {
 		setViewerState({isOpen: true, assetIndex: index});
 	}, []);
@@ -86,16 +76,9 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 		[allAssets.length]
 	);
 
-	const scrollToRef = useRef<((params: {index: number; animate?: boolean}) => void) | null>(null);
-
-	const cbScrollTo = useCallback(
-		(fn: (params: {index: number; animate?: boolean}) => void) => {
-			scrollToRef.current = fn;
-			if (initialScrollIndex !== null && initialScrollIndex > 0) {
-				fn({index: initialScrollIndex, animate: false});
-			}
-		},
-		[initialScrollIndex]
+	const itemSizes = useMemo(
+		() => virtualItems.map((item) => (item.type === 'placeholder' ? item.height : (heightMap.get(item.timeBucket) ?? ESTIMATED_ROW_HEIGHT_PX))),
+		[virtualItems, heightMap]
 	);
 
 	const {handleScrollStop} = useScrollPagination({
@@ -104,16 +87,6 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 		fetchNextPage,
 		loadedGroupCount: loadedGroups.length,
 	});
-
-	const handleScrollStopComposed = useCallback(
-		(event: {scrollTop: number; scrollLeft: number; moreInfo?: {firstVisibleIndex: number; lastVisibleIndex: number}}) => {
-			handleScrollStop(event);
-			if (event.moreInfo !== undefined) {
-				onScrollIndexChange(event.moreInfo.firstVisibleIndex);
-			}
-		},
-		[handleScrollStop, onScrollIndexChange]
-	);
 
 	const renderItem = useCallback(
 		({index}: {index: number}) => {
@@ -176,12 +149,12 @@ const MainPanel: React.FC<MainPanelProps> = ({api, contentWidth, initialScrollIn
 			<ErrorBoundary>
 				<VirtualList
 					dataSize={virtualItems.length}
-					itemSize={virtualItems.length > 0 ? {minSize: ESTIMATED_ROW_HEIGHT_PX, size: itemSizes} : ESTIMATED_ROW_HEIGHT_PX}
+					itemSize={{minSize: ESTIMATED_ROW_HEIGHT_PX, size: itemSizes}}
 					itemRenderer={renderItem}
 					direction="vertical"
+					scrollMode="native"
 					verticalScrollbar="visible"
-					onScrollStop={handleScrollStopComposed}
-					cbScrollTo={cbScrollTo}
+					onScrollStop={handleScrollStop}
 					style={{paddingRight: ri.scale(40)}}
 				/>
 			</ErrorBoundary>
