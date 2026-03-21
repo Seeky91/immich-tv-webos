@@ -47,7 +47,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 				)}
 				{activeView === 'search' && (
 					<div className={css.panelActive}>
-						<SearchPanel />
+						<SearchPanel api={api} contentWidth={contentWidth} />
 					</div>
 				)}
 			</ViewContainer>

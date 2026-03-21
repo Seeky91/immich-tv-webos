@@ -167,3 +167,17 @@ export interface ImmichAlbum {
 export interface ImmichAlbumDetails extends ImmichAlbum {
 	assets: ImmichAsset[];
 }
+
+export interface ImmichPerson {
+	id: string;
+	name: string;
+	assetCount: number;
+	isHidden: boolean;
+	thumbnailPath: string;
+}
+
+export interface PeopleResponse {
+	people: ImmichPerson[];
+	total: number;
+	visible: number;
+}

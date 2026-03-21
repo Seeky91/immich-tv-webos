@@ -89,6 +89,11 @@ export class APIClient {
 		return `${this.baseUrl}/assets/${assetId}/thumbnail?size=${size}&${name}=${value}`;
 	}
 
+	public getFaceThumbnailUrl(personId: string): string {
+		const {name, value} = this.getMediaAuthParam();
+		return `${this.baseUrl}/people/${personId}/thumbnail?${name}=${value}`;
+	}
+
 	public getAssetUrl(assetId: string): string {
 		const {name, value} = this.getMediaAuthParam();
 		return `${this.baseUrl}/assets/${assetId}/original?${name}=${value}`;

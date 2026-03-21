@@ -1,4 +1,4 @@
-import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage, BucketMetadata, ImmichAlbum, ImmichAlbumDetails} from './types';
+import type {ImmichAsset, GetAssetsParams, LoginResponse, TimelineBucket, ColumnarAssetResponse, GroupedAsset, GroupedAssetsResponse, GetBucketsParams, GroupedAssetsPage, BucketMetadata, ImmichAlbum, ImmichAlbumDetails, ImmichPerson, PeopleResponse} from './types';
 import FormattingService from '../utils/FormattingService';
 import {APIClient} from './client';
 import {AssetType} from './types';
@@ -167,6 +167,40 @@ export class ImmichAPI {
 		}
 
 		return {groups: filteredGroups, totalAssets: filteredGroups.reduce((sum, g) => sum + g.count, 0)};
+	}
+
+	public async getPeople(): Promise<ImmichPerson[]> {
+		const response = await this.client.fetch<PeopleResponse>('/people');
+		return response.people
+			.filter((person) => !person.isHidden)
+			.sort((a, b) => b.assetCount - a.assetCount)
+			.slice(0, 50);
+	}
+
+	public getFaceThumbnailUrl(personId: string): string {
+		return this.client.getFaceThumbnailUrl(personId);
+	}
+
+	public async searchSmartAssets(query: string): Promise<ImmichAsset[]> {
+		interface SearchResponse {
+			assets: {items: ImmichAsset[]};
+		}
+		const response = await this.client.fetch<SearchResponse>('/search/smart', {
+			method: 'POST',
+			body: JSON.stringify({query, size: 500}),
+		});
+		return response.assets.items;
+	}
+
+	public async searchByPerson(personId: string): Promise<ImmichAsset[]> {
+		interface SearchResponse {
+			assets: {items: ImmichAsset[]};
+		}
+		const response = await this.client.fetch<SearchResponse>('/search/metadata', {
+			method: 'POST',
+			body: JSON.stringify({personIds: [personId], size: 500}),
+		});
+		return response.assets.items;
 	}
 
 	public async getGroupedAssetsPageWithBuckets(allBuckets: TimelineBucket[], params: GetBucketsParams = {}): Promise<GroupedAssetsPage> {
