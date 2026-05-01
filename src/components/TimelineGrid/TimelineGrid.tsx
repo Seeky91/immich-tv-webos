@@ -101,7 +101,7 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 		}
 	}, [viewer.state, totalCount, pagination]);
 
-	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer.open]);
+	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer]);
 
 	const renderItem = useCallback(
 		({index}: {index: number}) => {

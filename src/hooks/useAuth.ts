@@ -83,7 +83,7 @@ export const useAuth = () => {
 				};
 
 				const client = new APIClient(sessionConfig);
-				const repository = new ImmichRepository(client);
+				const repo = new ImmichRepository(client);
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
@@ -91,7 +91,7 @@ export const useAuth = () => {
 					email,
 					accessToken: loginResponse.accessToken,
 				};
-				finalizeAuthSetup(repository, storedConfig);
+				finalizeAuthSetup(repo, storedConfig);
 				return {success: true};
 			} catch (error) {
 				console.error('Credential login failed:', error);
