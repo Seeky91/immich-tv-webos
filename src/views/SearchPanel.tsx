@@ -41,25 +41,27 @@ const SearchPanel: React.FC<SearchPanelProps> = ({contentWidth}) => {
 
 	return (
 		<Container className={css.searchPanel}>
-			<span className={css.panelTitle}>Search</span>
-			<div className={css.controls} style={{paddingLeft: ri.scale(72)}}>
-				{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-				<Input
-					placeholder="Smart search…"
-					value={inputValue}
-					onChange={handleInputChange}
-					size="large"
-					data-spotlight-default-element
-					className={css.searchInput}
-					{...({onComplete: handleTextSearch} as any)}
+			<div className={css.searchBar}>
+				<div className={css.inputWrapper}>
+					{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+					<Input
+						placeholder="Search…"
+						value={inputValue}
+						onChange={handleInputChange}
+						size="small"
+						iconBefore="search"
+						data-spotlight-default-element
+						className={css.searchInput}
+						{...({onComplete: handleTextSearch} as any)}
+					/>
+				</div>
+				<PeopleRibbon
+					people={people}
+					selectedPersonId={selectedPersonId}
+					onSelectPerson={handlePersonSearch}
+					isLoading={isPeopleLoading}
 				/>
 			</div>
-			<PeopleRibbon
-				people={people}
-				selectedPersonId={selectedPersonId}
-				onSelectPerson={handlePersonSearch}
-				isLoading={isPeopleLoading}
-			/>
 			<div className={css.results}>
 				{isSearchLoading && <Spinner component="div" centered transparent />}
 				{!isSearchLoading && !!error && <div className={css.state}>Search failed.</div>}

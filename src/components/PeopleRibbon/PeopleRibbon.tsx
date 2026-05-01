@@ -43,19 +43,21 @@ const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, selectedPersonId, on
 	if (isLoading || people.length === 0) return null;
 
 	return (
-		<Scroller direction="horizontal" scrollMode="native" horizontalScrollbar="hidden" style={{height: ri.scale(240), flexShrink: 0}}>
-			<div className={css.ribbon} style={{paddingLeft: ri.scale(72)}}>
-				{people.map((person) => (
-					<PersonItem
-						key={person.id}
-						person={person}
-						repository={repository}
-						isSelected={person.id === selectedPersonId}
-						onSelect={onSelectPerson}
-					/>
-				))}
-			</div>
-		</Scroller>
+		<div className={css.ribbonWrapper}>
+			<Scroller direction="horizontal" scrollMode="native" horizontalScrollbar="hidden" style={{height: ri.scale(208)}}>
+				<div className={css.ribbon} style={{paddingLeft: ri.scale(8)}}>
+					{people.map((person) => (
+						<PersonItem
+							key={person.id}
+							person={person}
+							repository={repository}
+							isSelected={person.id === selectedPersonId}
+							onSelect={onSelectPerson}
+						/>
+					))}
+				</div>
+			</Scroller>
+		</div>
 	);
 };
 

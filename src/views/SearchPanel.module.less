@@ -5,25 +5,24 @@
 	overflow: hidden;
 }
 
-.panelTitle {
-	flex-shrink: 0;
-	font-size: 2rem;
-	font-weight: 400;
-	color: rgba(255, 255, 255, 0.9);
-	padding: 48px 0 12px 72px;
-}
-
-.controls {
+.searchBar {
 	flex-shrink: 0;
 	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	padding: 0 0 24px;
+	flex-direction: row;
+	align-items: center;
+	gap: 80px;
+	padding: 32px 40px 16px 72px;
+	min-width: 0;
+}
+
+.inputWrapper {
+	flex: 0 0 auto;
+	width: 420px;
 }
 
 .searchInput {
 	width: 100%;
-	max-width: 800px;
+	--sand-component-bg-color: rgba(255, 255, 255, 0.04);
 }
 
 @keyframes fadeIn {

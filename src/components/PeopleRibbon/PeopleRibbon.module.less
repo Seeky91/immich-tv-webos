@@ -1,9 +1,16 @@
+.ribbonWrapper {
+	flex: 1;
+	min-width: 0;
+	-webkit-mask-image: linear-gradient(to right, black calc(100% - 96px), transparent);
+	mask-image: linear-gradient(to right, black calc(100% - 96px), transparent);
+}
+
 .ribbon {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: 24px;
-	padding: 24px 40px 24px 0;
+	gap: 32px;
+	padding: 12px 80px 12px 0;
 	height: 100%;
 }
 
@@ -11,38 +18,44 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
 	cursor: pointer;
 	border-radius: 12px;
 	padding: 8px;
-	transition: background-color 0.15s ease;
+	transition: transform 0.15s ease;
 
 	&:focus {
 		outline: none;
-		background-color: rgba(255, 255, 255, 0.1);
+		transform: scale(1.06);
+
+		.face {
+			border-color: #fff;
+			box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85);
+		}
 	}
 
 	&.selected .face {
 		border-color: #fff;
-		box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.55);
 	}
 }
 
 .face {
-	width: 96px;
-	height: 96px;
+	width: 128px;
+	height: 128px;
 	border-radius: 50%;
 	object-fit: cover;
 	border: 3px solid transparent;
 	background-color: rgba(255, 255, 255, 0.1);
 	display: block;
+	transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .name {
-	font-size: 0.8rem;
-	color: rgba(255, 255, 255, 0.8);
+	font-size: 1rem;
+	color: rgba(255, 255, 255, 0.85);
 	text-align: center;
-	max-width: 96px;
+	max-width: 152px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
