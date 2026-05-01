@@ -4,6 +4,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import React from 'react';
 
 import {useAuth} from '../hooks/useAuth';
+import {RepositoryProvider} from '../domain/RepositoryContext';
 import AppLayout from '../views/AppLayout';
 import LoginPanel from '../views/LoginPanel';
 
@@ -14,7 +15,7 @@ import css from './App.module.less';
 const queryClient = new QueryClient();
 
 const AppBase: React.FC = () => {
-	const {isAuthenticated, isValidating, apiClient, loginWithApiKey, loginWithCredentials, logout} = useAuth();
+	const {isAuthenticated, isValidating, repository, loginWithApiKey, loginWithCredentials, logout} = useAuth();
 
 	if (isValidating) {
 		return (
@@ -24,7 +25,7 @@ const AppBase: React.FC = () => {
 		);
 	}
 
-	if (!isAuthenticated || !apiClient) {
+	if (!isAuthenticated || !repository) {
 		return (
 			<div className={css.app}>
 				<Panels>
@@ -36,9 +37,11 @@ const AppBase: React.FC = () => {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<div className={css.app}>
-				<AppLayout api={apiClient} onSignOut={logout} />
-			</div>
+			<RepositoryProvider repository={repository}>
+				<div className={css.app}>
+					<AppLayout onSignOut={logout} />
+				</div>
+			</RepositoryProvider>
 		</QueryClientProvider>
 	);
 };

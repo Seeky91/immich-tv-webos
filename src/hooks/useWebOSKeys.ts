@@ -13,12 +13,10 @@ export const useWebOSKeys = ({onBack, onArrowLeft, onArrowRight}: UseWebOSKeysOp
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.keyCode === WEBOS_BACK_KEY || event.keyCode === ESCAPE_KEY) {
-				event.preventDefault();
-				event.stopPropagation();
 				if (onBack) {
+					event.preventDefault();
+					event.stopPropagation();
 					onBack();
-				} else {
-					window?.close();
 				}
 			} else if (event.key === 'ArrowLeft' && onArrowLeft) {
 				event.preventDefault();
@@ -29,7 +27,6 @@ export const useWebOSKeys = ({onBack, onArrowLeft, onArrowRight}: UseWebOSKeysOp
 			}
 		};
 
-		// Use capture phase to intercept before other handlers
 		window.addEventListener('keydown', handleKeyDown, {capture: true});
 		return () => window.removeEventListener('keydown', handleKeyDown, {capture: true});
 	}, [onBack, onArrowLeft, onArrowRight]);

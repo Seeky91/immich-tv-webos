@@ -1,12 +1,12 @@
 abstract class FormattingService {
 
 	public static formatDuration(duration: string): string {
-		const parts = duration.split(':');
-		if (parts.length < 3) return '';
+		const [hStr, mStr, sStr] = duration.split(':');
+		if (!hStr || !mStr || !sStr) return '';
 
-		const hours = parseInt(parts[0], 10);
-		const minutes = parseInt(parts[1], 10);
-		const seconds = Math.floor(parseFloat(parts[2]));
+		const hours = parseInt(hStr, 10);
+		const minutes = parseInt(mStr, 10);
+		const seconds = Math.floor(parseFloat(sStr));
 
 		return hours > 0
 			? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
@@ -15,6 +15,7 @@ abstract class FormattingService {
 
 	public static formatBucketDate(timeBucket: string): string {
 		const [year, month, day] = timeBucket.split('-').map(Number);
+		if (year === undefined || month === undefined || day === undefined) return timeBucket;
 		const date = new Date(year, month - 1, day);
 
 		const today = new Date();

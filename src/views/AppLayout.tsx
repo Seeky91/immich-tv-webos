@@ -1,25 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import {SIDEBAR_COLLAPSED_WIDTH} from '../utils/constants';
+import {createSpotlightContainer} from '../utils/spotlight';
 import NavigationRail from '../components/NavigationRail/NavigationRail';
 import MainPanel from './MainPanel';
 import AlbumsPanel from './AlbumsPanel';
 import SearchPanel from './SearchPanel';
 import type {View} from '../types/navigation';
-import type {ImmichAPI} from '../api/immich';
 import css from './AppLayout.module.less';
 
 interface AppLayoutProps {
-	api: ImmichAPI;
 	onSignOut: () => void;
 }
 
-const ViewContainer = SpotlightContainerDecorator(
-	{enterTo: 'last-focused'},
-	'div' as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement>>
-);
+const ViewContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
-const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
+const AppLayout: React.FC<AppLayoutProps> = ({onSignOut}) => {
 	const [activeView, setActiveView] = useState<View>('photos');
 	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
 
@@ -38,16 +33,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({api, onSignOut}) => {
 			/>
 			<ViewContainer className={css.viewContainer}>
 				<div className={activeView === 'photos' ? css.panelActive : css.panelHidden}>
-					<MainPanel api={api} contentWidth={contentWidth} />
+					<MainPanel contentWidth={contentWidth} />
 				</div>
 				{activeView === 'albums' && (
 					<div className={css.panelActive}>
-						<AlbumsPanel api={api} contentWidth={contentWidth} />
+						<AlbumsPanel contentWidth={contentWidth} />
 					</div>
 				)}
 				{activeView === 'search' && (
 					<div className={css.panelActive}>
-						<SearchPanel api={api} contentWidth={contentWidth} />
+						<SearchPanel contentWidth={contentWidth} />
 					</div>
 				)}
 			</ViewContainer>

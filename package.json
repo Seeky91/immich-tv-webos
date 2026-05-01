@@ -11,6 +11,7 @@
 		"watch": "enact pack --watch",
 		"clean": "enact clean",
 		"lint": "enact lint .",
+		"typecheck": "tsc --noEmit",
 		"license": "enact license",
 		"test": "enact test",
 		"test-watch": "enact test --watch"
@@ -43,8 +44,7 @@
 		"ilib": "npm:ilib-webos@^14.19.0-webos1",
 		"prop-types": "^15.8.1",
 		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"web-vitals": "^3.5.0"
+		"react-dom": "^18.2.0"
 	},
 	"devDependencies": {
 		"@types/react": "^18.2.0",

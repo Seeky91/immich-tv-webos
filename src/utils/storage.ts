@@ -9,7 +9,7 @@ export interface StoredAuthConfig {
 }
 
 abstract class StorageService {
-	private static readonly KEYS = {AUTH_CONFIG: 'immich_auth_config', LAST_VIEWED_INDEX: 'immich_last_viewed_index'} as const;
+	private static readonly KEYS = {AUTH_CONFIG: 'immich_auth_config'} as const;
 
 	public static getAuthConfig(): StoredAuthConfig | null {
 		const stored = localStorage.getItem(this.KEYS.AUTH_CONFIG);
@@ -42,15 +42,6 @@ abstract class StorageService {
 
 	public static clearAuthConfig(): void {
 		localStorage.removeItem(this.KEYS.AUTH_CONFIG);
-	}
-
-	public static getLastViewedIndex(): number {
-		const stored = localStorage.getItem(this.KEYS.LAST_VIEWED_INDEX);
-		return stored ? parseInt(stored, 10) : 0;
-	}
-
-	public static setLastViewedIndex(index: number): void {
-		localStorage.setItem(this.KEYS.LAST_VIEWED_INDEX, index.toString());
 	}
 }
 

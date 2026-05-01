@@ -32,13 +32,3 @@ declare module '*.svg' {
 	const value: string;
 	export default value;
 }
-
-interface ImportMetaEnv {
-	DEV?: boolean;
-	PROD?: boolean;
-	MODE?: string;
-}
-
-interface ImportMeta {
-	env: ImportMetaEnv;
-}

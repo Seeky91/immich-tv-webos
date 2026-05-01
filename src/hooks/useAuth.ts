@@ -2,8 +2,9 @@ import {useState, useEffect, useCallback} from 'react';
 import StorageService from '../utils/storage';
 import type {StoredAuthConfig} from '../utils/storage';
 import {APIClient, APIError} from '../api/client';
-import {ImmichAPI} from '../api/immich';
+import {ImmichRepository, validateAuth} from '../api/ImmichRepository';
 import {type AuthConfig, type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
+import type {PhotoRepository} from '../domain/PhotoRepository';
 
 export interface LoginResult {
 	success: boolean;
@@ -14,12 +15,12 @@ export const useAuth = () => {
 	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(null);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isValidating, setIsValidating] = useState(true);
-	const [apiClient, setApiClient] = useState<ImmichAPI | null>(null);
+	const [repository, setRepository] = useState<PhotoRepository | null>(null);
 
-	const finalizeAuthSetup = useCallback((api: ImmichAPI, storedConfig: StoredAuthConfig) => {
+	const finalizeAuthSetup = useCallback((repo: PhotoRepository, storedConfig: StoredAuthConfig) => {
 		StorageService.setAuthConfig(storedConfig);
 		setAuthConfig(storedConfig);
-		setApiClient(api);
+		setRepository(repo);
 		setIsAuthenticated(true);
 	}, []);
 
@@ -38,33 +39,20 @@ export const useAuth = () => {
 		try {
 			const apiConfig = storedConfigToAuthConfig(config);
 			const client = new APIClient(apiConfig);
-			const api = new ImmichAPI(client);
 
-			if (config.method === AuthMethod.USER_CREDENTIALS) {
-				const tokenValid = await api.validateUserAuth();
-				if (!tokenValid) {
-					setIsAuthenticated(false);
-					setApiClient(null);
-					setIsValidating(false);
-					return;
-				}
-
-				setApiClient(api);
-				setIsAuthenticated(true);
-			} else {
-				try {
-					await api.validateConnection();
-				} catch (error) {
-					console.warn('Ping failed, proceeding anyway with API key:', error);
-				}
-
-				setApiClient(api);
-				setIsAuthenticated(true);
+			const authValid = await validateAuth(client);
+			if (!authValid) {
+				setIsAuthenticated(false);
+				setRepository(null);
+				return;
 			}
+
+			setRepository(new ImmichRepository(client));
+			setIsAuthenticated(true);
 		} catch (error) {
 			console.error('Auth validation failed:', error);
 			setIsAuthenticated(false);
-			setApiClient(null);
+			setRepository(null);
 		} finally {
 			setIsValidating(false);
 		}
@@ -81,10 +69,12 @@ export const useAuth = () => {
 					password,
 				};
 				const tempClient = new APIClient(tempConfig);
-				const tempApi = new ImmichAPI(tempClient);
-				const loginResponse = await tempApi.login(email, password);
+				const loginResponse = await tempClient.fetch<{accessToken: string}>('/auth/login', {
+					method: 'POST',
+					body: JSON.stringify({email, password}),
+				});
 
-				const config: UserCredentialsConfig = {
+				const sessionConfig: UserCredentialsConfig = {
 					baseUrl,
 					method: AuthMethod.USER_CREDENTIALS,
 					email,
@@ -92,8 +82,8 @@ export const useAuth = () => {
 					accessToken: loginResponse.accessToken,
 				};
 
-				const client = new APIClient(config);
-				const api = new ImmichAPI(client);
+				const client = new APIClient(sessionConfig);
+				const repository = new ImmichRepository(client);
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
@@ -101,7 +91,7 @@ export const useAuth = () => {
 					email,
 					accessToken: loginResponse.accessToken,
 				};
-				finalizeAuthSetup(api, storedConfig);
+				finalizeAuthSetup(repository, storedConfig);
 				return {success: true};
 			} catch (error) {
 				console.error('Credential login failed:', error);
@@ -130,20 +120,16 @@ export const useAuth = () => {
 				};
 
 				const client = new APIClient(config);
-				const api = new ImmichAPI(client);
 
-				try {
-					await api.validateConnection();
-				} catch (error) {
-					console.warn('Ping failed, proceeding anyway with API key:', error);
-				}
+				const authValid = await validateAuth(client);
+				if (!authValid) return false;
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
 					method: AuthMethod.API_KEY,
 					apiKey,
 				};
-				finalizeAuthSetup(api, storedConfig);
+				finalizeAuthSetup(new ImmichRepository(client), storedConfig);
 				return true;
 			} catch (error) {
 				console.error('API key login failed:', error);
@@ -158,7 +144,7 @@ export const useAuth = () => {
 	const logout = useCallback(() => {
 		StorageService.clearAuthConfig();
 		setAuthConfig(null);
-		setApiClient(null);
+		setRepository(null);
 		setIsAuthenticated(false);
 	}, []);
 
@@ -166,7 +152,7 @@ export const useAuth = () => {
 		authConfig,
 		isAuthenticated,
 		isValidating,
-		apiClient,
+		repository,
 		loginWithCredentials,
 		loginWithApiKey,
 		logout,

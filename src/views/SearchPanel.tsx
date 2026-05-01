@@ -1,32 +1,27 @@
 import React, {useCallback, useState} from 'react';
 import Input from '@enact/sandstone/Input';
 import Spinner from '@enact/sandstone/Spinner';
-import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import ri from '@enact/ui/resolution';
 import PeopleRibbon from '../components/PeopleRibbon/PeopleRibbon';
-import GroupedTimeline from '../components/GroupedTimeline/GroupedTimeline';
-import {useImmichPeople} from '../hooks/useImmichPeople';
-import {useImmichSearchResults} from '../hooks/useImmichSearchResults';
-import type {SearchQuery} from '../hooks/useImmichSearchResults';
-import type {ImmichAPI} from '../api/immich';
+import TimelineGrid from '../components/TimelineGrid/TimelineGrid';
+import {usePeople} from '../hooks/usePeople';
+import {useSearch} from '../hooks/useSearch';
+import type {SearchQuery} from '../hooks/useSearch';
+import {createSpotlightContainer} from '../utils/spotlight';
 import css from './SearchPanel.module.less';
 
 interface SearchPanelProps {
-	api: ImmichAPI;
 	contentWidth: number;
 }
 
-const Container = SpotlightContainerDecorator(
-	{enterTo: 'default-element'},
-	'div' as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement>>
-);
+const Container = createSpotlightContainer({enterTo: 'default-element'});
 
-const SearchPanel: React.FC<SearchPanelProps> = ({api, contentWidth}) => {
+const SearchPanel: React.FC<SearchPanelProps> = ({contentWidth}) => {
 	const [activeQuery, setActiveQuery] = useState<SearchQuery | null>(null);
 	const [inputValue, setInputValue] = useState('');
 
-	const {data: people = [], isLoading: isPeopleLoading} = useImmichPeople(api);
-	const {groups, isLoading: isSearchLoading, error} = useImmichSearchResults(api, activeQuery);
+	const {data: people = [], isLoading: isPeopleLoading} = usePeople();
+	const {groups, isLoading: isSearchLoading, error} = useSearch(activeQuery);
 
 	const handleInputChange = useCallback((e: any) => setInputValue(e.value ?? ''), []);
 
@@ -61,7 +56,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({api, contentWidth}) => {
 			</div>
 			<PeopleRibbon
 				people={people}
-				api={api}
 				selectedPersonId={selectedPersonId}
 				onSelectPerson={handlePersonSearch}
 				isLoading={isPeopleLoading}
@@ -76,9 +70,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({api, contentWidth}) => {
 					<div className={css.state}>No results found.</div>
 				)}
 				{groups.length > 0 && (
-					<GroupedTimeline
+					<TimelineGrid
 						groups={groups}
-						api={api}
 						contentWidth={contentWidth}
 						style={{paddingLeft: ri.scale(72), paddingRight: ri.scale(40)}}
 					/>

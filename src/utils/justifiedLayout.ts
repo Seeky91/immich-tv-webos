@@ -25,13 +25,13 @@ export function calculateJustifiedLayout(ratios: number[], viewportWidth: number
 	let currentRowWidth = 0;
 
 	for (let i = 0; i < ratios.length; i++) {
-		const ratio = ratios[i];
+		const ratio = ratios[i]!;
 		const assetWidth = TARGET_ROW_HEIGHT_PX * ratio;
 		const gapWidth = currentRow.length > 0 ? GRID_GAP_PX : 0;
 
 		if (currentRowWidth + gapWidth + assetWidth > containerWidth && currentRow.length > 0) {
 			const availableWidth = containerWidth - (currentRow.length - 1) * GRID_GAP_PX;
-			const sumOfRatios = currentRow.reduce((sum, idx) => sum + ratios[idx], 0);
+			const sumOfRatios = currentRow.reduce((sum, idx) => sum + ratios[idx]!, 0);
 			rows.push({assets: [...currentRow], height: availableWidth / sumOfRatios});
 			currentRow = [i];
 			currentRowWidth = assetWidth;
@@ -52,7 +52,7 @@ export function calculateJustifiedLayout(ratios: number[], viewportWidth: number
 	for (const row of rows) {
 		let currentLeft = 0;
 		for (const assetIdx of row.assets) {
-			const assetWidth = row.height * ratios[assetIdx];
+			const assetWidth = row.height * ratios[assetIdx]!;
 			assetLayouts[assetIdx] = {top: currentTop, left: currentLeft, width: assetWidth, height: row.height};
 			currentLeft += assetWidth + GRID_GAP_PX;
 		}

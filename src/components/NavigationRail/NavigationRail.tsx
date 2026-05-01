@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import Icon from '@enact/sandstone/Icon';
+import {createSpotlightContainer} from '../../utils/spotlight';
 import type {View} from '../../types/navigation';
 import css from './NavigationRail.module.less';
 
@@ -16,10 +16,7 @@ const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
 	{view: 'search', icon: 'search', label: 'Search'},
 ];
 
-const RailContainer = SpotlightContainerDecorator(
-	{enterTo: 'last-focused'},
-	'div' as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement>>
-);
+const RailContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
 const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, onSignOut}) => {
 	const [isExpanded, setIsExpanded] = useState(false);

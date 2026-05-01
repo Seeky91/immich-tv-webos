@@ -1,31 +1,27 @@
 import React, {useCallback} from 'react';
 import Scroller from '@enact/sandstone/Scroller';
-import Spottable from '@enact/spotlight/Spottable';
-import type {SpottableProps} from '@enact/spotlight/Spottable';
 import ri from '@enact/ui/resolution';
-import type {ImmichAPI} from '../../api/immich';
-import type {ImmichPerson} from '../../api/types';
+import {SpottableDiv} from '../../utils/spotlight';
+import {useRepository} from '../../domain/RepositoryContext';
+import type {PhotoRepository} from '../../domain/PhotoRepository';
+import type {Person} from '../../domain/types';
 import css from './PeopleRibbon.module.less';
 
 interface PeopleRibbonProps {
-	people: ImmichPerson[];
-	api: ImmichAPI;
+	people: Person[];
 	selectedPersonId: string | null;
 	onSelectPerson: (personId: string) => void;
 	isLoading: boolean;
 }
 
-type SpottableDivProps = React.HTMLAttributes<HTMLDivElement> & SpottableProps;
-const SpottableDiv = Spottable('div') as React.ComponentType<SpottableDivProps>;
-
 interface PersonItemProps {
-	person: ImmichPerson;
-	api: ImmichAPI;
+	person: Person;
+	repository: PhotoRepository;
 	isSelected: boolean;
 	onSelect: (personId: string) => void;
 }
 
-const PersonItem: React.FC<PersonItemProps> = ({person, api, isSelected, onSelect}) => {
+const PersonItem: React.FC<PersonItemProps> = ({person, repository, isSelected, onSelect}) => {
 	const handleClick = useCallback(() => onSelect(person.id), [person.id, onSelect]);
 	return (
 		<SpottableDiv
@@ -33,7 +29,7 @@ const PersonItem: React.FC<PersonItemProps> = ({person, api, isSelected, onSelec
 			onClick={handleClick}
 		>
 			<img
-				src={api.getFaceThumbnailUrl(person.id)}
+				src={repository.faceUrl(person.id)}
 				className={css.face}
 				alt={person.name || 'Unknown person'}
 			/>
@@ -42,7 +38,8 @@ const PersonItem: React.FC<PersonItemProps> = ({person, api, isSelected, onSelec
 	);
 };
 
-const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, api, selectedPersonId, onSelectPerson, isLoading}) => {
+const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, selectedPersonId, onSelectPerson, isLoading}) => {
+	const repository = useRepository();
 	if (isLoading || people.length === 0) return null;
 
 	return (
@@ -52,7 +49,7 @@ const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, api, selectedPersonI
 					<PersonItem
 						key={person.id}
 						person={person}
-						api={api}
+						repository={repository}
 						isSelected={person.id === selectedPersonId}
 						onSelect={onSelectPerson}
 					/>

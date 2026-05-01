@@ -1,21 +1,21 @@
 import React, {useCallback} from 'react';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
-import type {ImmichAsset} from '../../api/types';
-import type {ImmichAPI} from '../../api/immich';
+import {useRepository} from '../../domain/RepositoryContext';
+import type {TimelineAsset} from '../../domain/types';
 import {MediaControls} from './MediaControls';
 import {VideoPlayer} from './VideoPlayer';
 import css from './MediaViewer.module.less';
 
 interface MediaViewerProps {
-	asset: ImmichAsset | null;
-	allAssets: ImmichAsset[];
+	asset: TimelineAsset | null;
+	allAssets: TimelineAsset[];
 	currentIndex: number;
 	onClose: () => void;
 	onNavigate: (direction: 'prev' | 'next') => void;
-	api: ImmichAPI;
 }
 
-export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({asset, allAssets, currentIndex, onClose, onNavigate, api}) => {
+export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({asset, allAssets, currentIndex, onClose, onNavigate}) => {
+	const repository = useRepository();
 	const handlePrev = useCallback(() => {
 		if (currentIndex > 0) onNavigate('prev');
 	}, [onNavigate, currentIndex]);
@@ -29,7 +29,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({asset, allAs
 	if (!asset) return null;
 
 	const isVideo = asset.type === 'VIDEO';
-	const mediaUrl = isVideo ? api.getOriginalUrl(asset.id) : api.getPreviewUrl(asset.id);
+	const mediaUrl = isVideo ? repository.originalUrl(asset.id) : repository.previewUrl(asset.id);
 
 	return (
 		<div className={css.viewerOverlay}>

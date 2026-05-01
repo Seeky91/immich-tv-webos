@@ -1,26 +1,26 @@
 import {useMemo} from 'react';
 import {calculateBucketHeight} from '../utils/justifiedLayout';
 import {TARGET_ROW_HEIGHT_PX, GRID_GAP_PX, BUCKET_HEADER_HEIGHT_PX, BUCKET_HEADER_MARGIN_PX} from '../utils/constants';
-import type {BucketMetadata, TimelineBucket, GroupedAsset} from '../api/types';
+import type {TimelineBucket, DayGroup} from '../domain/types';
 
 interface UseHeightMapOptions {
-	metadataMap: Map<string, BucketMetadata>;
 	allBuckets: TimelineBucket[];
-	loadedGroups: GroupedAsset[];
+	loadedGroups: DayGroup[];
 	viewportWidth: number;
 }
 
-export const useHeightMap = ({metadataMap, allBuckets, loadedGroups, viewportWidth}: UseHeightMapOptions) => {
+export const useHeightMap = ({allBuckets, loadedGroups, viewportWidth}: UseHeightMapOptions) => {
 	const heightMap = useMemo(() => {
 		const map = new Map<string, number>();
-		metadataMap.forEach((metadata, date) => {
-			map.set(date, calculateBucketHeight(metadata.ratios, viewportWidth));
-		});
+		for (const group of loadedGroups) {
+			const ratios = group.assets.map((a) => a.ratio);
+			map.set(group.timeBucket, calculateBucketHeight(ratios, viewportWidth));
+		}
 		return map;
-	}, [metadataMap, viewportWidth]);
+	}, [loadedGroups, viewportWidth]);
 
 	const exactLoadedHeight = useMemo(
-		() => loadedGroups.reduce((sum, group) => sum + (heightMap.get(group.timeBucket) ?? 0), 0),
+		() => loadedGroups.reduce((sum, g) => sum + (heightMap.get(g.timeBucket) ?? 0), 0),
 		[loadedGroups, heightMap]
 	);
 

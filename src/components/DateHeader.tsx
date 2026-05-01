@@ -1,12 +1,14 @@
-import React from 'react';
+import React, {useMemo} from 'react';
+import FormattingService from '../utils/FormattingService';
 import css from './DateHeader.module.less';
 
 interface DateHeaderProps {
-	displayDate: string;
+	timeBucket: string;
 	count: number;
 }
 
-export const DateHeader: React.FC<DateHeaderProps> = React.memo(({displayDate, count}) => {
+export const DateHeader: React.FC<DateHeaderProps> = React.memo(({timeBucket, count}) => {
+	const displayDate = useMemo(() => FormattingService.formatBucketDate(timeBucket), [timeBucket]);
 	return (
 		<div className={css.dateHeader} data-spotlight-disabled="true">
 			{displayDate}

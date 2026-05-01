@@ -1,10 +1,12 @@
 import {useQuery} from '@tanstack/react-query';
-import type {ImmichAPI} from '../api/immich';
 import {ASSETS_QUERY_CONFIG} from './queryConfig';
+import {useRepository} from '../domain/RepositoryContext';
 
-export const useAlbumDetails = (api: ImmichAPI, albumId: string) =>
-	useQuery({
+export const useAlbumDetails = (albumId: string) => {
+	const repository = useRepository();
+	return useQuery({
 		queryKey: ['album', albumId],
-		queryFn: () => api.getAlbumDetails(albumId),
+		queryFn: () => repository.getAlbum(albumId),
 		...ASSETS_QUERY_CONFIG,
 	});
+};

@@ -1,23 +1,19 @@
 import React, {useCallback, useMemo} from 'react';
-import Spottable from '@enact/spotlight/Spottable';
-import type {SpottableProps} from '@enact/spotlight/Spottable';
-import type {ImmichAlbum} from '../api/types';
-import type {ImmichAPI} from '../api/immich';
+import {SpottableDiv} from '../utils/spotlight';
+import {useRepository} from '../domain/RepositoryContext';
+import type {Album} from '../domain/types';
 import css from './AlbumCard.module.less';
 
-type SpottableDivProps = React.HTMLAttributes<HTMLDivElement> & SpottableProps;
-const SpottableDiv = Spottable('div') as React.ComponentType<SpottableDivProps>;
-
 interface AlbumCardProps {
-	album: ImmichAlbum;
-	api: ImmichAPI;
+	album: Album;
 	onSelect?: (albumId: string) => void;
 }
 
-export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, api, onSelect}) => {
+export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, onSelect}) => {
+	const repository = useRepository();
 	const thumbnailUrl = useMemo(
-		() => (album.albumThumbnailAssetId ? api.getAlbumThumbnailUrl(album.albumThumbnailAssetId) : null),
-		[api, album.albumThumbnailAssetId]
+		() => (album.albumThumbnailAssetId ? repository.albumThumbnailUrl(album.albumThumbnailAssetId) : null),
+		[repository, album.albumThumbnailAssetId]
 	);
 
 	const handleClick = useCallback(() => onSelect?.(album.id), [album.id, onSelect]);

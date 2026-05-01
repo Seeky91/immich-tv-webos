@@ -1,26 +1,22 @@
 import React, {useCallback, useMemo} from 'react';
-import Spottable from '@enact/spotlight/Spottable';
-import type {SpottableProps} from '@enact/spotlight/Spottable';
 import Icon from '@enact/sandstone/Icon';
 import FormattingService from '../utils/FormattingService';
-import type {ImmichAsset} from '../api/types';
-import type {ImmichAPI} from '../api/immich';
+import {SpottableDiv} from '../utils/spotlight';
+import {useRepository} from '../domain/RepositoryContext';
+import type {TimelineAsset} from '../domain/types';
 import css from './AssetCard.module.less';
 
-type SpottableDivProps = React.HTMLAttributes<HTMLDivElement> & SpottableProps;
-const SpottableDiv = Spottable('div') as React.ComponentType<SpottableDivProps>;
-
 interface AssetCardProps {
-	asset: ImmichAsset;
-	api: ImmichAPI;
+	asset: TimelineAsset;
 	index: number;
-	onSelect?: (asset: ImmichAsset, index: number) => void;
+	onSelect?: (asset: TimelineAsset, index: number) => void;
 	style?: React.CSSProperties;
 }
 
-export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, api, index, onSelect, style}) => {
+export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, index, onSelect, style}) => {
+	const repository = useRepository();
 	const isVideo = asset.type === 'VIDEO';
-	const thumbnailUrl = useMemo(() => api.getThumbnailUrl(asset.id), [api, asset.id]);
+	const thumbnailUrl = useMemo(() => repository.thumbnailUrl(asset.id), [repository, asset.id]);
 
 	const handleClick = useCallback(() => {
 		if (onSelect) {
