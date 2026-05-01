@@ -1,10 +1,10 @@
 {
-	"id": "immich-tv-webos",
+	"id": "com.seeky91.immichtv",
 	"version": "1.0.0",
-	"vendor": "LGE-SVL",
+	"vendor": "Quentin Jean-Amans",
 	"type": "web",
 	"main": "index.html",
-	"title": "Enact App Template",
+	"title": "Immich TV",
 	"icon": "icon.png",
 	"miniicon": "icon-mini.png",
 	"largeIcon": "icon-large.png",

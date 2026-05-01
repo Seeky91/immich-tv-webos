@@ -1,8 +1,8 @@
 {
 	"name": "immich-tv-webos",
 	"version": "1.0.0",
-	"description": "A general template for an Enact Sandstone application for webOS TVs",
-	"author": "",
+	"description": "Read-only Immich photo & video client for LG webOS TVs",
+	"author": "Quentin Jean-Amans <quentin.sqja@gmail.com> (https://github.com/Seeky91)",
 	"main": "src/index.tsx",
 	"scripts": {
 		"serve": "enact serve",
@@ -16,9 +16,24 @@
 		"test": "enact test",
 		"test-watch": "enact test --watch"
 	},
-	"license": "UNLICENSED",
-	"private": true,
-	"repository": "",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Seeky91/immich-tv-webos.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Seeky91/immich-tv-webos/issues"
+	},
+	"homepage": "https://github.com/Seeky91/immich-tv-webos#readme",
+	"keywords": [
+		"immich",
+		"webos",
+		"lg",
+		"tv",
+		"enact",
+		"sandstone",
+		"photo-gallery"
+	],
 	"engines": {
 		"npm": ">=6.9.0"
 	},

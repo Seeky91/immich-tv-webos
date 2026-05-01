@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install global webOS tools
+        run: npm install -g @enact/cli @webos-tools/cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run pack-p
+
+      - name: Package IPK
+        run: |
+          mkdir -p build
+          ares-package dist/ -o ./build/ -n
+          ls -la build/
+
+      - name: Generate manifest.json
+        run: node tools/build-manifest.mjs build/*.ipk build/manifest.json
+
+      - name: Upload artifacts (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipk-and-manifest
+          path: |
+            build/*.ipk
+            build/manifest.json
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.ipk
+            build/manifest.json
+          fail_on_unmatched_files: true
+          generate_release_notes: true

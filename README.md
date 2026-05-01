@@ -40,7 +40,7 @@
 
 ### Project Setup
 ```bash
-git clone https://github.com/your-repo/immich-tv-webos.git
+git clone https://github.com/Seeky91/immich-tv-webos.git
 cd immich-tv-webos
 npm install
 ```
@@ -80,6 +80,18 @@ make launch    # launches the app
 ## ⚖️ Disclaimer
 
 This is an unofficial third-party client. It is not affiliated with the official Immich development team. The application is provided "as is," optimized for personal use on LG Smart TVs.
+
+---
+
+## 💸 Support
+
+If this app is useful to you and you'd like to drop a tip, you can send Bitcoin to:
+
+```
+bc1qvxczfmurlglff6zmkgysnxy2yglvwspalcd373
+```
+
+Totally optional — the project is and will remain free and open-source.
 
 ---
 

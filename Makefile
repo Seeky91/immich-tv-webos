@@ -5,7 +5,7 @@ install:
 	ares-install --device lg-tv ./build/*.ipk
 
 launch:
-	ares-launch --device lg-tv immich-tv-webos
+	ares-launch --device lg-tv com.seeky91.immichtv
 
 inspect:
-	ares-inspect --device lg-tv immich-tv-webos
+	ares-inspect --device lg-tv com.seeky91.immichtv
