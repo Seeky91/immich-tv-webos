@@ -26,7 +26,23 @@ jobs:
         run: npm ci
 
       - name: Build app
-        run: npm run pack-p
+        run: |
+          node --version
+          npm --version
+          enact --version
+          npm run pack-p 2>&1 | tee build-output.log
+          EXIT=${PIPESTATUS[0]}
+          echo "Pack exit code: $EXIT"
+          ls -la dist/ || echo "No dist directory"
+          exit $EXIT
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-output.log
+          if-no-files-found: warn
 
       - name: Package IPK
         run: |
