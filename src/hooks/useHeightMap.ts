@@ -1,4 +1,5 @@
 import {useMemo} from 'react';
+import ri from '@enact/ui/resolution';
 import {calculateBucketHeight} from '../utils/justifiedLayout';
 import {TARGET_ROW_HEIGHT_PX, GRID_GAP_PX, BUCKET_HEADER_HEIGHT_PX, BUCKET_HEADER_MARGIN_PX} from '../utils/constants';
 import type {TimelineBucket, DayGroup} from '../domain/types';
@@ -25,16 +26,17 @@ export const useHeightMap = ({allBuckets, loadedGroups, viewportWidth}: UseHeigh
 	);
 
 	const estimatedTotalHeight = useMemo(() => {
+		const rowHeight = ri.scale(TARGET_ROW_HEIGHT_PX);
+		const gap = ri.scale(GRID_GAP_PX);
+		const headerBlock = ri.scale(BUCKET_HEADER_HEIGHT_PX) + ri.scale(BUCKET_HEADER_MARGIN_PX);
 		const loadedSum = Array.from(heightMap.values()).reduce((sum, h) => sum + h, 0);
-		const rowCapacity = Math.max(1, Math.floor((viewportWidth - 80) / TARGET_ROW_HEIGHT_PX));
+		const rowCapacity = Math.max(1, Math.floor((viewportWidth - ri.scale(80)) / rowHeight));
 		const loadedAssetCount = loadedGroups.reduce((sum, g) => sum + g.count, 0);
 		const totalAssets = allBuckets.reduce((sum, b) => sum + b.count, 0);
 		const unloadedAssets = Math.max(0, totalAssets - loadedAssetCount);
 		const unloadedBuckets = Math.max(0, allBuckets.length - heightMap.size);
 		const estimatedRows = Math.ceil(unloadedAssets / rowCapacity);
-		const estimatedUnloaded =
-			estimatedRows * (TARGET_ROW_HEIGHT_PX + GRID_GAP_PX) +
-			unloadedBuckets * (BUCKET_HEADER_HEIGHT_PX + BUCKET_HEADER_MARGIN_PX);
+		const estimatedUnloaded = estimatedRows * (rowHeight + gap) + unloadedBuckets * headerBlock;
 		return loadedSum + estimatedUnloaded;
 	}, [heightMap, allBuckets, loadedGroups, viewportWidth]);
 

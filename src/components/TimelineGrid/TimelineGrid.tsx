@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo} from 'react';
 import {VirtualList} from '@enact/sandstone/VirtualList';
+import ri from '@enact/ui/resolution';
 import {AssetCard} from '../AssetCard';
 import {DateHeader} from '../DateHeader';
 import {MediaViewer} from '../MediaViewer/MediaViewer';
@@ -32,8 +33,21 @@ type PlaceholderVirtualItem = {kind: 'placeholder'; height: number; globalStartI
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
 const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, pagination}) => {
-	const allAssets = useMemo(() => groups.flatMap((g) => g.assets), [groups]);
-	const viewer = useMediaViewer(allAssets.length);
+	const totalCount = useMemo(() => groups.reduce((sum, g) => sum + g.count, 0), [groups]);
+	const getAssetAt = useCallback(
+		(globalIndex: number): TimelineAsset | null => {
+			let offset = 0;
+			for (const group of groups) {
+				if (globalIndex < offset + group.count) {
+					return group.assets[globalIndex - offset] ?? null;
+				}
+				offset += group.count;
+			}
+			return null;
+		},
+		[groups]
+	);
+	const viewer = useMediaViewer(totalCount);
 
 	const {heightMap, placeholderHeight} = useHeightMap({
 		allBuckets: pagination?.allBuckets ?? [],
@@ -62,19 +76,17 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 		return items;
 	}, [groups, pagination, placeholderHeight]);
 
-	const itemSizes = useMemo(
-		() =>
-			virtualItems.map((item) => {
-				if (item.kind === 'placeholder') return item.height;
-				const layout = layoutMap.get(item.timeBucket);
-				return layout
-					? layout.totalHeight + BUCKET_HEADER_HEIGHT_PX + BUCKET_HEADER_MARGIN_PX
-					: heightMap.get(item.timeBucket) ?? ESTIMATED_ROW_HEIGHT_PX;
-			}),
-		[virtualItems, layoutMap, heightMap]
-	);
+	const itemSizes = useMemo(() => {
+		const headerBlock = ri.scale(BUCKET_HEADER_HEIGHT_PX) + ri.scale(BUCKET_HEADER_MARGIN_PX);
+		const fallback = ri.scale(ESTIMATED_ROW_HEIGHT_PX);
+		return virtualItems.map((item) => {
+			if (item.kind === 'placeholder') return item.height;
+			const layout = layoutMap.get(item.timeBucket);
+			return layout ? layout.totalHeight + headerBlock : heightMap.get(item.timeBucket) ?? fallback;
+		});
+	}, [virtualItems, layoutMap, heightMap]);
 
-	const {handleScrollStop} = useScrollPagination({
+	const {handleScroll} = useScrollPagination({
 		hasNextPage: pagination?.hasNextPage ?? false,
 		isFetchingNextPage: pagination?.isFetchingNextPage ?? false,
 		fetchNextPage: pagination?.fetchNextPage ?? noop,
@@ -84,10 +96,10 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 	useEffect(() => {
 		if (!pagination || !viewer.state?.isOpen) return;
 		if (!pagination.hasNextPage || pagination.isFetchingNextPage) return;
-		if (viewer.state.assetIndex >= allAssets.length - MEDIA_VIEWER_PREFETCH_THRESHOLD) {
+		if (viewer.state.assetIndex >= totalCount - MEDIA_VIEWER_PREFETCH_THRESHOLD) {
 			pagination.fetchNextPage();
 		}
-	}, [viewer.state, allAssets.length, pagination]);
+	}, [viewer.state, totalCount, pagination]);
 
 	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer.open]);
 
@@ -128,20 +140,21 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 			<ErrorBoundary>
 				<VirtualList
 					dataSize={virtualItems.length}
-					itemSize={{minSize: ESTIMATED_ROW_HEIGHT_PX, size: itemSizes}}
+					itemSize={{minSize: ri.scale(ESTIMATED_ROW_HEIGHT_PX), size: itemSizes}}
 					itemRenderer={renderItem}
 					direction="vertical"
 					scrollMode="native"
 					verticalScrollbar="visible"
-					onScrollStop={pagination ? handleScrollStop : undefined}
+					onScroll={pagination ? handleScroll : undefined}
+					onScrollStop={pagination ? handleScroll : undefined}
 					style={style}
 				/>
 			</ErrorBoundary>
 			{viewer.state?.isOpen && (
 				<ErrorBoundary>
 					<MediaViewer
-						asset={allAssets[viewer.state.assetIndex] ?? null}
-						allAssets={allAssets}
+						getAssetAt={getAssetAt}
+						totalCount={totalCount}
 						currentIndex={viewer.state.assetIndex}
 						onClose={viewer.close}
 						onNavigate={viewer.navigate}

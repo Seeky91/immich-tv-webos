@@ -1,10 +1,11 @@
 import Panels from '@enact/sandstone/Panels';
 import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import React from 'react';
+import {QueryCache, QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import React, {useMemo} from 'react';
 
 import {useAuth} from '../hooks/useAuth';
 import {RepositoryProvider} from '../domain/RepositoryContext';
+import {isAPIError} from '../utils/typeGuards';
 import AppLayout from '../views/AppLayout';
 import LoginPanel from '../views/LoginPanel';
 
@@ -12,10 +13,20 @@ import './attachErrorHandler';
 
 import css from './App.module.less';
 
-const queryClient = new QueryClient();
-
 const AppBase: React.FC = () => {
 	const {isAuthenticated, isValidating, repository, loginWithApiKey, loginWithCredentials, logout} = useAuth();
+
+	const queryClient = useMemo(
+		() =>
+			new QueryClient({
+				queryCache: new QueryCache({
+					onError: (error) => {
+						if (isAPIError(error) && error.status === 401) logout();
+					},
+				}),
+			}),
+		[logout]
+	);
 
 	if (isValidating) {
 		return (
