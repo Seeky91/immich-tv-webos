@@ -64,12 +64,13 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 	}, [groups, contentWidth]);
 
 	const virtualItems = useMemo<VirtualItem[]>(() => {
+		const items: VirtualItem[] = [];
 		let globalStart = 0;
-		const items: VirtualItem[] = groups.map((group) => {
+		for (const group of groups) {
 			const item: GroupVirtualItem = {...group, kind: 'group', globalStartIndex: globalStart};
+			items.push(item);
 			globalStart += group.count;
-			return item;
-		});
+		}
 		if (pagination && placeholderHeight > 0) {
 			items.push({kind: 'placeholder', height: placeholderHeight, globalStartIndex: globalStart});
 		}
