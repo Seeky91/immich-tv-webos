@@ -10,6 +10,7 @@ import AppLayout from '../views/AppLayout';
 import LoginPanel from '../views/LoginPanel';
 
 import './attachErrorHandler';
+import '../styles/tokens.less';
 
 import css from './App.module.less';
 
