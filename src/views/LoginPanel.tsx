@@ -10,7 +10,7 @@ import bannerImage from '../assets/immich-banner.png';
 
 interface LoginPanelProps {
 	isValidating: boolean;
-	onLoginWithApiKey: (baseUrl: string, apiKey: string) => Promise<boolean>;
+	onLoginWithApiKey: (baseUrl: string, apiKey: string) => Promise<LoginResult>;
 	onLoginWithCredentials: (baseUrl: string, email: string, password: string) => Promise<LoginResult>;
 }
 
@@ -34,9 +34,9 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 			return;
 		}
 
-		const success = await onLoginWithApiKey(apiKeyUrl, apiKey);
-		if (!success) {
-			setApiKeyError('Failed to connect. Check your URL and API key.');
+		const result = await onLoginWithApiKey(apiKeyUrl, apiKey);
+		if (!result.success) {
+			setApiKeyError(result.errorMessage ?? 'Failed to connect. Check your URL and API key.');
 		}
 	}, [apiKeyUrl, apiKey, onLoginWithApiKey]);
 

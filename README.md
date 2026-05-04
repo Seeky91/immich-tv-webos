@@ -36,6 +36,13 @@
 ### Compatibility
 Tested on webOS 6.0+ (LG TVs from 2021 onward). Earlier webOS versions are not currently supported — they ship older Chromium engines that lack runtime APIs the bundle depends on.
 
+### Cross-origin requests (CORS)
+The app loads from `file://` and fetches the Immich API cross-origin. Immich does not ship CORS headers by default, so without help every browser blocks the response.
+
+The `appinfo.json` ships `trustLevel: "netcast"` + `vendorExtension.allowCrossDomain: true`. These are LG-WAM-specific flags (undocumented by LG, well-known in the webosbrew community — same combo used by `youtube-webos`) that disable CORS validation for installed retail apps. They are silently ignored on webOS OSE / non-retail builds, and recent retail webOS (10.x+) doesn't need them, so adding them is safe across the board.
+
+If the bypass still doesn't apply for your firmware (you'll see "Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS)" in the login panel), configure CORS server-side: add `Access-Control-Allow-Origin: *` to every Immich API response and answer `OPTIONS` with `204` (typically via the Caddy/Nginx/Traefik proxy in front of Immich).
+
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or v20 recommended)
 * [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ``` npm install -g @enact/cli ```

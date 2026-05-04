@@ -11,10 +11,25 @@ export interface LoginResult {
 	errorMessage?: string;
 }
 
+const NETWORK_ERROR_MESSAGE =
+	"Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS).";
+
+function makeAuthErrorMessage(error: unknown, method: AuthMethod): string {
+	if (error instanceof APIError) {
+		if (error.status === 401) {
+			return method === AuthMethod.API_KEY ? 'Invalid API key' : 'Invalid email or password';
+		}
+		if (error.status) return `Server returned ${error.status}`;
+	}
+	return NETWORK_ERROR_MESSAGE;
+}
+
 export const useAuth = () => {
-	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(null);
+	// Initialize from storage synchronously so the first render reflects the persisted state.
+	// Without this, every mount briefly showed an empty <Loading> screen even when no creds existed.
+	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(() => StorageService.getAuthConfig());
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [isValidating, setIsValidating] = useState(true);
+	const [isValidating, setIsValidating] = useState<boolean>(() => StorageService.getAuthConfig() !== null);
 	const [repository, setRepository] = useState<PhotoRepository | null>(null);
 
 	const finalizeAuthSetup = useCallback((repo: PhotoRepository, storedConfig: StoredAuthConfig) => {
@@ -25,13 +40,8 @@ export const useAuth = () => {
 	}, []);
 
 	useEffect(() => {
-		const config = StorageService.getAuthConfig();
-		if (config) {
-			setAuthConfig(config);
-			validateAndSetup(config);
-		} else {
-			setIsValidating(false);
-		}
+		const stored = StorageService.getAuthConfig();
+		if (stored) void validateAndSetup(stored);
 	}, []);
 
 	const validateAndSetup = async (config: StoredAuthConfig) => {
@@ -95,13 +105,7 @@ export const useAuth = () => {
 				return {success: true};
 			} catch (error) {
 				console.error('Credential login failed:', error);
-				const errorMessage =
-					error instanceof APIError && error.status === 401
-						? 'Invalid email or password'
-						: error instanceof Error
-						? error.message
-						: 'Login failed. Check your credentials.';
-				return {success: false, errorMessage};
+				return {success: false, errorMessage: makeAuthErrorMessage(error, AuthMethod.USER_CREDENTIALS)};
 			} finally {
 				setIsValidating(false);
 			}
@@ -110,7 +114,7 @@ export const useAuth = () => {
 	);
 
 	const loginWithApiKey = useCallback(
-		async (baseUrl: string, apiKey: string): Promise<boolean> => {
+		async (baseUrl: string, apiKey: string): Promise<LoginResult> => {
 			setIsValidating(true);
 			try {
 				const config: ApiKeyConfig = {
@@ -120,9 +124,9 @@ export const useAuth = () => {
 				};
 
 				const client = new APIClient(config);
-
-				const authValid = await validateAuth(client);
-				if (!authValid) return false;
+				// Throws on network/CORS failure or non-2xx status — we propagate the error so the
+				// caller can show a meaningful message instead of a generic "failed".
+				await client.fetch('/users/me');
 
 				const storedConfig: StoredAuthConfig = {
 					baseUrl,
@@ -130,10 +134,10 @@ export const useAuth = () => {
 					apiKey,
 				};
 				finalizeAuthSetup(new ImmichRepository(client), storedConfig);
-				return true;
+				return {success: true};
 			} catch (error) {
 				console.error('API key login failed:', error);
-				return false;
+				return {success: false, errorMessage: makeAuthErrorMessage(error, AuthMethod.API_KEY)};
 			} finally {
 				setIsValidating(false);
 			}
