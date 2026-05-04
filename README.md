@@ -33,6 +33,9 @@
 
 ## 📦 Installation & Development
 
+### Compatibility
+Tested on webOS 6.0+ (LG TVs from 2021 onward). Earlier webOS versions are not currently supported — they ship older Chromium engines that lack runtime APIs the bundle depends on.
+
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or v20 recommended)
 * [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ``` npm install -g @enact/cli ```
