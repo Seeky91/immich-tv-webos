@@ -1,13 +1,13 @@
 {
 	"name": "immich-tv-webos",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Read-only Immich photo & video client for LG webOS TVs",
 	"author": "Quentin Jean-Amans <quentin.sqja@gmail.com> (https://github.com/Seeky91)",
 	"main": "src/index.tsx",
 	"scripts": {
 		"serve": "enact serve",
 		"pack": "enact pack",
-		"pack-p": "enact pack -p",
+		"pack-p": "enact pack -p && node tools/transpile-legacy.mjs",
 		"watch": "enact pack --watch",
 		"clean": "enact clean",
 		"lint": "enact lint .",
@@ -41,6 +41,9 @@
 		"theme": "sandstone",
 		"publicUrl": "./"
 	},
+	"browserslist": [
+		"Chrome >= 79"
+	],
 	"eslintConfig": {
 		"extends": "enact-proxy"
 	},
@@ -66,6 +69,7 @@
 		"@types/react": "^18.2.0",
 		"@types/react-dom": "^18.2.0",
 		"baseline-browser-mapping": "^2.9.14",
+		"esbuild": "^0.28.0",
 		"eslint-config-enact-proxy": "^1.0.7",
 		"typescript": "^5.9.3"
 	}
