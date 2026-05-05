@@ -1,4 +1,4 @@
-import type {APIClient} from './client';
+import {APIError, type APIClient} from './client';
 import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset, ImmichPerson, PeopleResponse} from './types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
 import type {Album, AlbumDetails, Person, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
@@ -9,6 +9,7 @@ interface ImmichSearchResponse {
 }
 
 const PEOPLE_LIMIT = 50;
+const SEARCH_PAGE_SIZE = 500;
 
 export class ImmichRepository implements PhotoRepository {
 	private client: APIClient;
@@ -91,7 +92,7 @@ export class ImmichRepository implements PhotoRepository {
 	public async searchSmart(query: string): Promise<TimelineAsset[]> {
 		const response = await this.client.fetch<ImmichSearchResponse>('/search/smart', {
 			method: 'POST',
-			body: JSON.stringify({query, size: 500}),
+			body: JSON.stringify({query, size: SEARCH_PAGE_SIZE}),
 		});
 		return this.searchItemsToAssets(response);
 	}
@@ -99,7 +100,7 @@ export class ImmichRepository implements PhotoRepository {
 	public async searchByPerson(personId: string): Promise<TimelineAsset[]> {
 		const response = await this.client.fetch<ImmichSearchResponse>('/search/metadata', {
 			method: 'POST',
-			body: JSON.stringify({personIds: [personId], size: 500}),
+			body: JSON.stringify({personIds: [personId], size: SEARCH_PAGE_SIZE}),
 		});
 		return this.searchItemsToAssets(response);
 	}
@@ -125,12 +126,14 @@ export class ImmichRepository implements PhotoRepository {
 	public faceUrl(personId: string): string {
 		return this.client.getFaceThumbnailUrl(personId);
 	}
-
-	public albumThumbnailUrl(thumbnailAssetId: string): string {
-		return this.client.getThumbnailUrl(thumbnailAssetId, 'thumbnail');
-	}
 }
 
 export async function validateAuth(client: APIClient): Promise<boolean> {
-	return client.fetch('/users/me').then(() => true).catch(() => false);
+	try {
+		await client.fetch('/users/me');
+		return true;
+	} catch (error) {
+		if (error instanceof APIError && error.status === 401) return false;
+		throw error;
+	}
 }

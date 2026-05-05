@@ -15,7 +15,7 @@ import '../styles/tokens.less';
 import css from './App.module.less';
 
 const AppBase: React.FC = () => {
-	const {authConfig, isAuthenticated, isValidating, repository, loginWithApiKey, loginWithCredentials, logout} = useAuth();
+	const {authConfig, isAuthenticated, isValidating, repository, validationError, loginWithApiKey, loginWithCredentials, logout} = useAuth();
 
 	const queryClient = useMemo(
 		() =>
@@ -43,7 +43,7 @@ const AppBase: React.FC = () => {
 		return (
 			<div className={css.app}>
 				<Panels>
-					<LoginPanel isValidating={isValidating} onLoginWithApiKey={loginWithApiKey} onLoginWithCredentials={loginWithCredentials} />
+					<LoginPanel isValidating={isValidating} validationError={validationError} onLoginWithApiKey={loginWithApiKey} onLoginWithCredentials={loginWithCredentials} />
 				</Panels>
 			</div>
 		);

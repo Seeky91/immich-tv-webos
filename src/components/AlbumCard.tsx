@@ -12,7 +12,7 @@ interface AlbumCardProps {
 export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, onSelect}) => {
 	const repository = useRepository();
 	const thumbnailUrl = useMemo(
-		() => (album.albumThumbnailAssetId ? repository.albumThumbnailUrl(album.albumThumbnailAssetId) : null),
+		() => (album.albumThumbnailAssetId ? repository.thumbnailUrl(album.albumThumbnailAssetId) : null),
 		[repository, album.albumThumbnailAssetId]
 	);
 

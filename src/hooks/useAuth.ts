@@ -28,6 +28,7 @@ export const useAuth = () => {
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isValidating, setIsValidating] = useState<boolean>(() => StorageService.getAuthConfig() !== null);
 	const [repository, setRepository] = useState<PhotoRepository | null>(null);
+	const [validationError, setValidationError] = useState('');
 
 	const finalizeAuthSetup = useCallback((repo: PhotoRepository, storedConfig: StoredAuthConfig) => {
 		StorageService.setAuthConfig(storedConfig);
@@ -43,12 +44,14 @@ export const useAuth = () => {
 
 	const validateAndSetup = async (config: StoredAuthConfig) => {
 		setIsValidating(true);
+		setValidationError('');
 		try {
 			const apiConfig = storedConfigToAuthConfig(config);
 			const client = new APIClient(apiConfig);
 
 			const authValid = await validateAuth(client);
 			if (!authValid) {
+				// 401: token expired or revoked — silent fallback to LoginPanel (expected UX).
 				setIsAuthenticated(false);
 				setRepository(null);
 				return;
@@ -57,7 +60,9 @@ export const useAuth = () => {
 			setRepository(new ImmichRepository(client));
 			setIsAuthenticated(true);
 		} catch (error) {
+			// Non-401 (5xx, network/CORS) — surface so the user knows why we fell back.
 			console.error('Auth validation failed:', error);
+			setValidationError(makeAuthErrorMessage(error, config.method));
 			setIsAuthenticated(false);
 			setRepository(null);
 		} finally {
@@ -68,6 +73,7 @@ export const useAuth = () => {
 	const loginWithCredentials = useCallback(
 		async (baseUrl: string, email: string, password: string): Promise<LoginResult> => {
 			setIsValidating(true);
+			setValidationError('');
 			try {
 				const tempConfig: UserCredentialsConfig = {
 					baseUrl,
@@ -113,6 +119,7 @@ export const useAuth = () => {
 	const loginWithApiKey = useCallback(
 		async (baseUrl: string, apiKey: string): Promise<LoginResult> => {
 			setIsValidating(true);
+			setValidationError('');
 			try {
 				const config: ApiKeyConfig = {
 					baseUrl,
@@ -147,6 +154,7 @@ export const useAuth = () => {
 		setAuthConfig(null);
 		setRepository(null);
 		setIsAuthenticated(false);
+		setValidationError('');
 	}, []);
 
 	return {
@@ -154,6 +162,7 @@ export const useAuth = () => {
 		isAuthenticated,
 		isValidating,
 		repository,
+		validationError,
 		loginWithCredentials,
 		loginWithApiKey,
 		logout,

@@ -1,4 +1,4 @@
-import type {AuthConfig} from './types';
+import {AuthMethod, type AuthConfig} from './types';
 
 export class APIError extends Error {
 	public status?: number;
@@ -28,17 +28,19 @@ export class APIClient {
 	}
 
 	private getHeaders(): HeadersInit {
-		return {
+		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			...(this.authConfig.method === 'USER_CREDENTIALS' &&
-				this.authConfig.accessToken && {
-					Authorization: `Bearer ${this.authConfig.accessToken}`,
-				}),
-			...(this.authConfig.method === 'API_KEY' && {
-				'x-api-key': this.authConfig.apiKey,
-			}),
-		} as HeadersInit;
+		};
+		switch (this.authConfig.method) {
+			case AuthMethod.USER_CREDENTIALS:
+				if (this.authConfig.accessToken) headers.Authorization = `Bearer ${this.authConfig.accessToken}`;
+				break;
+			case AuthMethod.API_KEY:
+				headers['x-api-key'] = this.authConfig.apiKey;
+				break;
+		}
+		return headers;
 	}
 
 	private getMediaAuthParam(): {name: string; value: string} {

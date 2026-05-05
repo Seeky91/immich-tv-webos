@@ -10,11 +10,12 @@ import bannerImage from '../assets/immich-banner.png';
 
 interface LoginPanelProps {
 	isValidating: boolean;
+	validationError?: string;
 	onLoginWithApiKey: (baseUrl: string, apiKey: string) => Promise<LoginResult>;
 	onLoginWithCredentials: (baseUrl: string, email: string, password: string) => Promise<LoginResult>;
 }
 
-const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey, onLoginWithCredentials}) => {
+const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, validationError, onLoginWithApiKey, onLoginWithCredentials}) => {
 	const [apiKeyUrl, setApiKeyUrl] = useState('');
 	const [apiKey, setApiKey] = useState('');
 	const [apiKeyError, setApiKeyError] = useState('');
@@ -61,6 +62,7 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 			<img src={bannerImage} alt="Immich" className={css.banner} />
 
 			<div className={css.formContainer}>
+				<ErrorMessage message={validationError ?? ''} className={css.errorMessage} />
 				<TabLayout className={css.layout} orientation="vertical">
 					<Tab title="🔑 API" tabKey="apikey">
 						<div className={css.tabContent}>
