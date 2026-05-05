@@ -6,11 +6,9 @@ import {DateHeader} from '../DateHeader';
 import {MediaViewer} from '../MediaViewer/MediaViewer';
 import {ErrorBoundary} from '../ErrorBoundary';
 import {useMediaViewer} from '../../hooks/useMediaViewer';
-import {useHeightMap} from '../../hooks/useHeightMap';
+import {useTimelineLayout} from '../../hooks/useTimelineLayout';
 import {useScrollPagination} from '../../hooks/useScrollPagination';
-import {calculateJustifiedLayout} from '../../utils/justifiedLayout';
-import {ESTIMATED_ROW_HEIGHT_PX, BUCKET_HEADER_HEIGHT_PX, BUCKET_HEADER_MARGIN_PX, MEDIA_VIEWER_PREFETCH_THRESHOLD} from '../../utils/constants';
-import type {JustifiedLayoutResult} from '../../utils/justifiedLayout';
+import {ESTIMATED_ROW_HEIGHT_PX, MEDIA_VIEWER_PREFETCH_THRESHOLD} from '../../utils/constants';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
@@ -33,35 +31,16 @@ type PlaceholderVirtualItem = {kind: 'placeholder'; height: number; globalStartI
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
 const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, pagination}) => {
-	const totalCount = useMemo(() => groups.reduce((sum, g) => sum + g.count, 0), [groups]);
-	const getAssetAt = useCallback(
-		(globalIndex: number): TimelineAsset | null => {
-			let offset = 0;
-			for (const group of groups) {
-				if (globalIndex < offset + group.count) {
-					return group.assets[globalIndex - offset] ?? null;
-				}
-				offset += group.count;
-			}
-			return null;
-		},
-		[groups]
-	);
+	const flatAssets = useMemo(() => groups.flatMap((g) => g.assets), [groups]);
+	const totalCount = flatAssets.length;
+	const getAssetAt = useCallback((i: number): TimelineAsset | null => flatAssets[i] ?? null, [flatAssets]);
 	const viewer = useMediaViewer(totalCount);
 
-	const {heightMap, placeholderHeight} = useHeightMap({
+	const {layoutMap, heightMap, placeholderHeight} = useTimelineLayout({
 		allBuckets: pagination?.allBuckets ?? [],
 		loadedGroups: groups,
 		viewportWidth: contentWidth,
 	});
-
-	const layoutMap = useMemo(() => {
-		const map = new Map<string, JustifiedLayoutResult>();
-		for (const group of groups) {
-			map.set(group.timeBucket, calculateJustifiedLayout(group.assets.map((a) => a.ratio), contentWidth));
-		}
-		return map;
-	}, [groups, contentWidth]);
 
 	const virtualItems = useMemo<VirtualItem[]>(() => {
 		const items: VirtualItem[] = [];
@@ -78,14 +57,12 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 	}, [groups, pagination, placeholderHeight]);
 
 	const itemSizes = useMemo(() => {
-		const headerBlock = ri.scale(BUCKET_HEADER_HEIGHT_PX) + ri.scale(BUCKET_HEADER_MARGIN_PX);
 		const fallback = ri.scale(ESTIMATED_ROW_HEIGHT_PX);
 		return virtualItems.map((item) => {
 			if (item.kind === 'placeholder') return item.height;
-			const layout = layoutMap.get(item.timeBucket);
-			return layout ? layout.totalHeight + headerBlock : heightMap.get(item.timeBucket) ?? fallback;
+			return heightMap.get(item.timeBucket) ?? fallback;
 		});
-	}, [virtualItems, layoutMap, heightMap]);
+	}, [virtualItems, heightMap]);
 
 	const {handleScroll} = useScrollPagination({
 		hasNextPage: pagination?.hasNextPage ?? false,

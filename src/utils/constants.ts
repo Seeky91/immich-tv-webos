@@ -1,9 +1,9 @@
 export const TARGET_ROW_HEIGHT_PX = 400;
 export const GRID_GAP_PX = 8;
+export const GRID_HORIZONTAL_PADDING_PX = 80;
 export const SCROLL_THRESHOLD_ITEMS = 2;
 export const ESTIMATED_ROW_HEIGHT_PX = 510;
 export const BUCKET_HEADER_HEIGHT_PX = 128;
 export const BUCKET_HEADER_MARGIN_PX = 40;
-export const LAYOUT_SAFETY_BUFFER_PX = 4;
 export const SIDEBAR_COLLAPSED_WIDTH = 160;
 export const MEDIA_VIEWER_PREFETCH_THRESHOLD = 5;
