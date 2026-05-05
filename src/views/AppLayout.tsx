@@ -31,6 +31,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({onSignOut}) => {
 				onNavigate={setActiveView}
 				onSignOut={onSignOut}
 			/>
+			{/*
+				MainPanel reste mounté (CSS-hidden) pour préserver la position de scroll de la VirtualList
+				du timeline. Le cache TanStack survit déjà via QueryClientProvider en haut, donc l'unmount
+				ne perdrait que la position scroll. Albums/Search réinitialisent leur navigation interne à
+				chaque retour, ce qui est désiré côté UX.
+			*/}
 			<ViewContainer className={css.viewContainer}>
 				<div className={activeView === 'photos' ? css.panelActive : css.panelHidden}>
 					<MainPanel contentWidth={contentWidth} />

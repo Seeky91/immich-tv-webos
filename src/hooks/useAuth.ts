@@ -6,10 +6,7 @@ import {ImmichRepository, validateAuth} from '../api/ImmichRepository';
 import {type AuthConfig, type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
 
-export interface LoginResult {
-	success: boolean;
-	errorMessage?: string;
-}
+export type LoginResult = {success: true} | {success: false; errorMessage: string};
 
 const NETWORK_ERROR_MESSAGE =
 	"Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS).";

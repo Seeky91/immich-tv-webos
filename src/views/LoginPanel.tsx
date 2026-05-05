@@ -36,7 +36,7 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 
 		const result = await onLoginWithApiKey(apiKeyUrl, apiKey);
 		if (!result.success) {
-			setApiKeyError(result.errorMessage ?? 'Failed to connect. Check your URL and API key.');
+			setApiKeyError(result.errorMessage);
 		}
 	}, [apiKeyUrl, apiKey, onLoginWithApiKey]);
 
@@ -52,7 +52,7 @@ const LoginPanel: React.FC<LoginPanelProps> = ({isValidating, onLoginWithApiKey,
 		}
 		const result = await onLoginWithCredentials(credentialsUrl, email, password);
 		if (!result.success) {
-			setCredentialsError(result.errorMessage ?? 'Login failed. Check your credentials.');
+			setCredentialsError(result.errorMessage);
 		}
 	}, [credentialsUrl, email, password, onLoginWithCredentials]);
 

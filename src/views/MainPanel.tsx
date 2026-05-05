@@ -4,6 +4,7 @@ import ri from '@enact/ui/resolution';
 import TimelineGrid from '../components/TimelineGrid/TimelineGrid';
 import {useInfiniteTimeline} from '../hooks/useAssets';
 import {presentError} from '../utils/presentError';
+import {GRID_INSET_RIGHT_PX} from '../utils/constants';
 import css from './MainPanel.module.less';
 
 interface MainPanelProps {
@@ -43,7 +44,7 @@ const MainPanel: React.FC<MainPanelProps> = ({contentWidth}) => {
 			<TimelineGrid
 				groups={loadedGroups}
 				contentWidth={contentWidth}
-				style={{paddingRight: ri.scale(40)}}
+				style={{paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
 				pagination={{allBuckets, hasNextPage: !!hasNextPage, isFetchingNextPage, fetchNextPage}}
 			/>
 		</Panel>

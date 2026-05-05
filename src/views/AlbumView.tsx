@@ -4,6 +4,7 @@ import ri from '@enact/ui/resolution';
 import {useAlbumDetails} from '../hooks/useAlbumDetails';
 import {useWebOSKeys} from '../hooks/useWebOSKeys';
 import {createSpotlightContainer} from '../utils/spotlight';
+import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
 import {groupAssetsByDay} from '../domain/transforms';
 import TimelineGrid from '../components/TimelineGrid/TimelineGrid';
 import {QueryStateView} from '../components/QueryStateView';
@@ -36,7 +37,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 		>
 			{album && (
 				<Container className={css.view}>
-					<div className={css.header} style={{paddingLeft: ri.scale(72)}}>
+					<div className={css.header} style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX)}}>
 						<Button icon="arrowlargeleft" size="small" onClick={onBack} data-spotlight-default-element />
 						<span className={css.title}>{album.albumName}</span>
 						<span className={css.count}>{album.assetCount} items</span>
@@ -45,7 +46,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 						<TimelineGrid
 							groups={loadedGroups}
 							contentWidth={contentWidth}
-							style={{paddingLeft: ri.scale(72), paddingRight: ri.scale(40)}}
+							style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
 						/>
 					</div>
 				</Container>
