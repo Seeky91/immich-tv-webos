@@ -18,7 +18,7 @@ const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
 
 const RailContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
-const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, onSignOut}) => {
+export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({activeView, onNavigate, onSignOut}) => {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -46,11 +46,7 @@ const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, 
 	}, []);
 
 	const navHandlers = useMemo(
-		() =>
-			NAV_ITEMS.reduce<Record<string, () => void>>(
-				(acc, {view}) => ({...acc, [view]: () => onNavigate(view)}),
-				{}
-			),
+		() => Object.fromEntries(NAV_ITEMS.map(({view}) => [view, () => onNavigate(view)])),
 		[onNavigate]
 	);
 
@@ -84,6 +80,6 @@ const NavigationRail: React.FC<NavigationRailProps> = ({activeView, onNavigate, 
 			</button>
 		</RailContainer>
 	);
-};
+});
 
-export default NavigationRail;
+NavigationRail.displayName = 'NavigationRail';

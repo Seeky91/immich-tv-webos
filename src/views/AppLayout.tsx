@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {SIDEBAR_COLLAPSED_WIDTH} from '../utils/constants';
 import {createSpotlightContainer} from '../utils/spotlight';
-import NavigationRail from '../components/NavigationRail/NavigationRail';
+import {NavigationRail} from '../components/NavigationRail/NavigationRail';
 import MainPanel from './MainPanel';
 import AlbumsPanel from './AlbumsPanel';
 import SearchPanel from './SearchPanel';

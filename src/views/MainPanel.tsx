@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import {Panel, Header} from '@enact/sandstone/Panels';
 import ri from '@enact/ui/resolution';
-import TimelineGrid from '../components/TimelineGrid/TimelineGrid';
+import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {useInfiniteTimeline} from '../hooks/useAssets';
 import {presentError} from '../utils/presentError';
 import {GRID_INSET_RIGHT_PX} from '../utils/constants';

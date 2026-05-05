@@ -15,7 +15,6 @@ interface MediaControlsProps {
 export const MediaControls: React.FC<MediaControlsProps> = React.memo(({currentIndex, totalCount, onPrev, onNext, onClose, canGoPrev, canGoNext}) => {
 	return (
 		<>
-			{/* Top bar with close button and counter */}
 			<div className={css.topBar}>
 				<Button icon="closex" onClick={onClose} className={css.closeButton} />
 				<span className={css.counter}>
@@ -23,7 +22,6 @@ export const MediaControls: React.FC<MediaControlsProps> = React.memo(({currentI
 				</span>
 			</div>
 
-			{/* Navigation arrows */}
 			{canGoPrev && <Button icon="arrowlargeleft" onClick={onPrev} className={`${css.navButton} ${css.navButtonLeft}`} />}
 			{canGoNext && <Button icon="arrowlargeright" onClick={onNext} className={`${css.navButton} ${css.navButtonRight}`} />}
 		</>

@@ -1,3 +1,5 @@
+@import '../styles/_mixins.less';
+
 .albumCard {
 	position: relative;
 	border-radius: 12px;
@@ -7,13 +9,7 @@
 	background: #1e293b;
 	transition: transform 0.2s ease, outline 0.1s ease;
 
-	&:focus,
-	&:global(.spottable:focus) {
-		outline: 4px solid rgba(66, 80, 175, 0.8);
-		outline-offset: -4px;
-		transform: scale(1.05);
-		z-index: 5;
-	}
+	.spottable-card-focus();
 }
 
 .thumbnail {

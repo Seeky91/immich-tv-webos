@@ -6,7 +6,7 @@ import {useWebOSKeys} from '../hooks/useWebOSKeys';
 import {createSpotlightContainer} from '../utils/spotlight';
 import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
 import {groupAssetsByDay} from '../domain/transforms';
-import TimelineGrid from '../components/TimelineGrid/TimelineGrid';
+import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {QueryStateView} from '../components/QueryStateView';
 import css from './AlbumView.module.less';
 

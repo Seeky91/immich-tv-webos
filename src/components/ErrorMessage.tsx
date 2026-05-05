@@ -17,3 +17,5 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({message, className}) 
 		</BodyText>
 	);
 };
+
+ErrorMessage.displayName = 'ErrorMessage';

@@ -38,7 +38,7 @@ const PersonItem: React.FC<PersonItemProps> = ({person, repository, isSelected, 
 	);
 };
 
-const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, selectedPersonId, onSelectPerson, isLoading}) => {
+export const PeopleRibbon: React.FC<PeopleRibbonProps> = React.memo(({people, selectedPersonId, onSelectPerson, isLoading}) => {
 	const repository = useRepository();
 	if (isLoading || people.length === 0) return null;
 
@@ -59,6 +59,6 @@ const PeopleRibbon: React.FC<PeopleRibbonProps> = ({people, selectedPersonId, on
 			</Scroller>
 		</div>
 	);
-};
+});
 
-export default PeopleRibbon;
+PeopleRibbon.displayName = 'PeopleRibbon';

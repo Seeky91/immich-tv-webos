@@ -30,7 +30,7 @@ type GroupVirtualItem = DayGroup & {kind: 'group'; globalStartIndex: number};
 type PlaceholderVirtualItem = {kind: 'placeholder'; height: number; globalStartIndex: number};
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
-const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, pagination}) => {
+export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, pagination}) => {
 	const flatAssets = useMemo(() => groups.flatMap((g) => g.assets), [groups]);
 	const totalCount = flatAssets.length;
 	const getAssetAt = useCallback((i: number): TimelineAsset | null => flatAssets[i] ?? null, [flatAssets]);
@@ -143,6 +143,6 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style,
 	);
 };
 
-const noop = () => {};
+TimelineGrid.displayName = 'TimelineGrid';
 
-export default TimelineGrid;
+const noop = () => {};

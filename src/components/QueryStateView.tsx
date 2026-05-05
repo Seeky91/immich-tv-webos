@@ -26,3 +26,5 @@ export const QueryStateView: React.FC<QueryStateViewProps> = ({
 	if (isEmpty) return <div className={className}>{emptyText}</div>;
 	return <>{children}</>;
 };
+
+QueryStateView.displayName = 'QueryStateView';

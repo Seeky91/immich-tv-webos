@@ -1,0 +1,11 @@
+// Shared LESS mixins. Imported via @import in *.module.less consumers.
+
+.spottable-card-focus() {
+	&:focus,
+	&:global(.spottable:focus) {
+		outline: 4px solid rgba(66, 80, 175, 0.8);
+		outline-offset: -4px;
+		transform: scale(1.05);
+		z-index: 5;
+	}
+}

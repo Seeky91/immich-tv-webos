@@ -12,11 +12,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		const video = videoRef.current;
 		if (!video) return;
 
-		const handleError = (e: Event) => {
-			console.error('Video error:', video.error);
-			console.error('Video error code:', video.error?.code);
-			console.error('Video error message:', video.error?.message);
-			console.log(e);
+		const handleError = () => {
+			console.error('Video playback error:', video.error);
 		};
 
 		const handleLoadedData = () => {
