@@ -1,32 +1,22 @@
 import {useState, useEffect, useCallback} from 'react';
 import StorageService from '../utils/storage';
 import type {StoredAuthConfig} from '../utils/storage';
-import {APIClient, APIError} from '../api/client';
+import {APIClient} from '../api/client';
 import {ImmichRepository, validateAuth} from '../api/ImmichRepository';
-import {type AuthConfig, type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
+import {type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
+import {makeAuthErrorMessage, storedConfigToAuthConfig} from './_authHelpers';
 
 export type LoginResult = {success: true} | {success: false; errorMessage: string};
-
-const NETWORK_ERROR_MESSAGE =
-	"Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS).";
-
-function makeAuthErrorMessage(error: unknown, method: AuthMethod): string {
-	if (error instanceof APIError) {
-		if (error.status === 401) {
-			return method === AuthMethod.API_KEY ? 'Invalid API key' : 'Invalid email or password';
-		}
-		if (error.status) return `Server returned ${error.status}`;
-	}
-	return NETWORK_ERROR_MESSAGE;
-}
 
 export const useAuth = () => {
 	// Initialize from storage synchronously so the first render reflects the persisted state.
 	// Without this, every mount briefly showed an empty <Loading> screen even when no creds existed.
-	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(() => StorageService.getAuthConfig());
+	// Captured once via useState lazy init so all 3 init sites (state + mount effect) share the same read.
+	const [initialConfig] = useState(() => StorageService.getAuthConfig());
+	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(initialConfig);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [isValidating, setIsValidating] = useState<boolean>(() => StorageService.getAuthConfig() !== null);
+	const [isValidating, setIsValidating] = useState<boolean>(initialConfig !== null);
 	const [repository, setRepository] = useState<PhotoRepository | null>(null);
 	const [validationError, setValidationError] = useState('');
 
@@ -38,9 +28,8 @@ export const useAuth = () => {
 	}, []);
 
 	useEffect(() => {
-		const stored = StorageService.getAuthConfig();
-		if (stored) void validateAndSetup(stored);
-	}, []);
+		if (initialConfig) void validateAndSetup(initialConfig);
+	}, [initialConfig]);
 
 	const validateAndSetup = async (config: StoredAuthConfig) => {
 		setIsValidating(true);
@@ -167,20 +156,4 @@ export const useAuth = () => {
 		loginWithApiKey,
 		logout,
 	};
-};
-
-const storedConfigToAuthConfig = (stored: StoredAuthConfig): AuthConfig => {
-	return stored.method === AuthMethod.USER_CREDENTIALS
-		? {
-				baseUrl: stored.baseUrl,
-				method: AuthMethod.USER_CREDENTIALS,
-				email: stored.email!,
-				password: '' /* Never stored */,
-				accessToken: stored.accessToken,
-		  }
-		: {
-				baseUrl: stored.baseUrl,
-				method: AuthMethod.API_KEY,
-				apiKey: stored.apiKey!,
-		  };
 };

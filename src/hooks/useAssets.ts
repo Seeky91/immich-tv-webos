@@ -1,6 +1,5 @@
 import {useQuery, useInfiniteQuery} from '@tanstack/react-query';
 import {ASSETS_QUERY_CONFIG, BUCKETS_PER_PAGE} from './queryConfig';
-import {isAPIError} from '../utils/typeGuards';
 import {useRepository} from '../domain/RepositoryContext';
 
 export const useBuckets = () => {
@@ -8,14 +7,9 @@ export const useBuckets = () => {
 	return useQuery({
 		queryKey: ['timeline-buckets'],
 		queryFn: () => repository.getBuckets(),
+		...ASSETS_QUERY_CONFIG,
 		staleTime: 10 * 60 * 1000,
 		gcTime: 30 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		refetchOnMount: false,
-		retry: (failureCount: number, error: unknown) => {
-			if (isAPIError(error) && error.status === 401) return false;
-			return failureCount < 2;
-		},
 	});
 };
 
