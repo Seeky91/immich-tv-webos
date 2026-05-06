@@ -1,7 +1,7 @@
 import ri from '@enact/ui/resolution';
 import {TARGET_ROW_HEIGHT_PX, GRID_GAP_PX, GRID_HORIZONTAL_PADDING_PX} from './constants';
 
-export interface LayoutRow {
+interface LayoutRow {
 	assets: number[];
 	height: number;
 }
@@ -14,7 +14,6 @@ export interface AssetLayout {
 }
 
 export interface JustifiedLayoutResult {
-	rows: LayoutRow[];
 	totalHeight: number;
 	assetLayouts: AssetLayout[];
 }
@@ -62,5 +61,5 @@ export function calculateJustifiedLayout(ratios: number[], viewportWidth: number
 		currentTop += row.height + gap;
 	}
 
-	return {rows, totalHeight, assetLayouts};
+	return {totalHeight, assetLayouts};
 }
