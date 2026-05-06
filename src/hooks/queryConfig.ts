@@ -1,4 +1,4 @@
-import {isAPIError} from '../utils/typeGuards';
+import {APIError} from '../api/client';
 
 /**
  * Shared TanStack Query configuration for asset-related queries.
@@ -11,7 +11,7 @@ export const ASSETS_QUERY_CONFIG = {
 	refetchOnMount: false,
 	retry: (failureCount: number, error: unknown) => {
 		// Don't retry on 401 (auth error)
-		if (isAPIError(error) && error.status === 401) return false;
+		if (error instanceof APIError && error.status === 401) return false;
 		return failureCount < 2;
 	},
 };

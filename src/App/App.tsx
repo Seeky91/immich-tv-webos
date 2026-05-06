@@ -5,7 +5,7 @@ import React, {useMemo} from 'react';
 
 import {useAuth} from '../hooks/useAuth';
 import {RepositoryProvider} from '../domain/RepositoryContext';
-import {isAPIError} from '../utils/typeGuards';
+import {APIError} from '../api/client';
 import AppLayout from '../views/AppLayout';
 import LoginPanel from '../views/LoginPanel';
 
@@ -22,7 +22,7 @@ const AppBase: React.FC = () => {
 			new QueryClient({
 				queryCache: new QueryCache({
 					onError: (error) => {
-						if (isAPIError(error) && error.status === 401) logout();
+						if (error instanceof APIError && error.status === 401) logout();
 					},
 				}),
 			}),
