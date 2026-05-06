@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo} from 'react';
 import Icon from '@enact/sandstone/Icon';
-import FormattingService from '../utils/FormattingService';
+import {formatDuration} from '../utils/FormattingService';
 import {SpottableDiv} from '../utils/spotlight';
 import {useRepository} from '../domain/RepositoryContext';
 import type {TimelineAsset} from '../domain/types';
@@ -34,7 +34,7 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, index, on
 						<Icon size={48}>play</Icon>
 					</div>
 
-					{asset.duration && <div className={css.durationBadge}>{FormattingService.formatDuration(asset.duration)}</div>}
+					{asset.duration && <div className={css.durationBadge}>{formatDuration(asset.duration)}</div>}
 				</>
 			)}
 		</SpottableDiv>

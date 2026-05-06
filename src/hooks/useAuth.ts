@@ -1,6 +1,5 @@
 import {useState, useEffect, useCallback} from 'react';
-import StorageService from '../utils/storage';
-import type {StoredAuthConfig} from '../utils/storage';
+import {getAuthConfig as readStoredAuthConfig, setAuthConfig as writeStoredAuthConfig, clearAuthConfig, type StoredAuthConfig} from '../utils/storage';
 import {APIClient} from '../api/client';
 import {ImmichRepository, validateAuth} from '../api/ImmichRepository';
 import {type UserCredentialsConfig, type ApiKeyConfig, AuthMethod} from '../api/types';
@@ -13,7 +12,7 @@ export const useAuth = () => {
 	// Initialize from storage synchronously so the first render reflects the persisted state.
 	// Without this, every mount briefly showed an empty <Loading> screen even when no creds existed.
 	// Captured once via useState lazy init so all 3 init sites (state + mount effect) share the same read.
-	const [initialConfig] = useState(() => StorageService.getAuthConfig());
+	const [initialConfig] = useState(() => readStoredAuthConfig());
 	const [authConfig, setAuthConfig] = useState<StoredAuthConfig | null>(initialConfig);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isValidating, setIsValidating] = useState<boolean>(initialConfig !== null);
@@ -21,7 +20,7 @@ export const useAuth = () => {
 	const [validationError, setValidationError] = useState('');
 
 	const finalizeAuthSetup = useCallback((repo: PhotoRepository, storedConfig: StoredAuthConfig) => {
-		StorageService.setAuthConfig(storedConfig);
+		writeStoredAuthConfig(storedConfig);
 		setAuthConfig(storedConfig);
 		setRepository(repo);
 		setIsAuthenticated(true);
@@ -139,7 +138,7 @@ export const useAuth = () => {
 	);
 
 	const logout = useCallback(() => {
-		StorageService.clearAuthConfig();
+		clearAuthConfig();
 		setAuthConfig(null);
 		setRepository(null);
 		setIsAuthenticated(false);

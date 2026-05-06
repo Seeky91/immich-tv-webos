@@ -8,41 +8,37 @@ export interface StoredAuthConfig {
 	accessToken?: string;
 }
 
-abstract class StorageService {
-	private static readonly KEYS = {AUTH_CONFIG: 'immich_auth_config'} as const;
+const AUTH_CONFIG_KEY = 'immich_auth_config';
 
-	public static getAuthConfig(): StoredAuthConfig | null {
-		const stored = localStorage.getItem(this.KEYS.AUTH_CONFIG);
-		if (!stored) return null;
+export function getAuthConfig(): StoredAuthConfig | null {
+	const stored = localStorage.getItem(AUTH_CONFIG_KEY);
+	if (!stored) return null;
 
-		try {
-			const config = JSON.parse(stored) as Partial<StoredAuthConfig>;
+	try {
+		const config = JSON.parse(stored) as Partial<StoredAuthConfig>;
 
-			if (!config.method && config.apiKey) {
-				config.method = AuthMethod.API_KEY;
-			}
+		if (!config.method && config.apiKey) {
+			config.method = AuthMethod.API_KEY;
+		}
 
-			if (!config.baseUrl || !config.method) {
-				console.error('[Storage] Invalid auth config, clearing');
-				this.clearAuthConfig();
-				return null;
-			}
-
-			return config as StoredAuthConfig;
-		} catch (error) {
-			console.error('[Storage] Failed to parse auth config:', error);
-			this.clearAuthConfig();
+		if (!config.baseUrl || !config.method) {
+			console.error('[Storage] Invalid auth config, clearing');
+			clearAuthConfig();
 			return null;
 		}
-	}
 
-	public static setAuthConfig(config: StoredAuthConfig): void {
-		localStorage.setItem(this.KEYS.AUTH_CONFIG, JSON.stringify(config));
-	}
-
-	public static clearAuthConfig(): void {
-		localStorage.removeItem(this.KEYS.AUTH_CONFIG);
+		return config as StoredAuthConfig;
+	} catch (error) {
+		console.error('[Storage] Failed to parse auth config:', error);
+		clearAuthConfig();
+		return null;
 	}
 }
 
-export default StorageService;
+export function setAuthConfig(config: StoredAuthConfig): void {
+	localStorage.setItem(AUTH_CONFIG_KEY, JSON.stringify(config));
+}
+
+export function clearAuthConfig(): void {
+	localStorage.removeItem(AUTH_CONFIG_KEY);
+}
