@@ -12,6 +12,13 @@ export interface SpotlightContainerOptions {
 	enterTo?: 'last-focused' | 'default-element' | 'topmost';
 }
 
-export function createSpotlightContainer(options: SpotlightContainerOptions = {}): React.ComponentType<DivProps> {
-	return SpotlightContainerDecorator(options, 'div' as unknown as React.ComponentType<DivProps>);
+export interface SpotlightContainerProps extends DivProps {
+	spotlightId?: string;
+	spotlightRestrict?: 'none' | 'self-first' | 'self-only';
+	spotlightDisabled?: boolean;
+	spotlightMuted?: boolean;
+}
+
+export function createSpotlightContainer(options: SpotlightContainerOptions = {}): React.ComponentType<SpotlightContainerProps> {
+	return SpotlightContainerDecorator(options, 'div' as unknown as React.ComponentType<SpotlightContainerProps>);
 }

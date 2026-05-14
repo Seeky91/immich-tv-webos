@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect} from 'react';
+import Spotlight from '@enact/spotlight';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
 import {useRepository} from '../../domain/RepositoryContext';
+import {createSpotlightContainer} from '../../utils/spotlight';
 import type {TimelineAsset} from '../../domain/types';
 import {MediaControls} from './MediaControls';
 import {VideoPlayer} from './VideoPlayer';
@@ -13,6 +15,11 @@ interface MediaViewerProps {
 	onClose: () => void;
 	onNavigate: (direction: 'prev' | 'next') => void;
 }
+
+const VIEWER_SPOTLIGHT_ID = 'media-viewer';
+// Trap Spotlight inside the viewer so D-pad can't reach the underlying rail/grid (which would
+// trigger NavigationRail's focus-based expand and other surprises).
+const ViewerContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
 export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, totalCount, currentIndex, onClose, onNavigate}) => {
 	const repository = useRepository();
@@ -27,6 +34,10 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	}, [onNavigate, currentIndex, totalCount]);
 
 	useWebOSKeys({onBack: onClose, onArrowLeft: handlePrev, onArrowRight: handleNext});
+
+	useEffect(() => {
+		Spotlight.focus(VIEWER_SPOTLIGHT_ID);
+	}, []);
 
 	useEffect(() => {
 		const prefetch = (index: number) => {
@@ -45,7 +56,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	const mediaUrl = isVideo ? repository.originalUrl(asset.id) : repository.previewUrl(asset.id);
 
 	return (
-		<div className={css.viewerOverlay}>
+		<ViewerContainer spotlightId={VIEWER_SPOTLIGHT_ID} spotlightRestrict="self-only" className={css.viewerOverlay}>
 			<div className={css.viewerContent}>{isVideo ? <VideoPlayer src={mediaUrl} /> : <img src={mediaUrl} alt="" className={css.viewerImage} />}</div>
 			<MediaControls
 				currentIndex={currentIndex}
@@ -56,7 +67,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 				canGoPrev={currentIndex > 0}
 				canGoNext={currentIndex < totalCount - 1}
 			/>
-		</div>
+		</ViewerContainer>
 	);
 });
 

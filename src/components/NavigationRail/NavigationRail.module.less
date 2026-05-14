@@ -1,3 +1,7 @@
+// No z-index here on purpose: flex items with z-index != auto create a stacking context
+// (per CSS spec) regardless of `position`, which would trap the rail at z-index 10 in the
+// root context. Without it the rail paints in normal document order, leaving MediaViewer
+// (position:fixed z-index:1000 inside ViewContainer) free to overlay it.
 .rail {
   display: flex;
   flex-direction: column;
@@ -12,7 +16,6 @@
   overflow: hidden;
   transition: width 0.3s ease-in-out;
   box-sizing: border-box;
-  z-index: 10;
 }
 
 .rail.expanded {
