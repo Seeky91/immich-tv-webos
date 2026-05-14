@@ -2,13 +2,11 @@ import {AuthMethod, type AuthConfig} from './types';
 
 export class APIError extends Error {
 	public status?: number;
-	public response?: unknown;
 
-	constructor(message: string, status?: number, response?: unknown) {
+	constructor(message: string, status?: number) {
 		super(message);
 		this.name = 'APIError';
 		this.status = status;
-		this.response = response;
 	}
 }
 
@@ -57,9 +55,8 @@ export class APIClient {
 				headers: {...this.getHeaders(), ...options.headers},
 			});
 			if (!response.ok) {
-				const errorBody = await response.text();
 				console.error(`[API] ${method} ${url} failed with ${response.status}: ${response.statusText}`);
-				throw new APIError(`API request failed: ${response.statusText}`, response.status, errorBody);
+				throw new APIError(`API request failed: ${response.statusText}`, response.status);
 			}
 
 			const text = await response.text();
