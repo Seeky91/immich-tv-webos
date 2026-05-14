@@ -27,36 +27,35 @@ export const useAuth = () => {
 	}, []);
 
 	useEffect(() => {
-		if (initialConfig) void validateAndSetup(initialConfig);
-	}, [initialConfig]);
+		if (!initialConfig) return;
+		void (async () => {
+			setIsValidating(true);
+			setValidationError('');
+			try {
+				const apiConfig = storedConfigToAuthConfig(initialConfig);
+				const client = new APIClient(apiConfig);
 
-	const validateAndSetup = async (config: StoredAuthConfig) => {
-		setIsValidating(true);
-		setValidationError('');
-		try {
-			const apiConfig = storedConfigToAuthConfig(config);
-			const client = new APIClient(apiConfig);
+				const authValid = await validateAuth(client);
+				if (!authValid) {
+					// 401: token expired or revoked — silent fallback to LoginPanel (expected UX).
+					setIsAuthenticated(false);
+					setRepository(null);
+					return;
+				}
 
-			const authValid = await validateAuth(client);
-			if (!authValid) {
-				// 401: token expired or revoked — silent fallback to LoginPanel (expected UX).
+				setRepository(new ImmichRepository(client));
+				setIsAuthenticated(true);
+			} catch (error) {
+				// Non-401 (5xx, network/CORS) — surface so the user knows why we fell back.
+				console.error('Auth validation failed:', error);
+				setValidationError(makeAuthErrorMessage(error, initialConfig.method));
 				setIsAuthenticated(false);
 				setRepository(null);
-				return;
+			} finally {
+				setIsValidating(false);
 			}
-
-			setRepository(new ImmichRepository(client));
-			setIsAuthenticated(true);
-		} catch (error) {
-			// Non-401 (5xx, network/CORS) — surface so the user knows why we fell back.
-			console.error('Auth validation failed:', error);
-			setValidationError(makeAuthErrorMessage(error, config.method));
-			setIsAuthenticated(false);
-			setRepository(null);
-		} finally {
-			setIsValidating(false);
-		}
-	};
+		})();
+	}, [initialConfig]);
 
 	const loginWithCredentials = useCallback(
 		async (baseUrl: string, email: string, password: string): Promise<LoginResult> => {
