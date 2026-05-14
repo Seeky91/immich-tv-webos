@@ -23,7 +23,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 
 	useWebOSKeys({onBack});
 
-	const loadedGroups = useMemo(() => groupAssetsByDay(album?.assets ?? []), [album]);
+	const loadedGroups = useMemo(() => groupAssetsByDay(album?.assets ?? [], album?.order), [album]);
 
 	return (
 		<QueryStateView

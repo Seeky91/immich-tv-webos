@@ -65,6 +65,7 @@ export class ImmichRepository implements PhotoRepository {
 		return {
 			...this.mapAlbum(details),
 			assets: details.assets.map((a) => this.assetFromImmichAsset(a)),
+			order: details.order ?? 'desc',
 		};
 	}
 

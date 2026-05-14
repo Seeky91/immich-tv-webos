@@ -56,8 +56,11 @@ export interface ImmichAlbum {
 	assetCount: number;
 }
 
+export type AssetOrder = 'asc' | 'desc';
+
 export interface ImmichAlbumDetails extends ImmichAlbum {
 	assets: ImmichAsset[];
+	order?: AssetOrder;
 }
 
 export interface ImmichPerson {

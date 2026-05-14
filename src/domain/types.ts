@@ -34,8 +34,11 @@ export interface Album {
 	assetCount: number;
 }
 
+export type AssetOrder = 'asc' | 'desc';
+
 export interface AlbumDetails extends Album {
 	assets: TimelineAsset[];
+	order: AssetOrder;
 }
 
 export interface Person {

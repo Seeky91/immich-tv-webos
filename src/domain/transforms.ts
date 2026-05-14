@@ -1,5 +1,5 @@
 import type {ColumnarAssetResponse} from '../api/types';
-import type {TimelineAsset, DayGroup} from './types';
+import type {TimelineAsset, DayGroup, AssetOrder} from './types';
 
 const dayKey = (isoDate: string): string => isoDate.slice(0, 10);
 
@@ -15,7 +15,9 @@ export function transformColumnarResponse(columnar: ColumnarAssetResponse): Time
 	}));
 }
 
-export function groupAssetsByDay(assets: TimelineAsset[]): DayGroup[] {
+// Day buckets are sorted by `order`; within-day order is preserved from the input array
+// (Immich pre-sorts album assets by its `order` preference, so insertion order is already correct).
+export function groupAssetsByDay(assets: TimelineAsset[], order: AssetOrder = 'desc'): DayGroup[] {
 	const dayMap = new Map<string, TimelineAsset[]>();
 	for (const asset of assets) {
 		const key = dayKey(asset.fileCreatedAt);
@@ -27,8 +29,9 @@ export function groupAssetsByDay(assets: TimelineAsset[]): DayGroup[] {
 		}
 	}
 
+	const compare = order === 'asc' ? (a: string, b: string) => a.localeCompare(b) : (a: string, b: string) => b.localeCompare(a);
 	return Array.from(dayMap.entries())
-		.sort(([a], [b]) => b.localeCompare(a))
+		.sort(([a], [b]) => compare(a, b))
 		.map(([date, dayAssets]) => ({
 			timeBucket: date,
 			assets: dayAssets,
