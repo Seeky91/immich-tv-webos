@@ -1,3 +1,5 @@
+import type {AssetOrder} from '../domain/types';
+
 export enum AuthMethod {
 	USER_CREDENTIALS = 'USER_CREDENTIALS',
 	API_KEY = 'API_KEY',
@@ -55,8 +57,6 @@ export interface ImmichAlbum {
 	albumThumbnailAssetId: string | null;
 	assetCount: number;
 }
-
-export type AssetOrder = 'asc' | 'desc';
 
 export interface ImmichAlbumDetails extends ImmichAlbum {
 	assets: ImmichAsset[];
