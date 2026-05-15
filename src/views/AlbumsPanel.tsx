@@ -31,7 +31,6 @@ const AlbumsPanel: React.FC<AlbumsPanelProps> = ({contentWidth}) => {
 			isEmpty={!albums?.length}
 			loadingText="Loading albums…"
 			emptyText="No albums found."
-			className={css.state}
 		>
 			<Scroller direction="vertical" scrollMode="native" verticalScrollbar="visible" className={css.scroller}>
 				<div className={css.grid}>

@@ -4,7 +4,6 @@ import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {useInfiniteTimeline} from '../hooks/useAssets';
 import {GRID_INSET_RIGHT_PX} from '../utils/constants';
-import css from './MainPanel.module.less';
 
 interface MainPanelProps {
 	contentWidth: number;
@@ -16,7 +15,7 @@ const MainPanel: React.FC<MainPanelProps> = ({contentWidth}) => {
 	const loadedGroups = useMemo(() => data?.pages.flatMap((p) => p.groups) ?? [], [data]);
 
 	return (
-		<QueryStateView isLoading={isLoading} error={isError ? error : null} className={css.state}>
+		<QueryStateView isLoading={isLoading} error={isError ? error : null}>
 			<TimelineGrid
 				groups={loadedGroups}
 				contentWidth={contentWidth}

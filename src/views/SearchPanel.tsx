@@ -70,7 +70,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({contentWidth}) => {
 					isEmpty={!activeQuery || groups.length === 0}
 					loadingText="Searching…"
 					emptyText={!activeQuery ? 'Tap a face or type to search' : 'No results found.'}
-					className={css.state}
 				>
 					<TimelineGrid
 						groups={groups}

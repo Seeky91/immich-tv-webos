@@ -45,7 +45,6 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 			isEmpty={!album}
 			loadingText="Loading…"
 			emptyText=""
-			className={css.state}
 		>
 			{album && (
 				<Container className={css.view}>

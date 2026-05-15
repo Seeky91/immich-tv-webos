@@ -1,5 +1,6 @@
 import React from 'react';
 import {presentError} from '../utils/presentError';
+import css from './QueryStateView.module.less';
 
 interface QueryStateViewProps {
 	isLoading: boolean;
@@ -22,9 +23,10 @@ export const QueryStateView: React.FC<QueryStateViewProps> = ({
 	className,
 	children,
 }) => {
-	if (isLoading) return <div className={className}>{loadingText}</div>;
-	if (error) return <div className={className}>{errorText ?? presentError(error)}</div>;
-	if (isEmpty) return <div className={className}>{emptyText}</div>;
+	const stateClass = className ? `${css.state} ${className}` : css.state;
+	if (isLoading) return <div className={stateClass}>{loadingText}</div>;
+	if (error) return <div className={stateClass}>{errorText ?? presentError(error)}</div>;
+	if (isEmpty) return <div className={stateClass}>{emptyText}</div>;
 	return <>{children}</>;
 };
 
