@@ -57,7 +57,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 
 	return (
 		<ViewerContainer spotlightId={VIEWER_SPOTLIGHT_ID} spotlightRestrict="self-only" className={css.viewerOverlay}>
-			<div className={css.viewerContent}>{isVideo ? <VideoPlayer src={mediaUrl} /> : <img src={mediaUrl} alt="" className={css.viewerImage} />}</div>
+			<div className={css.viewerContent}>{isVideo ? <VideoPlayer src={mediaUrl} /> : <img src={mediaUrl} alt="" className={css.viewerMedia} />}</div>
 			<MediaControls
 				currentIndex={currentIndex}
 				totalCount={totalCount}
