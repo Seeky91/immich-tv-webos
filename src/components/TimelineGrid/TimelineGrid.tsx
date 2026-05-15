@@ -72,7 +72,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	});
 
 	useEffect(() => {
-		if (!pagination || !viewer.state?.isOpen) return;
+		if (!pagination || !viewer.state) return;
 		if (!pagination.hasNextPage || pagination.isFetchingNextPage) return;
 		if (viewer.state.assetIndex >= totalCount - MEDIA_VIEWER_PREFETCH_THRESHOLD) {
 			pagination.fetchNextPage();
@@ -128,7 +128,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 					style={style}
 				/>
 			</ErrorBoundary>
-			{viewer.state?.isOpen && (
+			{viewer.state && (
 				<ErrorBoundary>
 					<MediaViewer
 						getAssetAt={getAssetAt}

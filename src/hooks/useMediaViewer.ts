@@ -1,11 +1,10 @@
 import {useCallback, useState} from 'react';
 
-export interface ViewerState {
-	isOpen: boolean;
+interface ViewerState {
 	assetIndex: number;
 }
 
-export interface MediaViewerControls {
+interface MediaViewerControls {
 	state: ViewerState | null;
 	isOpen: boolean;
 	open: (index: number) => void;
@@ -17,7 +16,7 @@ export const useMediaViewer = (totalAssets: number): MediaViewerControls => {
 	const [state, setState] = useState<ViewerState | null>(null);
 
 	const open = useCallback((index: number) => {
-		setState({isOpen: true, assetIndex: index});
+		setState({assetIndex: index});
 	}, []);
 
 	const close = useCallback(() => setState(null), []);
@@ -36,5 +35,5 @@ export const useMediaViewer = (totalAssets: number): MediaViewerControls => {
 		[totalAssets]
 	);
 
-	return {state, isOpen: !!state?.isOpen, open, close, navigate};
+	return {state, isOpen: state !== null, open, close, navigate};
 };
