@@ -1,8 +1,8 @@
 import React, {useCallback, useState} from 'react';
 import Input from '@enact/sandstone/Input';
-import Spinner from '@enact/sandstone/Spinner';
 import ri from '@enact/ui/resolution';
 import {PeopleRibbon} from '../components/PeopleRibbon/PeopleRibbon';
+import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {usePeople} from '../hooks/usePeople';
 import {useSearch} from '../hooks/useSearch';
@@ -64,21 +64,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({contentWidth}) => {
 				/>
 			</div>
 			<div className={css.results}>
-				{isSearchLoading && <Spinner component="div" centered transparent />}
-				{!isSearchLoading && !!error && <div className={css.state}>Search failed.</div>}
-				{!activeQuery && !isSearchLoading && (
-					<div className={css.emptyState}>Tap a face or type to search</div>
-				)}
-				{activeQuery && !isSearchLoading && !error && groups.length === 0 && (
-					<div className={css.state}>No results found.</div>
-				)}
-				{groups.length > 0 && (
+				<QueryStateView
+					isLoading={isSearchLoading}
+					error={error}
+					isEmpty={!activeQuery || groups.length === 0}
+					loadingText="Searching…"
+					emptyText={!activeQuery ? 'Tap a face or type to search' : 'No results found.'}
+					className={css.state}
+				>
 					<TimelineGrid
 						groups={groups}
 						contentWidth={contentWidth}
 						style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
 					/>
-				)}
+				</QueryStateView>
 			</div>
 		</Container>
 	);

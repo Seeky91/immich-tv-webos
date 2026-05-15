@@ -44,7 +44,6 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 			error={error}
 			isEmpty={!album}
 			loadingText="Loading…"
-			errorText="Failed to load album."
 			emptyText=""
 			className={css.state}
 		>

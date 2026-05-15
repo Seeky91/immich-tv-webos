@@ -1,4 +1,5 @@
 import React from 'react';
+import {presentError} from '../utils/presentError';
 
 interface QueryStateViewProps {
 	isLoading: boolean;
@@ -16,13 +17,13 @@ export const QueryStateView: React.FC<QueryStateViewProps> = ({
 	error,
 	isEmpty = false,
 	loadingText = 'Loading…',
-	errorText = 'Something went wrong.',
+	errorText,
 	emptyText = 'Nothing here yet.',
 	className,
 	children,
 }) => {
 	if (isLoading) return <div className={className}>{loadingText}</div>;
-	if (error) return <div className={className}>{errorText}</div>;
+	if (error) return <div className={className}>{errorText ?? presentError(error)}</div>;
 	if (isEmpty) return <div className={className}>{emptyText}</div>;
 	return <>{children}</>;
 };

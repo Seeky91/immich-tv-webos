@@ -30,7 +30,6 @@ const AlbumsPanel: React.FC<AlbumsPanelProps> = ({contentWidth}) => {
 			error={error}
 			isEmpty={!albums?.length}
 			loadingText="Loading albums…"
-			errorText="Failed to load albums."
 			emptyText="No albums found."
 			className={css.state}
 		>
