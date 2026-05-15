@@ -6,7 +6,7 @@ interface LayoutRow {
 	height: number;
 }
 
-export interface AssetLayout {
+interface AssetLayout {
 	top: number;
 	left: number;
 	width: number;

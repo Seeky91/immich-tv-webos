@@ -12,7 +12,7 @@ import {ESTIMATED_ROW_HEIGHT_PX, MEDIA_VIEWER_PREFETCH_THRESHOLD} from '../../ut
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
-export interface TimelineGridPagination {
+interface TimelineGridPagination {
 	allBuckets: TimelineBucket[];
 	hasNextPage: boolean;
 	isFetchingNextPage: boolean;

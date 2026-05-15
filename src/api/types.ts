@@ -5,7 +5,7 @@ export enum AuthMethod {
 	API_KEY = 'API_KEY',
 }
 
-export interface BaseAuthConfig {
+interface BaseAuthConfig {
 	baseUrl: string;
 	method: AuthMethod;
 }
@@ -31,7 +31,7 @@ export interface ImmichAsset {
 	exifInfo?: ExifInfo;
 }
 
-export interface ExifInfo {
+interface ExifInfo {
 	exifImageWidth?: number;
 	exifImageHeight?: number;
 }

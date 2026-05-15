@@ -1,4 +1,4 @@
-export type AssetType = 'IMAGE' | 'VIDEO';
+type AssetType = 'IMAGE' | 'VIDEO';
 
 export interface TimelineAsset {
 	id: string;

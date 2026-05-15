@@ -8,11 +8,11 @@ type SpottableDivProps = DivProps & SpottableProps;
 
 export const SpottableDiv = Spottable('div') as React.ComponentType<SpottableDivProps>;
 
-export interface SpotlightContainerOptions {
+interface SpotlightContainerOptions {
 	enterTo?: 'last-focused' | 'default-element' | 'topmost';
 }
 
-export interface SpotlightContainerProps extends DivProps {
+interface SpotlightContainerProps extends DivProps {
 	spotlightId?: string;
 	spotlightRestrict?: 'none' | 'self-first' | 'self-only';
 	spotlightDisabled?: boolean;
