@@ -1,4 +1,7 @@
+import {useQuery, type QueryKey, type UseQueryOptions, type UseQueryResult} from '@tanstack/react-query';
 import {APIError} from '../api/client';
+import {useRepository} from '../domain/RepositoryContext';
+import type {PhotoRepository} from '../domain/PhotoRepository';
 
 /**
  * Shared TanStack Query configuration for asset-related queries.
@@ -21,3 +24,17 @@ export const ASSETS_QUERY_CONFIG = {
  * Each bucket represents one day of photos/videos.
  */
 export const BUCKETS_PER_PAGE = 3;
+
+export function useRepositoryQuery<T>(
+	queryKey: QueryKey,
+	fetcher: (r: PhotoRepository) => Promise<T>,
+	options?: Partial<Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn'>>,
+): UseQueryResult<T> {
+	const repository = useRepository();
+	return useQuery({
+		queryKey,
+		queryFn: () => fetcher(repository),
+		...ASSETS_QUERY_CONFIG,
+		...options,
+	});
+}

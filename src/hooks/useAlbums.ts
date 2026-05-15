@@ -1,12 +1,3 @@
-import {useQuery} from '@tanstack/react-query';
-import {ASSETS_QUERY_CONFIG} from './queryConfig';
-import {useRepository} from '../domain/RepositoryContext';
+import {useRepositoryQuery} from './queryConfig';
 
-export const useAlbums = () => {
-	const repository = useRepository();
-	return useQuery({
-		queryKey: ['albums'],
-		queryFn: () => repository.getAlbums(),
-		...ASSETS_QUERY_CONFIG,
-	});
-};
+export const useAlbums = () => useRepositoryQuery(['albums'], (r) => r.getAlbums());
