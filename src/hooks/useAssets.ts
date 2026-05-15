@@ -2,7 +2,7 @@ import {useQuery, useInfiniteQuery} from '@tanstack/react-query';
 import {ASSETS_QUERY_CONFIG, BUCKETS_PER_PAGE} from './queryConfig';
 import {useRepository} from '../domain/RepositoryContext';
 
-export const useBuckets = () => {
+const useBuckets = () => {
 	const repository = useRepository();
 	return useQuery({
 		queryKey: ['timeline-buckets'],
