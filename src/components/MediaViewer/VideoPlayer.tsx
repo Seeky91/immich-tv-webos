@@ -42,5 +42,5 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
 		};
 	}, []);
 
-	return <video ref={videoRef} src={src} controls className={css.viewerMedia} disableRemotePlayback={false} />;
+	return <video ref={videoRef} src={src} controls className={css.viewerMedia} />;
 };
