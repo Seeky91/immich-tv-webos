@@ -13,7 +13,6 @@ export interface BaseAuthConfig {
 export interface UserCredentialsConfig extends BaseAuthConfig {
 	method: typeof AuthMethod.USER_CREDENTIALS;
 	email: string;
-	password: string;
 	accessToken?: string;
 }
 

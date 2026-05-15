@@ -21,7 +21,6 @@ export const storedConfigToAuthConfig = (stored: StoredAuthConfig): AuthConfig =
 				baseUrl: stored.baseUrl,
 				method: AuthMethod.USER_CREDENTIALS,
 				email: stored.email!,
-				password: '' /* Never stored */,
 				accessToken: stored.accessToken,
 		  }
 		: {

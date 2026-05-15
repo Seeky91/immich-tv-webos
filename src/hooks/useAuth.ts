@@ -66,7 +66,6 @@ export const useAuth = () => {
 					baseUrl,
 					method: AuthMethod.USER_CREDENTIALS,
 					email,
-					password,
 				};
 				const tempClient = new APIClient(tempConfig);
 				const loginResponse = await tempClient.fetch<{accessToken: string}>('/auth/login', {
@@ -78,7 +77,6 @@ export const useAuth = () => {
 					baseUrl,
 					method: AuthMethod.USER_CREDENTIALS,
 					email,
-					password: '' /* Will not be stored */,
 					accessToken: loginResponse.accessToken,
 				};
 
