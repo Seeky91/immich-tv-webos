@@ -3,7 +3,7 @@ import ri from '@enact/ui/resolution';
 import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {useInfiniteTimeline} from '../hooks/useAssets';
-import {GRID_INSET_RIGHT_PX} from '../utils/constants';
+import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
 
 interface MainPanelProps {
 	contentWidth: number;
@@ -23,7 +23,7 @@ const MainPanel: React.FC<MainPanelProps> = ({contentWidth}) => {
 			<TimelineGrid
 				groups={loadedGroups}
 				contentWidth={contentWidth}
-				style={{paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
+				style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
 				pagination={pagination}
 			/>
 		</QueryStateView>
