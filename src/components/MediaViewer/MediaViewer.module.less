@@ -28,7 +28,11 @@
 
 // Hide Sandstone VideoPlayer's built-in back button — duplicates our MediaControls X.
 // The sentinel aria-label is set on the VideoPlayer.tsx side (HIDDEN_BACK_LABEL).
-.viewerMedia button[aria-label='immich-tv-internal-back-hidden'] {
+// :global() is required because:
+//   1. Sandstone renders the button as <div role="button"> (not <button>).
+//   2. The button lives in Sandstone's FloatingLayer portal, outside the .viewerMedia
+//      ancestor chain, so a CSS-Modules-scoped descendant selector never matches.
+:global([aria-label='immich-tv-internal-back-hidden']) {
 	display: none;
 }
 
