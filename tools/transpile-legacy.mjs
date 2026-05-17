@@ -1,13 +1,15 @@
 #!/usr/bin/env node
-// Transpiles dist/main.js down to webOS-compatible syntax (Chromium 79 / webOS 6.0+).
+// Transpiles dist/main.js down to webOS-compatible syntax (Chromium 68 / webOS 5.0+).
 // Enact CLI excludes most node_modules from babel-loader, so dependencies like
-// @tanstack/query-core ship modern syntax (??=, ??, ?.) into the bundle, which
-// older webOS versions cannot parse.
+// @tanstack/query-core ship modern syntax (??=, ??, ?., #privateField, …) into the
+// bundle, which older webOS versions cannot parse. Combined with the runtime
+// polyfills in src/polyfills.ts, this brings the supported floor down to LG TVs
+// from 2018 onward (OLED CX 2020 included).
 
 import { build, transform } from 'esbuild';
 import { readFileSync, existsSync } from 'node:fs';
 
-const TARGET = 'chrome79';
+const TARGET = 'chrome68';
 const BUNDLE = 'dist/main.js';
 
 if (!existsSync(BUNDLE)) {
