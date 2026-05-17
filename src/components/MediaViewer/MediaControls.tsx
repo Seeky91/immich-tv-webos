@@ -22,8 +22,8 @@ export const MediaControls: React.FC<MediaControlsProps> = React.memo(({currentI
 				</span>
 			</div>
 
-			{canGoPrev && <Button icon="arrowlargeleft" onClick={onPrev} className={`${css.navButton} ${css.navButtonLeft}`} />}
-			{canGoNext && <Button icon="arrowlargeright" onClick={onNext} className={`${css.navButton} ${css.navButtonRight}`} />}
+			{canGoPrev && <Button icon="arrowlargeleft" size="large" onClick={onPrev} className={`${css.navButton} ${css.navButtonLeft}`} />}
+			{canGoNext && <Button icon="arrowlargeright" size="large" onClick={onNext} className={`${css.navButton} ${css.navButtonRight}`} />}
 		</>
 	);
 });
