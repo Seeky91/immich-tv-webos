@@ -26,6 +26,12 @@
 	object-fit: contain;
 }
 
+// Hide Sandstone VideoPlayer's built-in back button — duplicates our MediaControls X.
+// The sentinel aria-label is set on the VideoPlayer.tsx side (HIDDEN_BACK_LABEL).
+.viewerMedia button[aria-label='immich-tv-internal-back-hidden'] {
+	display: none;
+}
+
 .topBar {
 	position: absolute;
 	top: 0;
