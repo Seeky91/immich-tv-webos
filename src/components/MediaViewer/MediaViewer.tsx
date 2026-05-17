@@ -33,7 +33,12 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 		if (currentIndex < totalCount - 1) onNavigate('next');
 	}, [onNavigate, currentIndex, totalCount]);
 
-	useWebOSKeys({onBack: onClose, onArrowLeft: handlePrev, onArrowRight: handleNext});
+	const isVideo = asset?.type === 'VIDEO';
+	useWebOSKeys({
+		onBack: onClose,
+		onArrowLeft: isVideo ? undefined : handlePrev,
+		onArrowRight: isVideo ? undefined : handleNext,
+	});
 
 	useEffect(() => {
 		Spotlight.focus(VIEWER_SPOTLIGHT_ID);
@@ -52,7 +57,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 
 	if (!asset) return null;
 
-	const isVideo = asset.type === 'VIDEO';
 	const mediaUrl = isVideo ? repository.videoPlaybackUrl(asset.id) : repository.previewUrl(asset.id);
 
 	return (
