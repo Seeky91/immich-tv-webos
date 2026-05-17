@@ -34,7 +34,7 @@
 ## 📦 Installation & Development
 
 ### Compatibility
-Tested on webOS 6.0+ (LG TVs from 2021 onward). Earlier webOS versions are not currently supported — they ship older Chromium engines that lack runtime APIs the bundle depends on.
+Tested on webOS 5.0+ (LG TVs from 2018 onward, including the OLED CX 2020 line). Earlier firmwares (webOS 4 / Chromium 53 and below) are not currently supported — they ship Chromium engines too old for our minimum runtime polyfill set.
 
 ### Cross-origin requests (CORS)
 The app loads from `file://` and fetches the Immich API cross-origin. Immich does not ship CORS headers by default, so without help every browser blocks the response.
