@@ -53,7 +53,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	if (!asset) return null;
 
 	const isVideo = asset.type === 'VIDEO';
-	const mediaUrl = isVideo ? repository.originalUrl(asset.id) : repository.previewUrl(asset.id);
+	const mediaUrl = isVideo ? repository.videoPlaybackUrl(asset.id) : repository.previewUrl(asset.id);
 
 	return (
 		<ViewerContainer spotlightId={VIEWER_SPOTLIGHT_ID} spotlightRestrict="self-only" className={css.viewerOverlay}>
