@@ -1,46 +1,26 @@
-import React, {useRef, useEffect} from 'react';
+import React from 'react';
+import {VideoPlayer as SandstoneVideoPlayer} from '@enact/sandstone/VideoPlayer';
 import css from './MediaViewer.module.less';
 
 interface VideoPlayerProps {
 	src: string;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => {
-	const videoRef = useRef<HTMLVideoElement>(null);
-
-	useEffect(() => {
-		const video = videoRef.current;
-		if (!video) return;
-
-		const handleError = () => {
-			console.error('Video playback error:', video.error);
-		};
-
-		const handleLoadedData = () => {
-			video.play().catch((err) => {
-				console.warn('Video autoplay failed:', err);
-			});
-		};
-
-		video.addEventListener('error', handleError);
-		video.addEventListener('loadeddata', handleLoadedData);
-
-		return () => {
-			video.removeEventListener('error', handleError);
-			video.removeEventListener('loadeddata', handleLoadedData);
-		};
-	}, [src]);
-
-	useEffect(() => {
-		const video = videoRef.current;
-		return () => {
-			if (video) {
-				video.pause();
-				video.src = '';
-				video.load();
-			}
-		};
-	}, []);
-
-	return <video ref={videoRef} src={src} controls className={css.viewerMedia} />;
+// Sandstone exposes VideoPlayer with a Slottable-only typing — `autoCloseTimeout`,
+// `jumpBy`, `noAutoPlay`, `spotlightDisabled` and friends live on VideoPlayerBaseProps
+// and are forwarded at runtime through Sandstone's HOC chain. Spread with an `as any`
+// cast is the established pattern in this project (see SearchPanel onComplete).
+const PLAYER_PROPS = {
+	autoCloseTimeout: 5000,
+	jumpBy: 10,
+	noAutoPlay: false,
+	spotlightDisabled: false,
 };
+
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => (
+	<SandstoneVideoPlayer {...(PLAYER_PROPS as any)} className={css.viewerMedia}>
+		<source src={src} type="video/mp4" />
+	</SandstoneVideoPlayer>
+);
+
+VideoPlayer.displayName = 'VideoPlayer';
