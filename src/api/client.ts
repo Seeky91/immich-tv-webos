@@ -97,4 +97,9 @@ export class APIClient {
 		const {name, value} = this.getMediaAuthParam();
 		return `${this.baseUrl}/assets/${assetId}/original?${name}=${value}`;
 	}
+
+	public getVideoPlaybackUrl(assetId: string): string {
+		const {name, value} = this.getMediaAuthParam();
+		return `${this.baseUrl}/assets/${assetId}/video/playback?${name}=${value}`;
+	}
 }

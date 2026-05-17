@@ -66,6 +66,7 @@
 		"react-dom": "^18.2.0"
 	},
 	"devDependencies": {
+		"@types/jest": "^30.0.0",
 		"@types/react": "^18.2.0",
 		"@types/react-dom": "^18.2.0",
 		"baseline-browser-mapping": "^2.9.14",

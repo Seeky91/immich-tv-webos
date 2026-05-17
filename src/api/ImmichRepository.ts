@@ -124,6 +124,10 @@ export class ImmichRepository implements PhotoRepository {
 		return this.client.getAssetUrl(assetId);
 	}
 
+	public videoPlaybackUrl(assetId: string): string {
+		return this.client.getVideoPlaybackUrl(assetId);
+	}
+
 	public faceUrl(personId: string): string {
 		return this.client.getFaceThumbnailUrl(personId);
 	}
