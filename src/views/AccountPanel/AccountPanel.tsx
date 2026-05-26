@@ -1,7 +1,9 @@
 import React, {useCallback, useState} from 'react';
+import Button from '@enact/sandstone/Button';
 import {AccountGrid} from './AccountGrid';
 import {AuthForm, type AuthFormPayload, type AuthSubmitResult} from '../../components/AuthForm/AuthForm';
 import type {Account} from '../../utils/accountsStore';
+import bannerImage from '../../assets/immich-banner.png';
 import css from './AccountPanel.module.less';
 
 export type AccountPanelMode = 'first-launch' | 'overlay';
@@ -56,9 +58,10 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 					<AuthForm initialUrl="" onSubmit={handleSubmit} />
 				) : (
 					<>
+						<img src={bannerImage} alt="Immich" className={css.banner} />
 						<h2 className={css.welcomeTitle}>Welcome to Immich for TV</h2>
 						<p className={css.welcomeSub}>Add your Immich account to start browsing.</p>
-						<button className={css.welcomeCta} onClick={goForm}>+ Add account</button>
+						<Button size="large" onClick={goForm} backgroundOpacity="opaque">+ Add account</Button>
 					</>
 				)}
 			</div>

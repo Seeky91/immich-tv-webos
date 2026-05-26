@@ -1,6 +1,5 @@
 .form {
-	max-width: 36rem;
-	margin: 0 auto;
+	/* full width — let Sandstone TabLayout size itself */
 }
 
 .backBtn {
@@ -9,14 +8,25 @@
 	left: 1.5rem;
 }
 
-.tabs {
+.layout {
+	height: 720px;
+}
+
+.tabContent {
 	display: flex;
-	justify-content: center;
-	margin-bottom: 1.5rem;
+	flex-direction: column;
+	height: 100%;
+	padding-left: 20px;
 }
 
 .field {
-	margin-bottom: 1.25rem;
+	margin-bottom: 24px;
+	max-width: 36rem;
+	width: 100%;
+
+	> * {
+		width: 100%;
+	}
 }
 
 .label {

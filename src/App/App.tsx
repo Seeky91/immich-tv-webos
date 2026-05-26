@@ -1,4 +1,5 @@
 import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
+import Panels from '@enact/sandstone/Panels';
 import {QueryCache, QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import React, {useCallback, useMemo, useState} from 'react';
 
@@ -78,16 +79,18 @@ const AppBase: React.FC = () => {
 	if (accounts.length === 0) {
 		return (
 			<div className={css.app}>
-				<AccountPanel
-					mode="first-launch"
-					accounts={accounts}
-					activeAccountId={activeAccountId}
-					defaultAccountId={defaultAccountId}
-					onSwitch={handleSwitch}
-					onSetDefault={setAsDefault}
-					onRemove={removeAccount}
-					onAddAccount={handleAddAccount}
-				/>
+				<Panels>
+					<AccountPanel
+						mode="first-launch"
+						accounts={accounts}
+						activeAccountId={activeAccountId}
+						defaultAccountId={defaultAccountId}
+						onSwitch={handleSwitch}
+						onSetDefault={setAsDefault}
+						onRemove={removeAccount}
+						onAddAccount={handleAddAccount}
+					/>
+				</Panels>
 			</div>
 		);
 	}
@@ -110,16 +113,18 @@ const AppBase: React.FC = () => {
 						{validationError}
 					</div>
 				)}
-				<AccountPanel
-					mode="overlay"
-					accounts={accounts}
-					activeAccountId={activeAccountId}
-					defaultAccountId={defaultAccountId}
-					onSwitch={handleSwitch}
-					onSetDefault={setAsDefault}
-					onRemove={removeAccount}
-					onAddAccount={handleAddAccount}
-				/>
+				<Panels>
+					<AccountPanel
+						mode="overlay"
+						accounts={accounts}
+						activeAccountId={activeAccountId}
+						defaultAccountId={defaultAccountId}
+						onSwitch={handleSwitch}
+						onSetDefault={setAsDefault}
+						onRemove={removeAccount}
+						onAddAccount={handleAddAccount}
+					/>
+				</Panels>
 			</div>
 		);
 	}

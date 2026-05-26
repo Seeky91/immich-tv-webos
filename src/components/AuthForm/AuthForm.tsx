@@ -85,70 +85,74 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 			) : null}
 
 			<div className={css.form}>
-				<TabLayout orientation="vertical">
+				<TabLayout className={css.layout} orientation="vertical">
 					<Tab title="Email" tabKey="creds">
-						<div className={css.field}>
-							<label className={css.label}>Server URL</label>
-							<UrlInput
-								value={url}
-								onChange={setUrl}
-								disabled={submitting}
-								placeholder="http://192.168.1.42:2283 or https://immich.mydomain.com"
-								autoFocus
-							/>
-						</div>
-						<div className={css.field}>
-							<label className={css.label}>Email</label>
-							<Input
-								size="large"
-								value={email}
-								onChange={handleEmailChange}
-								placeholder="Email"
-								disabled={submitting}
-							/>
-						</div>
-						<div className={css.field}>
-							<label className={css.label}>Password</label>
-							<Input
-								size="large"
-								type="password"
-								value={password}
-								onChange={handlePasswordChange}
-								placeholder="Password"
-								disabled={submitting}
-							/>
-						</div>
-						<div className={css.actions}>
-							<Button onClick={submitCreds} disabled={submitting} backgroundOpacity="opaque">
-								{submitting ? 'Connecting…' : 'Connect'}
-							</Button>
+						<div className={css.tabContent}>
+							<div className={css.field}>
+								<label className={css.label}>Server URL</label>
+								<UrlInput
+									value={url}
+									onChange={setUrl}
+									disabled={submitting}
+									placeholder="http://192.168.1.42:2283 or https://immich.mydomain.com"
+									autoFocus
+								/>
+							</div>
+							<div className={css.field}>
+								<label className={css.label}>Email</label>
+								<Input
+									size="large"
+									value={email}
+									onChange={handleEmailChange}
+									placeholder="Email"
+									disabled={submitting}
+								/>
+							</div>
+							<div className={css.field}>
+								<label className={css.label}>Password</label>
+								<Input
+									size="large"
+									type="password"
+									value={password}
+									onChange={handlePasswordChange}
+									placeholder="Password"
+									disabled={submitting}
+								/>
+							</div>
+							<div className={css.actions}>
+								<Button onClick={submitCreds} disabled={submitting} backgroundOpacity="opaque">
+									{submitting ? 'Connecting…' : 'Connect'}
+								</Button>
+							</div>
 						</div>
 					</Tab>
 
 					<Tab title="API Key" tabKey="apikey">
-						<div className={css.field}>
-							<label className={css.label}>Server URL</label>
-							<UrlInput
-								value={url}
-								onChange={setUrl}
-								disabled={submitting}
-								placeholder="http://192.168.1.42:2283"
-							/>
-						</div>
-						<div className={css.field}>
-							<label className={css.label}>API Key</label>
-							<Input
-								size="large"
-								value={apiKey}
-								onChange={handleApiKeyChange}
-								placeholder="API Key"
-								disabled={submitting}
-							/>
-						</div>
-						<div className={css.actions}>
-							<Button onClick={submitApi} disabled={submitting} backgroundOpacity="opaque">
-								{submitting ? 'Connecting…' : 'Connect'}
-							</Button>
+						<div className={css.tabContent}>
+							<div className={css.field}>
+								<label className={css.label}>Server URL</label>
+								<UrlInput
+									value={url}
+									onChange={setUrl}
+									disabled={submitting}
+									placeholder="http://192.168.1.42:2283"
+								/>
+							</div>
+							<div className={css.field}>
+								<label className={css.label}>API Key</label>
+								<Input
+									size="large"
+									value={apiKey}
+									onChange={handleApiKeyChange}
+									placeholder="API Key"
+									disabled={submitting}
+								/>
+							</div>
+							<div className={css.actions}>
+								<Button onClick={submitApi} disabled={submitting} backgroundOpacity="opaque">
+									{submitting ? 'Connecting…' : 'Connect'}
+								</Button>
+							</div>
 						</div>
 					</Tab>
 				</TabLayout>
