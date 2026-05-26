@@ -69,18 +69,31 @@ export function readAccountsStore(): AccountsStore {
 
 	const legacyRaw = localStorage.getItem(LEGACY_KEY);
 	if (legacyRaw) {
+		let legacy: LegacyConfig | null = null;
 		try {
-			const legacy = JSON.parse(legacyRaw) as LegacyConfig;
+			legacy = JSON.parse(legacyRaw) as LegacyConfig;
+		} catch (e) {
+			console.error('[accountsStore] legacy config is unparseable, discarding', e);
+			localStorage.removeItem(LEGACY_KEY);
+		}
+
+		if (legacy) {
 			const migrated = migrateLegacy(legacy);
 			if (migrated) {
-				writeAccountsStore(migrated);
-				localStorage.removeItem(LEGACY_KEY);
-				return migrated;
+				try {
+					writeAccountsStore(migrated);
+					localStorage.removeItem(LEGACY_KEY);
+					return migrated;
+				} catch (e) {
+					console.error('[accountsStore] failed to write migrated store, keeping legacy key', e);
+					// Do NOT remove legacy. Return the in-memory migrated store so the session works;
+					// the next boot will retry the migration.
+					return migrated;
+				}
 			}
-		} catch (e) {
-			console.error('[accountsStore] failed to migrate legacy config', e);
+			// Valid JSON but no usable account — discard.
+			localStorage.removeItem(LEGACY_KEY);
 		}
-		localStorage.removeItem(LEGACY_KEY);
 	}
 
 	return emptyStore();

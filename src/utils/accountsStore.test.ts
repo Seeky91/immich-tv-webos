@@ -86,6 +86,32 @@ describe('readAccountsStore', () => {
 		const store = readAccountsStore();
 		expect(store.accounts).toEqual([]);
 	});
+
+	test('discards valid-but-incomplete legacy entry (no baseUrl) and returns empty store', () => {
+		localStorage.setItem(LEGACY_KEY, JSON.stringify({method: AuthMethod.API_KEY}));
+		const store = readAccountsStore();
+		expect(store.accounts).toEqual([]);
+		expect(localStorage.getItem(LEGACY_KEY)).toBeNull();
+	});
+
+	test('keeps legacy key when writeAccountsStore throws (e.g. QuotaExceededError)', () => {
+		localStorage.setItem(
+			LEGACY_KEY,
+			JSON.stringify({baseUrl: 'http://k', method: AuthMethod.API_KEY, apiKey: 'kk'}),
+		);
+		const spy = jest.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+			throw new Error('QuotaExceededError');
+		});
+		try {
+			const store = readAccountsStore();
+			// In-memory migration still returns the migrated store so the current session can proceed.
+			expect(store.accounts).toHaveLength(1);
+			// Legacy key MUST still be present for the next boot to retry.
+			expect(localStorage.getItem(LEGACY_KEY)).not.toBeNull();
+		} finally {
+			spy.mockRestore();
+		}
+	});
 });
 
 describe('mutators', () => {
