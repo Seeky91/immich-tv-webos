@@ -98,6 +98,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 							/>
 						</div>
 						<div className={css.field}>
+							<label className={css.label}>Email</label>
 							<Input
 								size="large"
 								value={email}

@@ -64,8 +64,8 @@ jest.mock('@enact/sandstone/TabLayout', () => {
 describe('AuthForm', () => {
 	test('renders both tabs', () => {
 		render(<AuthForm initialUrl="" onSubmit={async () => ({success: true})} onBack={() => {}} />);
-		expect(screen.getByText(/Email/)).toBeTruthy();
-		expect(screen.getByText(/API Key/)).toBeTruthy();
+		expect(screen.getByRole('tab', {name: /Email/})).toBeTruthy();
+		expect(screen.getByRole('tab', {name: /API Key/})).toBeTruthy();
 	});
 
 	test('pre-fills URL from initialUrl prop', () => {
