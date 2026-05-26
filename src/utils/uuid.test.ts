@@ -14,10 +14,12 @@ describe('randomId', () => {
 
 	test('falls back to Math.random when crypto.randomUUID is missing', () => {
 		const realCrypto = globalThis.crypto;
-		// @ts-expect-error — intentional removal for fallback test
 		globalThis.crypto = {} as Crypto;
-		const id = randomId();
-		expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-		globalThis.crypto = realCrypto;
+		try {
+			const id = randomId();
+			expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+		} finally {
+			globalThis.crypto = realCrypto;
+		}
 	});
 });
