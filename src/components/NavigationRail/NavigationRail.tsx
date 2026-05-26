@@ -7,7 +7,9 @@ import css from './NavigationRail.module.less';
 interface NavigationRailProps {
 	activeView: View;
 	onNavigate: (view: View) => void;
-	onSignOut: () => void;
+	onOpenAccount: () => void;
+	accountLetter: string;
+	accountGradient: string;
 }
 
 const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
@@ -18,7 +20,7 @@ const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
 
 const RailContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
-export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({activeView, onNavigate, onSignOut}) => {
+export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({activeView, onNavigate, onOpenAccount, accountLetter, accountGradient}) => {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,11 +74,11 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 			))}
 			<div className={css.spacer} />
 			<div className={css.divider} />
-			<button className={css.navItem} onClick={onSignOut}>
-				<div className={css.iconContainer}>
-					<Icon>logout</Icon>
+			<button className={css.navItem} onClick={onOpenAccount}>
+				<div className={css.iconContainer} style={{background: accountGradient, color: 'white'}}>
+					{accountLetter}
 				</div>
-				<span className={css.label}>Sign Out</span>
+				<span className={css.label}>Account</span>
 			</button>
 		</RailContainer>
 	);

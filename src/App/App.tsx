@@ -1,13 +1,14 @@
-import Panels from '@enact/sandstone/Panels';
 import ThemeDecorator from '@enact/sandstone/ThemeDecorator';
 import {QueryCache, QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import React, {useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 
-import {useAuth} from '../hooks/useAuth';
+import {useAccounts} from '../hooks/useAccounts';
 import {RepositoryProvider} from '../domain/RepositoryContext';
 import {APIError} from '../api/client';
 import AppLayout from '../views/AppLayout';
-import LoginPanel from '../views/LoginPanel';
+import {AccountPanel} from '../views/AccountPanel/AccountPanel';
+import {deriveLabel, pickGradient} from '../utils/accountVisual';
+import type {AuthFormPayload, AuthSubmitResult} from '../components/AuthForm/AuthForm';
 
 import './attachErrorHandler';
 import '../styles/tokens.less';
@@ -15,45 +16,142 @@ import '../styles/tokens.less';
 import css from './App.module.less';
 
 const AppBase: React.FC = () => {
-	const {authConfig, isAuthenticated, isValidating, repository, validationError, loginWithApiKey, loginWithCredentials, logout} = useAuth();
+	const {
+		accounts,
+		activeAccountId,
+		defaultAccountId,
+		repository,
+		isValidating,
+		validationError,
+		addAccount,
+		removeAccount,
+		switchTo,
+		setAsDefault,
+	} = useAccounts();
 
-	const queryClient = useMemo(
+	const [overlayOpen, setOverlayOpen] = useState(false);
+
+	const openOverlay = useCallback(() => setOverlayOpen(true), []);
+	const closeOverlay = useCallback(() => setOverlayOpen(false), []);
+
+	const activeAccount = accounts.find(a => a.id === activeAccountId) ?? null;
+
+	const accountLetter = activeAccount
+		? (deriveLabel(activeAccount).match(/\S/)?.[0] ?? '?').toUpperCase()
+		: '?';
+	const accountGradient = activeAccount ? pickGradient(activeAccount.id) : '#333';
+
+	const handleSwitch = useCallback(
+		(id: string) => {
+			switchTo(id);
+			closeOverlay();
+		},
+		[switchTo, closeOverlay],
+	);
+
+	const handleAddAccount = useCallback(
+		async (payload: AuthFormPayload): Promise<AuthSubmitResult> => {
+			const result = await addAccount(payload);
+			if (result.success) closeOverlay();
+			return result;
+		},
+		[addAccount, closeOverlay],
+	);
+
+	const makeQueryClient = useCallback(
 		() =>
 			new QueryClient({
 				queryCache: new QueryCache({
 					onError: (error) => {
-						if (error instanceof APIError && error.status === 401) logout();
+						if (error instanceof APIError && error.status === 401) openOverlay();
 					},
 				}),
 			}),
-		[logout]
+		// Re-create only when activeAccountId changes (cache reset on account switch).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[activeAccountId],
 	);
 
-	if (!isAuthenticated || !repository) {
-		// Only show <Loading> during initial validation of *stored* credentials.
-		// During user-initiated login submission, keep LoginPanel mounted so its inputs and
-		// any error message survive the round-trip (the panel shows its own "Connecting…" state).
-		if (isValidating && authConfig) {
-			return (
-				<div className={css.app} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-					<p>Loading…</p>
-				</div>
-			);
-		}
+	const queryClient = useMemo(makeQueryClient, [makeQueryClient]);
+
+	// Branch 1: no accounts at all → first-launch flow
+	if (accounts.length === 0) {
 		return (
 			<div className={css.app}>
-				<Panels>
-					<LoginPanel isValidating={isValidating} validationError={validationError} onLoginWithApiKey={loginWithApiKey} onLoginWithCredentials={loginWithCredentials} />
-				</Panels>
+				<AccountPanel
+					mode="first-launch"
+					accounts={accounts}
+					activeAccountId={activeAccountId}
+					defaultAccountId={defaultAccountId}
+					onSwitch={handleSwitch}
+					onSetDefault={setAsDefault}
+					onRemove={removeAccount}
+					onAddAccount={handleAddAccount}
+				/>
 			</div>
 		);
 	}
 
+	// Branch 2: accounts exist but no repository yet
+	if (isValidating && !repository && !overlayOpen) {
+		return (
+			<div className={css.app} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+				<p>Loading…</p>
+			</div>
+		);
+	}
+
+	if (!repository) {
+		// 401 on boot or validation failed — force account switch/re-auth
+		return (
+			<div className={css.app}>
+				{validationError && (
+					<div style={{position: 'fixed', top: '1rem', right: '1rem', color: '#ff9999', background: 'rgba(40,0,0,0.8)', padding: '0.5rem 1rem', borderRadius: '0.3rem', zIndex: 200}}>
+						{validationError}
+					</div>
+				)}
+				<AccountPanel
+					mode="overlay"
+					accounts={accounts}
+					activeAccountId={activeAccountId}
+					defaultAccountId={defaultAccountId}
+					onSwitch={handleSwitch}
+					onSetDefault={setAsDefault}
+					onRemove={removeAccount}
+					onAddAccount={handleAddAccount}
+				/>
+			</div>
+		);
+	}
+
+	// Branch 3: repository ready
 	return (
 		<QueryClientProvider client={queryClient}>
-			<RepositoryProvider repository={repository}>
+			<RepositoryProvider key={activeAccountId ?? undefined} repository={repository}>
 				<div className={css.app}>
-					<AppLayout onSignOut={logout} />
+					{validationError && (
+						<div style={{position: 'fixed', top: '1rem', right: '1rem', color: '#ff9999', background: 'rgba(40,0,0,0.8)', padding: '0.5rem 1rem', borderRadius: '0.3rem', zIndex: 200}}>
+							{validationError}
+						</div>
+					)}
+					<AppLayout
+						onOpenAccount={openOverlay}
+						accountLetter={accountLetter}
+						accountGradient={accountGradient}
+					/>
+					{overlayOpen && (
+						<AccountPanel
+							mode="overlay"
+							accounts={accounts}
+							activeAccountId={activeAccountId}
+							defaultAccountId={defaultAccountId}
+							onSwitch={handleSwitch}
+							onSetDefault={setAsDefault}
+							onRemove={removeAccount}
+							onAddAccount={handleAddAccount}
+							onCloseOverlay={closeOverlay}
+						/>
+					)}
 				</div>
 			</RepositoryProvider>
 		</QueryClientProvider>

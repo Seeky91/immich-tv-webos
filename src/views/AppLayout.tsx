@@ -9,12 +9,14 @@ import type {View} from '../types/navigation';
 import css from './AppLayout.module.less';
 
 interface AppLayoutProps {
-	onSignOut: () => void;
+	onOpenAccount: () => void;
+	accountLetter: string;
+	accountGradient: string;
 }
 
 const ViewContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
-const AppLayout: React.FC<AppLayoutProps> = ({onSignOut}) => {
+const AppLayout: React.FC<AppLayoutProps> = ({onOpenAccount, accountLetter, accountGradient}) => {
 	const [activeView, setActiveView] = useState<View>('photos');
 	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
 
@@ -29,7 +31,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({onSignOut}) => {
 			<NavigationRail
 				activeView={activeView}
 				onNavigate={setActiveView}
-				onSignOut={onSignOut}
+				onOpenAccount={onOpenAccount}
+				accountLetter={accountLetter}
+				accountGradient={accountGradient}
 			/>
 			{/*
 				MainPanel reste mounté (CSS-hidden) pour préserver la position de scroll de la VirtualList
