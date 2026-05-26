@@ -52,6 +52,16 @@
 		"build/*",
 		"dist/*"
 	],
+	"jest": {
+		"moduleNameMapper": {
+			"^react$": "<rootDir>/node_modules/react/index.js",
+			"^react/jsx-runtime$": "<rootDir>/node_modules/react/jsx-runtime.js",
+			"^react/jsx-dev-runtime$": "<rootDir>/node_modules/react/jsx-dev-runtime.js",
+			"^react-dom$": "<rootDir>/node_modules/react-dom/index.js",
+			"^react-dom/client$": "<rootDir>/node_modules/react-dom/client.js",
+			"^@testing-library/react$": "<rootDir>/node_modules/@testing-library/react/dist/index.js"
+		}
+	},
 	"dependencies": {
 		"@enact/core": "^4.7.8",
 		"@enact/i18n": "^4.7.8",
