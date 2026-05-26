@@ -35,14 +35,14 @@ export type AddAccountInput = AddAccountCredentialsInput | AddAccountApiKeyInput
 
 const accountToConfig = (acc: Account): UserCredentialsConfig | ApiKeyConfig => {
 	if (acc.method === AuthMethod.API_KEY) {
-		// apiKey is guaranteed present for API_KEY accounts by construction
-		return {baseUrl: acc.baseUrl, method: AuthMethod.API_KEY, apiKey: acc.apiKey as string};
+		if (!acc.apiKey) throw new Error(`[useAccounts] API_KEY account ${acc.id} has no apiKey`);
+		return {baseUrl: acc.baseUrl, method: AuthMethod.API_KEY, apiKey: acc.apiKey};
 	}
+	if (!acc.email) throw new Error(`[useAccounts] USER_CREDENTIALS account ${acc.id} has no email`);
 	return {
 		baseUrl: acc.baseUrl,
 		method: AuthMethod.USER_CREDENTIALS,
-		// email is guaranteed present for USER_CREDENTIALS accounts by construction
-		email: acc.email as string,
+		email: acc.email,
 		accessToken: acc.accessToken,
 	};
 };
@@ -51,12 +51,13 @@ const resolveActiveId = (store: AccountsStore): string | null =>
 	store.defaultAccountId ?? store.lastActiveAccountId ?? store.accounts[0]?.id ?? null;
 
 export const useAccounts = () => {
-	const [store, setStore] = useState<AccountsStore>(() => readAccountsStore());
-	const [activeAccountId, setActiveAccountId] = useState<string | null>(() =>
-		resolveActiveId(readAccountsStore()),
-	);
+	let _initial: AccountsStore | undefined;
+	const getInitial = () => (_initial ??= readAccountsStore());
+
+	const [store, setStore] = useState<AccountsStore>(getInitial);
+	const [activeAccountId, setActiveAccountId] = useState<string | null>(() => resolveActiveId(getInitial()));
 	const [repository, setRepository] = useState<PhotoRepository | null>(null);
-	const [isValidating, setIsValidating] = useState<boolean>(() => resolveActiveId(readAccountsStore()) !== null);
+	const [isValidating, setIsValidating] = useState<boolean>(() => resolveActiveId(getInitial()) !== null);
 	const [validationError, setValidationError] = useState('');
 
 	const persist = useCallback((next: AccountsStore) => {

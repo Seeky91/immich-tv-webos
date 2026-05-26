@@ -92,6 +92,31 @@ describe('removeAccount', () => {
 	});
 });
 
+describe('switchTo', () => {
+	const a: Account = {id: 'a', baseUrl: 'http://a', method: AuthMethod.API_KEY, apiKey: 'ka', addedAt: 1};
+	const b: Account = {id: 'b', baseUrl: 'http://b', method: AuthMethod.API_KEY, apiKey: 'kb', addedAt: 2};
+
+	test('changes activeAccountId and re-validates', async () => {
+		seed([a, b], {lastActiveAccountId: 'a'});
+		const {result} = renderHook(() => useAccounts());
+		await waitFor(() => expect(result.current.activeAccountId).toBe('a'));
+		act(() => result.current.switchTo('b'));
+		await waitFor(() => expect(result.current.activeAccountId).toBe('b'));
+		expect(result.current.repository).not.toBeNull();
+	});
+
+	test('on 401 keeps the new id but clears repository', async () => {
+		seed([a, b], {lastActiveAccountId: 'a'});
+		const {result} = renderHook(() => useAccounts());
+		await waitFor(() => expect(result.current.activeAccountId).toBe('a'));
+		mockValidate.mockResolvedValueOnce(false);
+		act(() => result.current.switchTo('b'));
+		await waitFor(() => expect(result.current.isValidating).toBe(false));
+		expect(result.current.activeAccountId).toBe('b');
+		expect(result.current.repository).toBeNull();
+	});
+});
+
 describe('setAsDefault', () => {
 	const a: Account = {id: 'a', baseUrl: 'http://a', method: AuthMethod.API_KEY, apiKey: 'ka', addedAt: 1};
 	const b: Account = {id: 'b', baseUrl: 'http://b', method: AuthMethod.API_KEY, apiKey: 'kb', addedAt: 2};
