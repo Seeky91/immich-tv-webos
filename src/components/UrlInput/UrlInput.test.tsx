@@ -37,6 +37,12 @@ describe('UrlInput', () => {
 		expect(onChange).toHaveBeenCalledWith('');
 	});
 
+	test('clear button is disabled when value is empty', () => {
+		render(<UrlInput value="" onChange={() => {}} />);
+		const clearBtn = screen.getByLabelText('Clear');
+		expect(clearBtn).toHaveProperty('disabled', true);
+	});
+
 	test('chip clicks append their text', () => {
 		const onChange = jest.fn();
 		render(<UrlInput value="http://x" onChange={onChange} />);
