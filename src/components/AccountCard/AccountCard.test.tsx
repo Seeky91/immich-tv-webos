@@ -20,7 +20,7 @@ describe('AccountCard', () => {
 	});
 
 	test('shows DEFAULT badge when isDefault', () => {
-		render(<AccountCard account={acc} isActive={false} isDefault={true} onSelect={() => {}} />);
+		render(<AccountCard account={acc} isActive={false} isDefault onSelect={() => {}} />);
 		expect(screen.getByText('DEFAULT')).toBeTruthy();
 	});
 

@@ -29,10 +29,11 @@ jest.mock('@enact/sandstone/Button', () => ({
 }));
 
 jest.mock('@enact/sandstone/TabLayout', () => {
-	const React = require('react');
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const ReactLib = require('react');
 	const TabLayoutMock = ({children}: any) => {
-		const tabs = React.Children.toArray(children);
-		const [active, setActive] = React.useState(0);
+		const tabs = ReactLib.Children.toArray(children);
+		const [active, setActive] = ReactLib.useState(0);
 		return (
 			<div>
 				<div role="tablist">

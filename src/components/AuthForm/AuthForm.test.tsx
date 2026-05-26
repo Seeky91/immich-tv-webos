@@ -38,12 +38,13 @@ jest.mock('@enact/sandstone/Icon', () => {
 });
 
 jest.mock('@enact/sandstone/TabLayout', () => {
-	const React = require('react');
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	const ReactLib = require('react');
 	// Simulate real TabLayout: only the active tab's content is shown.
 	// Render tab titles as clickable labels; clicking them switches the active tab.
 	const TabLayout = ({children}: any) => {
-		const tabs = React.Children.toArray(children);
-		const [active, setActive] = React.useState(0);
+		const tabs = ReactLib.Children.toArray(children);
+		const [active, setActive] = ReactLib.useState(0);
 		return (
 			<div>
 				<div role="tablist">
@@ -109,6 +110,6 @@ describe('AuthForm', () => {
 		fireEvent.change(screen.getByPlaceholderText(/Email/i), {target: {value: 'a@b'}});
 		fireEvent.change(screen.getByPlaceholderText(/Password/i), {target: {value: 'pw'}});
 		fireEvent.click(screen.getByRole('button', {name: /Connect/i}));
-		await waitFor(() => expect(screen.getByText('nope')).toBeTruthy());
+		expect(await screen.findByText('nope')).toBeTruthy();
 	});
 });

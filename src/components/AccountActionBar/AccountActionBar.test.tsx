@@ -16,7 +16,7 @@ const noop = () => {};
 
 describe('AccountActionBar', () => {
 	test('hides when focusedAccountId is null', () => {
-		const {container} = render(
+		render(
 			<AccountActionBar
 				focusedAccountId={null}
 				activeAccountId="a"
@@ -26,7 +26,7 @@ describe('AccountActionBar', () => {
 				onRemove={noop}
 			/>,
 		);
-		expect(container.querySelector('button')).toBeNull();
+		expect(screen.queryAllByRole('button')).toEqual([]);
 	});
 
 	test('on the active card: Switch is not shown, Sign out is present', () => {
