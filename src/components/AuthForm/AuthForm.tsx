@@ -1,8 +1,8 @@
 import React, {useCallback, useState} from 'react';
 import Button from '@enact/sandstone/Button';
-import Input from '@enact/sandstone/Input';
 import TabLayout, {Tab} from '@enact/sandstone/TabLayout';
 import {ErrorMessage} from '../ErrorMessage';
+import {FieldRow} from '../FieldRow/FieldRow';
 import {UrlInput} from '../UrlInput/UrlInput';
 import {AuthMethod} from '../../api/types';
 import css from './AuthForm.module.less';
@@ -37,14 +37,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 	const [apiKey, setApiKey] = useState('');
 	const [error, setError] = useState('');
 	const [submitting, setSubmitting] = useState(false);
-
-	// Sandstone Input emits a custom {value} payload (not the standard React event).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleEmailChange = useCallback((e: any) => setEmail(e.value as string), []);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handlePasswordChange = useCallback((e: any) => setPassword(e.value as string), []);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleApiKeyChange = useCallback((e: any) => setApiKey(e.value as string), []);
 
 	const submit = useCallback(
 		async (payload: AuthFormPayload) => {
@@ -94,29 +86,29 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 									value={url}
 									onChange={setUrl}
 									disabled={submitting}
-									placeholder="http://192.168.1.42:2283 or https://immich.mydomain.com"
+									placeholder="http://192.168.1.42:2283"
 									autoFocus
 								/>
 							</div>
 							<div className={css.field}>
 								<label className={css.label}>Email</label>
-								<Input
-									size="large"
+								<FieldRow
 									value={email}
-									onChange={handleEmailChange}
+									onChange={setEmail}
 									placeholder="Email"
 									disabled={submitting}
+									clearLabel="Clear Email"
 								/>
 							</div>
 							<div className={css.field}>
 								<label className={css.label}>Password</label>
-								<Input
-									size="large"
-									type="password"
+								<FieldRow
 									value={password}
-									onChange={handlePasswordChange}
+									onChange={setPassword}
+									type="password"
 									placeholder="Password"
 									disabled={submitting}
+									clearLabel="Clear Password"
 								/>
 							</div>
 							<div className={css.actions}>
@@ -140,12 +132,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 							</div>
 							<div className={css.field}>
 								<label className={css.label}>API Key</label>
-								<Input
-									size="large"
+								<FieldRow
 									value={apiKey}
-									onChange={handleApiKeyChange}
+									onChange={setApiKey}
 									placeholder="API Key"
 									disabled={submitting}
+									clearLabel="Clear API Key"
 								/>
 							</div>
 							<div className={css.actions}>

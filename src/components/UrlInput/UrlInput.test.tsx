@@ -33,13 +33,13 @@ describe('UrlInput', () => {
 	test('clear button calls onChange with empty string', () => {
 		const onChange = jest.fn();
 		render(<UrlInput value="something" onChange={onChange} />);
-		fireEvent.click(screen.getByLabelText('Clear'));
+		fireEvent.click(screen.getByLabelText('Clear URL'));
 		expect(onChange).toHaveBeenCalledWith('');
 	});
 
 	test('clear button stays present regardless of value (stable spotlight target)', () => {
 		render(<UrlInput value="" onChange={() => {}} />);
-		expect(screen.getByLabelText('Clear')).toBeTruthy();
+		expect(screen.getByLabelText('Clear URL')).toBeTruthy();
 	});
 
 	test('chip clicks append their text', () => {

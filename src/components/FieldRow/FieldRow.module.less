@@ -1,0 +1,30 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.row > :first-child {
+	display: inline-block;
+}
+
+.clear {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: 0.3rem;
+	background: rgba(255, 255, 255, 0.04);
+	color: rgba(255, 255, 255, 0.72);
+	font-size: 1.1rem;
+	font-family: inherit;
+	user-select: none;
+	transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.clear:focus {
+	background: #c0392b;
+	color: #fff;
+	outline: none;
+}
