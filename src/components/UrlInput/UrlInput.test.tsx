@@ -37,10 +37,9 @@ describe('UrlInput', () => {
 		expect(onChange).toHaveBeenCalledWith('');
 	});
 
-	test('clear button is disabled when value is empty', () => {
+	test('clear button stays present regardless of value (stable spotlight target)', () => {
 		render(<UrlInput value="" onChange={() => {}} />);
-		const clearBtn = screen.getByLabelText('Clear');
-		expect(clearBtn).toHaveProperty('disabled', true);
+		expect(screen.getByLabelText('Clear')).toBeTruthy();
 	});
 
 	test('chip clicks append their text', () => {

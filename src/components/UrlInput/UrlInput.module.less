@@ -1,27 +1,49 @@
 .wrap {
-	display: flex;
+	display: inline-flex;
 	flex-direction: column;
+	align-items: flex-start;
 	gap: 0.5rem;
-}
-
-.inputRow {
-	position: relative;
-	display: flex;
-	align-items: center;
-}
-
-.clearBtn {
-	position: absolute;
-	right: 0.5rem;
-	min-width: 0;
 }
 
 .chips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
+	display: inline-flex;
+	flex-wrap: nowrap;
+	border-radius: 0.4rem;
+	background: rgba(255, 255, 255, 0.04);
+	padding: 0.15rem;
+	gap: 0.1rem;
 }
 
 .chip {
-	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 1.7rem;
+	padding: 0 0.6rem;
+	color: rgba(255, 255, 255, 0.72);
+	border-radius: 0.3rem;
+	font-size: 0.7rem;
+	font-family: inherit;
+	letter-spacing: 0.02em;
+	user-select: none;
+	transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.chipClear {
+	margin-left: 0.4rem;
+	background: rgba(255, 255, 255, 0.04);
+	font-size: 0.9rem;
+	min-width: 1.7rem;
+	padding: 0 0.4rem;
+}
+
+.chip:focus {
+	background: #5fa8d3;
+	color: #fff;
+	outline: none;
+}
+
+.chipClear:focus {
+	background: #c0392b;
+	color: #fff;
 }

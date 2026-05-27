@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, useRef} from 'react';
 import Input from '@enact/sandstone/Input';
-import Button from '@enact/sandstone/Button';
+import {SpottableDiv} from '../../utils/spotlight';
 import css from './UrlInput.module.less';
 
 const SHORTCUTS = ['http://', 'https://', '.local', '.com', ':2283', ':30041'] as const;
@@ -33,36 +33,33 @@ export const UrlInput: React.FC<UrlInputProps> = ({value, onChange, placeholder,
 
 	return (
 		<div className={css.wrap}>
-			<div className={css.inputRow}>
-				<Input
-					size="large"
-					value={value}
-					onChange={handleChange}
-					placeholder={placeholder}
-					disabled={disabled}
-					autoFocus={autoFocus}
-				/>
-				<Button
-					className={css.clearBtn}
-					aria-label="Clear"
-					size="small"
-					icon="closex"
-					onClick={handleClear}
-					disabled={!value || disabled}
-				/>
-			</div>
-			<div className={css.chips}>
+			<Input
+				size="large"
+				value={value}
+				onChange={handleChange}
+				placeholder={placeholder}
+				disabled={disabled}
+				autoFocus={autoFocus}
+			/>
+			<div className={css.chips} role="group" aria-label="URL shortcuts">
 				{SHORTCUTS.map(s => (
-					<Button
+					<SpottableDiv
 						key={s}
+						role="button"
 						className={css.chip}
-						size="small"
 						onClick={chipHandlers[s]}
-						disabled={disabled}
 					>
 						{s}
-					</Button>
+					</SpottableDiv>
 				))}
+				<SpottableDiv
+					role="button"
+					aria-label="Clear"
+					className={[css.chip, css.chipClear].join(' ')}
+					onClick={handleClear}
+				>
+					×
+				</SpottableDiv>
 			</div>
 		</div>
 	);

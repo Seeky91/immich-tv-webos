@@ -1,7 +1,7 @@
 .root {
 	position: relative;
 	width: 100%;
-	max-width: 80rem;
+	max-width: 72rem;
 	margin: 0 auto;
 	padding-top: 4rem;
 }
@@ -17,39 +17,37 @@
 }
 
 .layout {
-	min-height: 28rem;
+	min-height: 26rem;
 }
 
 .tabContent {
 	display: flex;
 	flex-direction: column;
-	padding-left: 1rem;
+	align-items: flex-start;
+	gap: 1.25rem;
+	padding: 0.5rem 0 1rem 4rem;
 }
 
 .field {
-	margin-bottom: 1rem;
-	max-width: 36rem;
-	width: 100%;
-
-	> * {
-		width: 100%;
-	}
+	display: inline-block;
 }
 
 .label {
 	display: block;
-	font-size: 0.7rem;
-	letter-spacing: 0.08em;
+	font-size: 0.65rem;
+	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	opacity: 0.5;
-	margin-bottom: 0.4rem;
+	opacity: 0.55;
+	margin-bottom: 0.3rem;
+	font-weight: 500;
 }
 
 .actions {
-	margin-top: 2rem;
+	margin-top: 0.75rem;
 	display: flex;
+	gap: 1rem;
 }
 
 .error {
-	margin-top: 1rem;
+	margin-top: 0.5rem;
 }
