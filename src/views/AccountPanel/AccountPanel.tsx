@@ -52,18 +52,19 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 	);
 
 	if (mode === 'first-launch') {
+		if (subMode === 'form') {
+			return (
+				<div className={css.firstLaunchForm}>
+					<AuthForm initialUrl="" onSubmit={handleSubmit} />
+				</div>
+			);
+		}
 		return (
 			<div className={css.firstLaunch}>
-				{subMode === 'form' ? (
-					<AuthForm initialUrl="" onSubmit={handleSubmit} />
-				) : (
-					<>
-						<img src={bannerImage} alt="Immich" className={css.banner} />
-						<h2 className={css.welcomeTitle}>Welcome to Immich for TV</h2>
-						<p className={css.welcomeSub}>Add your Immich account to start browsing.</p>
-						<Button size="large" onClick={goForm} backgroundOpacity="opaque">+ Add account</Button>
-					</>
-				)}
+				<img src={bannerImage} alt="Immich" className={css.banner} />
+				<h2 className={css.welcomeTitle}>Welcome to Immich for TV</h2>
+				<p className={css.welcomeSub}>Add your Immich account to start browsing.</p>
+				<Button autoFocus size="large" onClick={goForm} backgroundOpacity="opaque">+ Add account</Button>
 			</div>
 		);
 	}
