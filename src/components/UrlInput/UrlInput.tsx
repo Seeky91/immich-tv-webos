@@ -1,4 +1,4 @@
-import React, {useMemo, useRef} from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {SpottableDiv} from '../../utils/spotlight';
 import {FieldRow} from '../FieldRow/FieldRow';
 import css from './UrlInput.module.less';
@@ -15,7 +15,9 @@ interface UrlInputProps {
 
 export const UrlInput: React.FC<UrlInputProps> = ({value, onChange, placeholder, disabled, autoFocus}) => {
 	const valueRef = useRef(value);
-	valueRef.current = value;
+	useEffect(() => {
+		valueRef.current = value;
+	});
 
 	const chipHandlers = useMemo(
 		() =>
