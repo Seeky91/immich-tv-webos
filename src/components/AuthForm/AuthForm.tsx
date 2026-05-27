@@ -86,7 +86,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 									value={url}
 									onChange={setUrl}
 									disabled={submitting}
-									placeholder="http://192.168.1.42:2283"
+									placeholder="http(s)://…"
 									autoFocus
 								/>
 							</div>
@@ -127,7 +127,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 									value={url}
 									onChange={setUrl}
 									disabled={submitting}
-									placeholder="http://192.168.1.42:2283"
+									placeholder="http(s)://…"
 								/>
 							</div>
 							<div className={css.field}>

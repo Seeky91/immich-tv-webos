@@ -1,7 +1,8 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import Button from '@enact/sandstone/Button';
 import {AccountGrid} from './AccountGrid';
 import {AuthForm, type AuthFormPayload, type AuthSubmitResult} from '../../components/AuthForm/AuthForm';
+import {useWebOSKeys} from '../../hooks/useWebOSKeys';
 import type {Account} from '../../utils/accountsStore';
 import bannerImage from '../../assets/immich-banner.png';
 import css from './AccountPanel.module.less';
@@ -29,6 +30,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 	onSetDefault,
 	onRemove,
 	onAddAccount,
+	onCloseOverlay,
 }) => {
 	// Both modes start on 'grid'. In first-launch mode 'grid' renders the welcome screen
 	// (since accounts.length === 0 means no cards to draw); the user clicks the CTA
@@ -50,6 +52,17 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 		},
 		[mode, onAddAccount],
 	);
+
+	// Remote Back semantics: on form, peel back to grid; on grid in overlay mode, close
+	// the overlay. First-launch grid has no back target (root of app) so we leave the key
+	// unhandled and let WAM fall through to its default exit behavior.
+	const backHandler = useMemo<(() => void) | undefined>(() => {
+		if (subMode === 'form') return goGrid;
+		if (mode === 'overlay') return onCloseOverlay;
+		return undefined;
+	}, [mode, subMode, goGrid, onCloseOverlay]);
+
+	useWebOSKeys({onBack: backHandler});
 
 	if (mode === 'first-launch') {
 		if (subMode === 'form') {

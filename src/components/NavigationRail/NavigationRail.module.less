@@ -65,6 +65,22 @@
   overflow: visible;   // On laisse déborder si besoin
 }
 
+// Avatar for the Account rail item: the bare letter has only line-height of body
+// text, which makes the colored gradient render as a thin stripe. Wrap it in a
+// circle sized to roughly match the Sandstone Icon footprint used by sibling items.
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  color: white;
+}
+
 /* ── Label ── */
 
 .label {

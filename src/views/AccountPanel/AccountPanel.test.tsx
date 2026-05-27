@@ -133,4 +133,39 @@ describe('AccountPanel', () => {
 		fireEvent.click(screen.getByRole('button', {name: /Back/i}));
 		expect(screen.queryByRole('button', {name: /Connect/i})).toBeNull();
 	});
+
+	test('Back key on overlay grid closes the overlay (webOS 10 keyCode 1536)', () => {
+		const onCloseOverlay = jest.fn();
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+				onCloseOverlay={onCloseOverlay}
+			/>,
+		);
+		fireEvent.keyDown(window, {keyCode: 1536});
+		expect(onCloseOverlay).toHaveBeenCalledTimes(1);
+	});
+
+	test('Back key on overlay form returns to grid (no overlay close)', () => {
+		const onCloseOverlay = jest.fn();
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+				onCloseOverlay={onCloseOverlay}
+			/>,
+		);
+		fireEvent.click(screen.getByText(/Add account/i).closest('[role="button"]')!);
+		screen.getByRole('button', {name: /Connect/i});
+		fireEvent.keyDown(window, {keyCode: 1536});
+		expect(screen.queryByRole('button', {name: /Connect/i})).toBeNull();
+		expect(onCloseOverlay).not.toHaveBeenCalled();
+	});
 });

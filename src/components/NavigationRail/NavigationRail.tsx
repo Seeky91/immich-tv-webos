@@ -75,8 +75,10 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 			<div className={css.spacer} />
 			<div className={css.divider} />
 			<button className={css.navItem} onClick={onOpenAccount}>
-				<div className={css.iconContainer} style={{background: accountGradient, color: 'white'}}>
-					{accountLetter}
+				<div className={css.iconContainer}>
+					<span className={css.avatar} style={{background: accountGradient}}>
+						{accountLetter}
+					</span>
 				</div>
 				<span className={css.label}>Account</span>
 			</button>
