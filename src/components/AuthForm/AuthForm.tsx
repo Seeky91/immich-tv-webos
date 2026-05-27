@@ -77,7 +77,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack}
 	}, [url, apiKey, submit]);
 
 	return (
-		<div>
+		<div className={css.root}>
 			{onBack ? (
 				<Button className={css.backBtn} size="small" icon="arrowsmallleft" onClick={onBack}>
 					Back
