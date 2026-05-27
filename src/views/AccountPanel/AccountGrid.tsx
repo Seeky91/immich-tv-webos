@@ -1,6 +1,8 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import Spotlight from '@enact/spotlight';
 import {AccountCard} from '../../components/AccountCard/AccountCard';
 import {AccountActionBar} from '../../components/AccountActionBar/AccountActionBar';
+import {SpottableDiv, createSpotlightContainer} from '../../utils/spotlight';
 import type {Account} from '../../utils/accountsStore';
 import css from './AccountGrid.module.less';
 
@@ -13,6 +15,9 @@ interface AccountGridProps {
 	onRemove: (id: string) => void;
 	onAdd: () => void;
 }
+
+const GRID_SPOTLIGHT_ID = 'account-grid';
+const GridContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
 export const AccountGrid: React.FC<AccountGridProps> = ({
 	accounts,
@@ -56,8 +61,14 @@ export const AccountGrid: React.FC<AccountGridProps> = ({
 
 	const handleAddFocus = useCallback(() => setFocusedId(null), []);
 
+	useEffect(() => {
+		// Spotlight may target cards before they mount; defer until after layout.
+		const raf = requestAnimationFrame(() => Spotlight.focus(GRID_SPOTLIGHT_ID));
+		return () => cancelAnimationFrame(raf);
+	}, []);
+
 	return (
-		<div className={css.wrap}>
+		<GridContainer className={css.wrap} spotlightId={GRID_SPOTLIGHT_ID}>
 			<h4 className={css.heading}>Accounts</h4>
 			<div className={css.grid}>
 				{sorted.map(a => (
@@ -70,10 +81,15 @@ export const AccountGrid: React.FC<AccountGridProps> = ({
 						/>
 					</div>
 				))}
-				<button className={css.addTile} onClick={onAdd} onFocus={handleAddFocus}>
+				<SpottableDiv
+					role="button"
+					className={css.addTile}
+					onClick={onAdd}
+					onFocus={handleAddFocus}
+				>
 					<span className={css.addIcon}>+</span>
 					<span>Add account</span>
-				</button>
+				</SpottableDiv>
 			</div>
 			<AccountActionBar
 				focusedAccountId={focusedId}
@@ -83,6 +99,6 @@ export const AccountGrid: React.FC<AccountGridProps> = ({
 				onSetDefault={onSetDefault}
 				onRemove={onRemove}
 			/>
-		</div>
+		</GridContainer>
 	);
 };

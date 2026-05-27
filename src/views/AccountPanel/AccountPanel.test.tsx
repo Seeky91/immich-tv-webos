@@ -115,7 +115,7 @@ describe('AccountPanel', () => {
 				{...noopHandlers}
 			/>,
 		);
-		fireEvent.click(screen.getByText(/Add account/i).closest('button')!);
+		fireEvent.click(screen.getByText(/Add account/i).closest('[role="button"]')!);
 		expect(screen.getByRole('button', {name: /Connect/i})).toBeTruthy();
 	});
 
@@ -129,7 +129,7 @@ describe('AccountPanel', () => {
 				{...noopHandlers}
 			/>,
 		);
-		fireEvent.click(screen.getByText(/Add account/i).closest('button')!);
+		fireEvent.click(screen.getByText(/Add account/i).closest('[role="button"]')!);
 		fireEvent.click(screen.getByRole('button', {name: /Back/i}));
 		expect(screen.queryByRole('button', {name: /Connect/i})).toBeNull();
 	});

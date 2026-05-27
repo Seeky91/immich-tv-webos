@@ -27,7 +27,7 @@ describe('AccountCard', () => {
 	test('clicking the card calls onSelect', () => {
 		const onSelect = jest.fn();
 		render(<AccountCard account={acc} isActive={false} isDefault={false} onSelect={onSelect} />);
-		fireEvent.click(screen.getByText('me@example.com').closest('button')!);
+		fireEvent.click(screen.getByText('me@example.com').closest('[role="button"]')!);
 		expect(onSelect).toHaveBeenCalledWith('a');
 	});
 });

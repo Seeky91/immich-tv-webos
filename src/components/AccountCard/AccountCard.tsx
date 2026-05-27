@@ -1,4 +1,5 @@
 import React, {useCallback, useMemo} from 'react';
+import {SpottableDiv} from '../../utils/spotlight';
 import type {Account} from '../../utils/accountsStore';
 import {deriveLabel, pickGradient} from '../../utils/accountVisual';
 import css from './AccountCard.module.less';
@@ -25,7 +26,8 @@ export const AccountCard: React.FC<AccountCardProps> = ({account, isActive, isDe
 	}, [account.baseUrl]);
 
 	return (
-		<button
+		<SpottableDiv
+			role="button"
 			className={[css.card, isActive ? css.active : ''].filter(Boolean).join(' ')}
 			onClick={handleClick}
 		>
@@ -35,6 +37,6 @@ export const AccountCard: React.FC<AccountCardProps> = ({account, isActive, isDe
 			</div>
 			<div className={css.label}>{label}</div>
 			<div className={css.host}>{host}</div>
-		</button>
+		</SpottableDiv>
 	);
 };
