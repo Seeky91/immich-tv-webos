@@ -168,4 +168,30 @@ describe('AccountPanel', () => {
 		expect(screen.queryByRole('button', {name: /Connect/i})).toBeNull();
 		expect(onCloseOverlay).not.toHaveBeenCalled();
 	});
+
+	test('Backspace (keyCode 8) inside an input does NOT trigger back (typing must work)', () => {
+		const onCloseOverlay = jest.fn();
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+				onCloseOverlay={onCloseOverlay}
+			/>,
+		);
+		fireEvent.click(screen.getByText(/Add account/i).closest('[role="button"]')!);
+		screen.getByRole('button', {name: /Connect/i});
+
+		// Backspace originating from a real input must be left alone so the native
+		// editor deletes a character. Some webOS firmwares re-map Back to keyCode 8
+		// — that fallback should only fire when focus is on a non-editable element.
+		const urlInput = screen.getByPlaceholderText('http(s)://…');
+		fireEvent.keyDown(urlInput, {keyCode: 8});
+
+		// Still on the form, overlay not closed
+		screen.getByRole('button', {name: /Connect/i});
+		expect(onCloseOverlay).not.toHaveBeenCalled();
+	});
 });

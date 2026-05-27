@@ -10,10 +10,22 @@ interface UseWebOSKeysOptions {
 // all the ones we've observed plus Escape for dev mode in a desktop browser:
 //   - 461   : VK_BACK on older webOS (matches Enact's ThemeDecorator default of cancel: 461)
 //   - 1536  : observed on webOS 10.x via Chrome/120 WAM (ares-inspect capture on Quentin's TV)
-//   - 8     : Backspace fallback (some firmwares re-map Back to it)
+//   - 8     : Backspace fallback (some firmwares re-map Back to it) — gated on focus, see below
 //   - 10009 : Tizen-style back (Tizen TVs and a handful of LG firmwares)
 //   - 27    : Escape, for dev browsers
 const BACK_KEYCODES = new Set([461, 1536, 8, 10009, 27]);
+const BACKSPACE_KEYCODE = 8;
+
+// Backspace is overloaded: it's the on-remote Back on a few firmwares AND the
+// delete-previous-character key on any input (USB keyboard or webOS virtual keyboard).
+// When focus is on an editable element we let the native editor handle it; everywhere
+// else we keep the Back fallback behavior.
+function isEditableTarget(target: EventTarget | null): boolean {
+	if (!(target instanceof HTMLElement)) return false;
+	if (target.isContentEditable) return true;
+	const tag = target.tagName;
+	return tag === 'INPUT' || tag === 'TEXTAREA';
+}
 
 // Back handlers are tracked in a stack so the most recently mounted hook wins. This lets
 // nested screens (e.g. AlbumView → MediaViewer) coexist: opening the viewer pushes its
@@ -42,6 +54,7 @@ function ensureBridgeInstalled(): void {
 		'keydown',
 		(event: KeyboardEvent) => {
 			if (!BACK_KEYCODES.has(event.keyCode)) return;
+			if (event.keyCode === BACKSPACE_KEYCODE && isEditableTarget(event.target)) return;
 			if (fireTopBack()) {
 				event.preventDefault();
 				// stopImmediatePropagation (not stopPropagation) so sibling window-level listeners
