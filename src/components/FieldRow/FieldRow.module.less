@@ -1,7 +1,11 @@
 .row {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+}
+
+// flex `gap` is Chrome 84+ (dropped on webOS 6 / Cr79) — use margins instead.
+.row > * + * {
+	margin-left: 0.5rem;
 }
 
 .row > :first-child {

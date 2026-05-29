@@ -4,6 +4,10 @@
 	background: #161616;
 	border-radius: 0.6rem;
 	display: flex;
-	gap: 0.75rem;
 	width: fit-content;
+}
+
+// flex `gap` is Chrome 84+ (dropped on webOS 6 / Cr79) — use margins instead.
+.bar > * + * {
+	margin-left: 0.75rem;
 }

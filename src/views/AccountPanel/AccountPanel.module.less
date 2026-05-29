@@ -39,9 +39,20 @@
 	margin-bottom: 2.5rem;
 }
 
+// Full-screen account overlay.
+// IMPORTANT (webOS compat): use the four physical offsets, NOT the `inset` shorthand.
+// `inset` is Chrome 87+ and is silently dropped on webOS 6 (Chromium 79), which left this
+// fixed overlay at its static position — below the 100vh app shell, i.e. off-screen — so
+// the account modal was invisible on the LG C1 (pressing "Account" appeared to do nothing).
+// Verified fixed on Chromium 79. NB: Sandstone's own <Popup position="center"> is ALSO
+// broken on Cr79 (its translate(-50%,-50%) centering loses the Y axis there), so this
+// self-contained overlay is the robust choice. Do NOT reintroduce `inset`.
 .overlay {
 	position: fixed;
-	inset: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	background: rgba(0, 0, 0, 0.72);
 	padding: 3rem;
 	z-index: 100;
