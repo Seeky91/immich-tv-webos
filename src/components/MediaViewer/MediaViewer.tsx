@@ -53,7 +53,8 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	// When the controls reappear (after a reveal key), move focus onto the ✕ so they are
 	// immediately actionable. Skip the first run: initial focus is handled by the mount
 	// effect above. Runs as a passive effect (post-commit), so the button is already
-	// visibility:visible and therefore focusable.
+	// visibility:visible and therefore focusable. This also fires when navigating from a
+	// video to an image (isVideo true→false) — focusing ✕ then is intentional and benign.
 	const didFocusOnceRef = useRef(false);
 	useEffect(() => {
 		if (!didFocusOnceRef.current) {

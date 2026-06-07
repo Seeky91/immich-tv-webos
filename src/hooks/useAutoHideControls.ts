@@ -7,7 +7,6 @@ interface UseAutoHideControlsOptions {
 
 interface AutoHideControls {
 	visible: boolean;
-	reveal: () => void;
 }
 
 const DEFAULT_HIDE_DELAY_MS = 4000;
@@ -43,11 +42,6 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 		}, hideDelayMs);
 	}, [clearTimer, hideDelayMs]);
 
-	const reveal = useCallback(() => {
-		setVisible(true);
-		startTimer();
-	}, [startTimer]);
-
 	useEffect(() => {
 		if (!enabled) {
 			setVisible(true);
@@ -80,5 +74,5 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 		};
 	}, [enabled, startTimer, clearTimer]);
 
-	return {visible, reveal};
+	return {visible};
 };

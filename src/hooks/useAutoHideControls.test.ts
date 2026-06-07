@@ -82,27 +82,6 @@ describe('useAutoHideControls', () => {
 		expect(whileHidden.defaultPrevented).toBe(true);
 	});
 
-	test('reveal() shows controls and restarts the timer', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
-		act(() => {
-			jest.advanceTimersByTime(4000);
-		});
-		expect(result.current.visible).toBe(false);
-		act(() => {
-			result.current.reveal();
-		});
-		expect(result.current.visible).toBe(true);
-		// timer restarted — still visible at 3999 ms, hidden again at 4000 ms
-		act(() => {
-			jest.advanceTimersByTime(3999);
-		});
-		expect(result.current.visible).toBe(true);
-		act(() => {
-			jest.advanceTimersByTime(1);
-		});
-		expect(result.current.visible).toBe(false);
-	});
-
 	test('removes its keydown listener on unmount', () => {
 		const removeSpy = jest.spyOn(window, 'removeEventListener');
 		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
