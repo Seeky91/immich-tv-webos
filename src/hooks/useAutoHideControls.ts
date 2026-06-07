@@ -67,6 +67,10 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 			event.stopImmediatePropagation();
 		};
 
+		// Capture phase + the stopImmediatePropagation above are load-bearing: Spotlight listens
+		// for keydown on window in the BUBBLE phase, so swallowing in the capture phase is what
+		// stops it from activating the (hidden) focused control on a reveal press. Do not switch
+		// this to the bubble phase or to stopPropagation.
 		window.addEventListener('keydown', handleKeyDown, {capture: true});
 		return () => {
 			window.removeEventListener('keydown', handleKeyDown, {capture: true});

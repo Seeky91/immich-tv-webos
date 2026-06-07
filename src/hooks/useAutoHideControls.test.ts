@@ -82,6 +82,19 @@ describe('useAutoHideControls', () => {
 		expect(whileHidden.defaultPrevented).toBe(true);
 	});
 
+	test('ArrowUp and ArrowDown also act as reveal keys', () => {
+		['ArrowUp', 'ArrowDown'].forEach((key) => {
+			const {result, unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+			act(() => {
+				jest.advanceTimersByTime(4000);
+			});
+			expect(result.current.visible).toBe(false);
+			pressKey(key);
+			expect(result.current.visible).toBe(true);
+			unmount();
+		});
+	});
+
 	test('removes its keydown listener on unmount', () => {
 		const removeSpy = jest.spyOn(window, 'removeEventListener');
 		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
