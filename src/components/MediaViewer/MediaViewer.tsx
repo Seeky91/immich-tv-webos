@@ -1,10 +1,11 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import Spotlight from '@enact/spotlight';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
+import {useAutoHideControls} from '../../hooks/useAutoHideControls';
 import {useRepository} from '../../domain/RepositoryContext';
 import {createSpotlightContainer} from '../../utils/spotlight';
 import type {TimelineAsset} from '../../domain/types';
-import {MediaControls} from './MediaControls';
+import {MediaControls, CLOSE_BUTTON_SPOTLIGHT_ID} from './MediaControls';
 import {VideoPlayer} from './VideoPlayer';
 import css from './MediaViewer.module.less';
 
@@ -34,6 +35,11 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	}, [onNavigate, currentIndex, totalCount]);
 
 	const isVideo = asset?.type === 'VIDEO';
+
+	// Auto-hide is for still images only. Video keeps its always-visible MediaControls and
+	// relies on Sandstone VideoPlayer's own auto-hide (OK/Select is play/pause there).
+	const {visible: controlsVisible} = useAutoHideControls({enabled: !isVideo});
+
 	useWebOSKeys({
 		onBack: onClose,
 		onArrowLeft: isVideo ? undefined : handlePrev,
@@ -43,6 +49,21 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 	useEffect(() => {
 		Spotlight.focus(VIEWER_SPOTLIGHT_ID);
 	}, []);
+
+	// When the controls reappear (after a reveal key), move focus onto the ✕ so they are
+	// immediately actionable. Skip the first run: initial focus is handled by the mount
+	// effect above. Runs as a passive effect (post-commit), so the button is already
+	// visibility:visible and therefore focusable.
+	const didFocusOnceRef = useRef(false);
+	useEffect(() => {
+		if (!didFocusOnceRef.current) {
+			didFocusOnceRef.current = true;
+			return;
+		}
+		if (controlsVisible && !isVideo) {
+			Spotlight.focus(CLOSE_BUTTON_SPOTLIGHT_ID);
+		}
+	}, [controlsVisible, isVideo]);
 
 	useEffect(() => {
 		const prefetch = (index: number) => {
@@ -70,6 +91,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 				onClose={onClose}
 				canGoPrev={currentIndex > 0}
 				canGoNext={currentIndex < totalCount - 1}
+				controlsVisible={controlsVisible}
 			/>
 		</ViewerContainer>
 	);
