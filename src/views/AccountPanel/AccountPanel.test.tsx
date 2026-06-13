@@ -194,4 +194,33 @@ describe('AccountPanel', () => {
 		screen.getByRole('button', {name: /Connect/i});
 		expect(onCloseOverlay).not.toHaveBeenCalled();
 	});
+
+	test('Backspace (keyCode 8) targeting <body> while an input is focused does NOT trigger back (webOS virtual-keyboard quirk)', () => {
+		const onCloseOverlay = jest.fn();
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+				onCloseOverlay={onCloseOverlay}
+			/>,
+		);
+		fireEvent.click(screen.getByText(/Add account/i).closest('[role="button"]')!);
+		screen.getByRole('button', {name: /Connect/i});
+
+		// On a real TV the virtual keyboard's Backspace arrives as a keyCode-8 keydown whose
+		// target is <body>, not the focused <input> (Sandstone types into an <input> in a
+		// FloatingLayer popup). Reproduce that mismatch: focus the field, dispatch from body.
+		// The capture handler must still detect we're editing text via document.activeElement.
+		const urlInput = screen.getByPlaceholderText('http(s)://…');
+		urlInput.focus();
+		expect(document.activeElement).toBe(urlInput);
+		fireEvent.keyDown(document.body, {keyCode: 8});
+
+		// Still on the form, not kicked back to the grid
+		screen.getByRole('button', {name: /Connect/i});
+		expect(onCloseOverlay).not.toHaveBeenCalled();
+	});
 });
