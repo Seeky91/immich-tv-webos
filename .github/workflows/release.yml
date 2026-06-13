@@ -20,7 +20,9 @@ jobs:
           cache: 'npm'
 
       - name: Install global webOS tools
-        run: npm install -g @enact/cli @webos-tools/cli
+        # @webos-tools/cli is pinned to 3.2.3: 3.2.4 bumps rimraf to 6.x, which is no
+        # longer callable the way ares-package invokes it and breaks the Package IPK step.
+        run: npm install -g @enact/cli @webos-tools/cli@3.2.3
 
       - name: Install dependencies
         run: npm ci
