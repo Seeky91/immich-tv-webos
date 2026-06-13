@@ -1,109 +1,167 @@
-# Immich TV (LG webOS)
+<p align="center">
+  <img src="assets/icon-source.png" width="128" alt="Immich TV icon">
+</p>
 
-**Immich TV** A read-only client for [Immich](https://immich.app/) designed for LG webOS TVs. Built with the **Enact** framework and **Sandstone** UI library.
+<h1 align="center">📺 Immich TV (LG webOS)</h1>
 
----
+<p align="center">
+  A read-only <a href="https://immich.app/">Immich</a> client for LG webOS TVs — browse your<br>
+  self-hosted photo and video library from the couch, navigated with the TV remote.
+</p>
 
-## 🚀 Key Features
-
-* **Timeline View**: Infinite-scrolling photo/video timeline grouped by date.
-* **Albums**: Browse your Immich albums and explore each one with a date-grouped timeline.
-* **Search**: Smart text search powered by Immich's ML backend, plus face/person search via a People ribbon.
-* **Justified Grid**: Layout that respects original aspect ratios while maintaining aligned rows.
-* **Virtualized List**: DOM node recycling via `VirtualList` for smooth performance on large libraries.
-* **Timeline Height Calculation**: Uses Immich API metadata to pre-calculate total content height for a stable scrollbar.
-* **NavigationRail**: Collapsible left sidebar (expands on D-pad focus) for switching between Photos, Albums, and Search.
-* **Native Focus Management**: Integration with the webOS Spotlight (D-pad) navigation system.
-* **Authentication**: Supports API Key and login credentials.
-* **Video Playback**: Support for video files using Sandstone media components.
+<p align="center">
+  Built with <a href="https://enactjs.com/">Enact</a> + <a href="https://enactjs.com/docs/modules/sandstone/">Sandstone</a> &nbsp;·&nbsp; available on the <a href="https://repo.webosbrew.org/apps/com.seeky91.immichtv">webOS Homebrew Channel</a>
+</p>
 
 ---
 
-## 🛠️ Technical Stack
+## ✨ Features
 
-| Technology | Usage |
-| :--- | :--- |
-| **Enact Framework** | LG's React-based framework optimized for webOS |
-| **Sandstone UI** | Native TV component library for premium look & feel |
-| **TypeScript** | Strict typing for codebase robustness and reliability |
-| **TanStack Query (v5)** | Server state management, caching, and infinite scroll logic |
-| **Immich API** | Direct integration with the Immich "Internal" API endpoints |
+- 🖼️ **Timeline** — infinite-scrolling photo & video timeline grouped by date, laid out in a justified grid that preserves original aspect ratios.
+- 📁 **Albums** — browse your Immich albums, each with its own date-grouped timeline.
+- 🔎 **Search** — smart text search powered by Immich's ML backend, plus face/person browsing through a People ribbon.
+- 👥 **Multiple accounts** — add several Immich servers or accounts and switch between them.
+- ▶️ **Video playback** — plays video assets with TV-friendly controls that auto-hide during playback.
+- 🎮 **Remote-first** — full D-pad navigation through the webOS Spotlight focus system; no mouse or touch assumed.
 
 ---
 
-## 📦 Installation & Development
+## 🧩 Compatibility
 
-### Compatibility
-Tested on webOS 5.0+ (LG TVs from 2018 onward, including the OLED CX 2020 line). Earlier firmwares (webOS 4 / Chromium 53 and below) are not currently supported — they ship Chromium engines too old for our minimum runtime polyfill set.
+Immich TV targets **webOS 5.0 and newer** — LG TVs from 2018 onward, including the 2020 OLED CX line.
 
-### Cross-origin requests (CORS)
-The app loads from `file://` and fetches the Immich API cross-origin. Immich does not ship CORS headers by default, so without help every browser blocks the response.
+The production bundle is transpiled down to Chromium 68 with a runtime polyfill set, which sets that floor. Older firmwares (webOS 4 / Chromium 53 and below) ship browser engines too old to run the app.
 
-The `appinfo.json` ships `trustLevel: "netcast"` + `vendorExtension.allowCrossDomain: true`. These are LG-WAM-specific flags (undocumented by LG, well-known in the webosbrew community — same combo used by `youtube-webos`) that disable CORS validation for installed retail apps. They are silently ignored on webOS OSE / non-retail builds, and recent retail webOS (10.x+) doesn't need them, so adding them is safe across the board.
+---
 
-If the bypass still doesn't apply for your firmware (you'll see "Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS)" in the login panel), configure CORS server-side: add `Access-Control-Allow-Origin: *` to every Immich API response and answer `OPTIONS` with `204` (typically via the Caddy/Nginx/Traefik proxy in front of Immich).
+## 📥 Installation
+
+### Homebrew Channel (recommended)
+
+Immich TV is published in the [webOS Homebrew Channel](https://www.webosbrew.org/).
+
+1. Install the Homebrew Channel on your TV — see the [webosbrew install guide](https://www.webosbrew.org/pages/install.html).
+2. Open it, find **[Immich TV](https://repo.webosbrew.org/apps/com.seeky91.immichtv)** in the app list, and install.
+3. Launch it from your TV's app launcher.
+
+Updates are delivered automatically through the channel.
+
+### Manual sideload (.ipk)
+
+For a specific build, or if you don't use the Homebrew Channel:
+
+1. Enable **Developer Mode** on your TV (LG's Developer Mode app) and register it with the ares CLI.
+2. Download the latest `.ipk` from the [Releases page](https://github.com/Seeky91/immich-tv-webos/releases), or build it yourself (see [Building from source](#-building-from-source)).
+3. Install and launch:
+
+```bash
+ares-install com.seeky91.immichtv_<version>_all.ipk
+ares-launch com.seeky91.immichtv
+```
+
+---
+
+## 🌐 Immich server setup (CORS)
+
+The app runs from a `file://` origin and calls the Immich API cross-origin. Immich ships no `Access-Control-Allow-Origin` headers by default, so whether it works out of the box depends on your TV's firmware:
+
+- **webOS 10.x and newer** silently bypass CORS for installed apps — it just works, no server changes needed.
+- **Older firmwares** enforce CORS like any browser. Immich will log the request as `200 OK`, but the TV blocks the response, and the login screen shows:
+
+  > Couldn't reach the server. Verify the URL and that your Immich server allows requests from this app (CORS).
+
+`appinfo.json` ships `vendorExtension.allowCrossDomain: true` as a hint to LG's WAM runtime. The stronger `trustLevel: "netcast"` flag — which some webosbrew apps use to force a WAM-level CORS bypass — is deliberately **not** shipped: it disables `window.PalmServiceBridge` and breaks the on-screen keyboard on webOS 10.x.
+
+If you hit the error above, allow this app's requests server-side. With nginx in front of Immich:
+
+```nginx
+add_header Access-Control-Allow-Origin  "*" always;
+add_header Access-Control-Allow-Headers "Authorization, x-api-key, Content-Type" always;
+add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+
+if ($request_method = OPTIONS) {
+    return 204;
+}
+```
+
+The equivalent directives work for Caddy, Traefik, or any reverse proxy. The app authenticates with `Authorization` / `x-api-key` headers and uses no cookies, so a wildcard origin is safe here.
+
+---
+
+## 🛠️ Building from source
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v18 or v20 recommended)
-* [Enact CLI](https://enactjs.com/docs/developer-tools/cli/): ``` npm install -g @enact/cli ```
-* [webOS CLI (Ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/): ``` npm install -g @webos-tools/cli ```
 
-### Project Setup
+- **[Node.js](https://nodejs.org/)** 18 or 20
+- **[Enact CLI](https://enactjs.com/docs/developer-tools/cli/)** — `npm install -g @enact/cli`
+- **[webOS CLI (ares)](https://webostv.developer.lge.com/develop/tools/cli-installation/)** — `npm install -g @webos-tools/cli@3.2.3`
+  > Pin `3.2.3`: version `3.2.4` ships a rimraf 6 regression that breaks `ares-package`.
+
+### Setup
+
 ```bash
 git clone https://github.com/Seeky91/immich-tv-webos.git
 cd immich-tv-webos
 npm install
 ```
 
-### Development (PC)
-To bypass CORS issues during local development, use the configured proxy or launch your browser with security disabled.
+### Develop
+
 ```bash
-npm run serve
+npm run serve      # dev server with hot reload
 ```
 
-### Deployment to TV
-1. Ensure your TV is in **Developer Mode** and on the same network.
-2. Call your device "lg-tv" (or modify the name in the Makefile), then:
+The dev server runs from `http://localhost`, so the cross-origin rules above still apply. There is no bundled proxy — either configure CORS on your Immich server, or launch Chrome with `--disable-web-security --user-data-dir=/tmp/immich-dev` for local testing.
+
+### Quality gates
+
 ```bash
-make install   # builds and deploys the .ipk to the TV
-make launch    # launches the app
+npm run lint       # ESLint (CI treats warnings as errors)
+npm run typecheck  # tsc --noEmit — must pass before committing
+npm run test       # unit tests
+```
+
+### Package & deploy
+
+```bash
+npm run pack-p     # production build (Enact pack + legacy transpile pass)
+make pack          # build the .ipk
+make install       # deploy it to a TV registered as "lg-tv"
+make launch        # launch the app
+make inspect       # open remote devtools
 ```
 
 ---
 
-## 🏗️ Project Architecture
+## 🏗️ Architecture
 
-* `src/api/` — HTTP client, auth header injection, Immich API calls, and strict type definitions.
-* `src/hooks/` — All data and UI logic:
-  * Auth: `useAuth`
-  * Asset data: `useInfiniteGroupedAssets`, `useAllAssets`, `useBuckets`
-  * Albums: `useAlbums`, `useAlbumDetails`
-  * Search: `useImmichSearchResults`, `useImmichPeople`
-  * Performance: `useHeightMap`, `useScrollPagination`
-  * webOS: `useWebOSKeys` (D-pad remote key handling)
-* `src/views/` — Primary screens: `LoginPanel`, `AppLayout`, `MainPanel` (timeline), `AlbumsPanel`, `AlbumView`, `SearchPanel`.
-* `src/components/` — Atomic UI units: `AssetCard`, `AlbumCard`, `NavigationRail`, `GroupedTimeline`, `MediaViewer`, `PeopleRibbon`, `DateHeader`.
-* `src/utils/` — Justified layout engine, height map calculation, date/duration formatting, localStorage helpers.
+Immich TV is a layered, dependency-injected React app:
+
+- **`src/domain/`** — a `PhotoRepository` interface and a `RepositoryContext` provider. Hooks depend on this abstraction, never on HTTP directly.
+- **`src/api/`** — the concrete `ImmichRepository`, the HTTP client, and the Immich response types.
+- **`src/hooks/`** — [TanStack Query](https://tanstack.com/query) wrappers for data (assets, albums, search, people, accounts) plus webOS UI hooks (D-pad keys, layout, media viewer).
+- **`src/views/` & `src/components/`** — the TV UI, built on Enact + Sandstone and navigated entirely through the webOS Spotlight (D-pad) focus system.
+
+One webOS-specific build detail worth calling out: the production bundle is post-processed by `tools/transpile-legacy.mjs`, which re-targets it to Chromium 68 with esbuild. Enact's Babel pass excludes `node_modules`, so dependencies shipping modern syntax (e.g. `??=`) would otherwise reach the bundle untransformed and fail to parse on older webOS engines — leaving a black screen. See `CLAUDE.md` for the full pipeline.
 
 ---
 
 ## ⚖️ Disclaimer
 
-This is an unofficial third-party client. It is not affiliated with the official Immich development team. The application is provided "as is," optimized for personal use on LG Smart TVs.
+Immich TV is an unofficial, third-party client. It is not affiliated with or endorsed by the Immich project. Provided as-is for personal use on LG Smart TVs.
+
+---
+
+## 📄 License
+
+MIT © [Quentin Jean-Amans](https://github.com/Seeky91). See [LICENSE](LICENSE).
 
 ---
 
 ## 💸 Support
 
-If this app is useful to you and you'd like to drop a tip, you can send Bitcoin to:
+If Immich TV is useful to you, you can leave a tip in Bitcoin — entirely optional, the project is and will remain free and open-source.
 
 ```
 bc1qvxczfmurlglff6zmkgysnxy2yglvwspalcd373
 ```
-
-Totally optional — the project is and will remain free and open-source.
-
----
-
-
-**Built with ❤️ for the Immich community.**
