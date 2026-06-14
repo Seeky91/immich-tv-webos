@@ -7,7 +7,7 @@
 	"scripts": {
 		"serve": "enact serve",
 		"pack": "enact pack",
-		"pack-p": "enact pack -p && node tools/transpile-legacy.mjs",
+		"pack-p": "enact pack -p && node tools/transpile-legacy.mjs && node tools/prune-ilib.mjs",
 		"watch": "enact pack --watch",
 		"clean": "enact clean",
 		"lint": "enact lint .",
