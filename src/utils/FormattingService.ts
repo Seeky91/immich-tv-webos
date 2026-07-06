@@ -1,10 +1,18 @@
-export function formatDuration(duration: string): string {
+// Immich servers before v2 send asset durations as "H:MM:SS.mmm" strings; newer ones send
+// milliseconds. Normalize both to seconds at the API boundary.
+export function toDurationSeconds(duration: string | number | null | undefined): number | null {
+	if (duration == null) return null;
+	if (typeof duration === 'number') return duration / 1000;
 	const [hStr, mStr, sStr] = duration.split(':');
-	if (!hStr || !mStr || !sStr) return '';
+	if (!hStr || !mStr || !sStr) return null;
+	return parseInt(hStr, 10) * 3600 + parseInt(mStr, 10) * 60 + parseFloat(sStr);
+}
 
-	const hours = parseInt(hStr, 10);
-	const minutes = parseInt(mStr, 10);
-	const seconds = Math.floor(parseFloat(sStr));
+export function formatDuration(durationSeconds: number): string {
+	const total = Math.floor(durationSeconds);
+	const hours = Math.floor(total / 3600);
+	const minutes = Math.floor((total % 3600) / 60);
+	const seconds = total % 60;
 
 	return hours > 0
 		? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`

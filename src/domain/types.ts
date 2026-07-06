@@ -5,7 +5,7 @@ export interface TimelineAsset {
 	type: AssetType;
 	ratio: number;
 	fileCreatedAt: string;
-	duration: string | null;
+	durationSeconds: number | null;
 }
 
 export interface TimelineBucket {

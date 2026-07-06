@@ -34,7 +34,7 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, index, on
 						<Icon size={48}>play</Icon>
 					</div>
 
-					{asset.duration && <div className={css.durationBadge}>{formatDuration(asset.duration)}</div>}
+					{asset.durationSeconds !== null && <div className={css.durationBadge}>{formatDuration(asset.durationSeconds)}</div>}
 				</>
 			)}
 		</SpottableDiv>

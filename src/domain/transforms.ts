@@ -1,4 +1,5 @@
 import type {ColumnarAssetResponse} from '../api/types';
+import {toDurationSeconds} from '../utils/FormattingService';
 import type {TimelineAsset, DayGroup, AssetOrder} from './types';
 
 const dayKey = (isoDate: string): string => isoDate.slice(0, 10);
@@ -11,7 +12,7 @@ export function transformColumnarResponse(columnar: ColumnarAssetResponse): Time
 		type: columnar.isImage[i]! ? 'IMAGE' : 'VIDEO',
 		ratio: ratios ? ratios[i]! : 1,
 		fileCreatedAt: columnar.fileCreatedAt[i]!,
-		duration: columnar.duration[i] ?? null,
+		durationSeconds: toDurationSeconds(columnar.duration[i]),
 	}));
 }
 

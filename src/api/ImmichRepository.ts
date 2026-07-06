@@ -3,6 +3,7 @@ import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset
 import type {PhotoRepository} from '../domain/PhotoRepository';
 import type {Album, AlbumDetails, Person, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
 import {groupAssetsByDay, transformColumnarResponse} from '../domain/transforms';
+import {toDurationSeconds} from '../utils/FormattingService';
 
 interface ImmichSearchResponse {
 	assets: {items: ImmichAsset[]};
@@ -77,7 +78,7 @@ export class ImmichRepository implements PhotoRepository {
 			type: a.type === 'VIDEO' ? 'VIDEO' : 'IMAGE',
 			ratio: w && h ? w / h : 1,
 			fileCreatedAt: a.fileCreatedAt,
-			duration: a.duration ?? null,
+			durationSeconds: toDurationSeconds(a.duration),
 		};
 	}
 

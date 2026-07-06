@@ -27,7 +27,8 @@ export interface ImmichAsset {
 	id: string;
 	type: string;
 	fileCreatedAt: string;
-	duration: string | null;
+	// "H:MM:SS.mmm" on Immich < v2, milliseconds on newer servers
+	duration: string | number | null;
 	exifInfo?: ExifInfo;
 }
 
@@ -38,7 +39,7 @@ interface ExifInfo {
 
 export interface ColumnarAssetResponse {
 	id: string[];
-	duration: (string | null)[];
+	duration: (string | number | null)[];
 	isImage: boolean[];
 	fileCreatedAt: string[];
 	ownerId: string[];
