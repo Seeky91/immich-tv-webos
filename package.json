@@ -1,6 +1,6 @@
 {
 	"name": "immich-tv-webos",
-	"version": "1.2.4",
+	"version": "1.2.5",
 	"description": "Read-only Immich photo & video client for LG webOS TVs",
 	"author": "Quentin Jean-Amans <quentin.sqja@gmail.com> (https://github.com/Seeky91)",
 	"main": "src/index.tsx",
