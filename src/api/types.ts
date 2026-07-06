@@ -29,7 +29,10 @@ export interface ImmichAsset {
 	fileCreatedAt: string;
 	// "H:MM:SS.mmm" on Immich < v2, milliseconds on newer servers
 	duration: string | number | null;
+	// Immich < v2 nests dimensions in exifInfo; v2 puts them at the top level
 	exifInfo?: ExifInfo;
+	width?: number;
+	height?: number;
 }
 
 interface ExifInfo {
@@ -59,14 +62,16 @@ export interface ImmichAlbum {
 }
 
 export interface ImmichAlbumDetails extends ImmichAlbum {
-	assets: ImmichAsset[];
+	// Embedded on Immich < v2 only; v2 serves album assets through the timeline endpoints
+	assets?: ImmichAsset[];
 	order?: AssetOrder;
 }
 
 export interface ImmichPerson {
 	id: string;
 	name: string;
-	assetCount: number;
+	// Removed in Immich v2
+	assetCount?: number;
 	isHidden: boolean;
 }
 

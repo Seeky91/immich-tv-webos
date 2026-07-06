@@ -30,7 +30,7 @@ export class ImmichRepository implements PhotoRepository {
 	}
 
 	private mapPerson(p: ImmichPerson): Person {
-		return {id: p.id, name: p.name, assetCount: p.assetCount};
+		return {id: p.id, name: p.name, assetCount: p.assetCount ?? 0};
 	}
 
 	public async getBuckets(): Promise<TimelineBucket[]> {
@@ -51,8 +51,9 @@ export class ImmichRepository implements PhotoRepository {
 		};
 	}
 
-	private async fetchBucket(timeBucket: string): Promise<TimelineAsset[]> {
-		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}`);
+	private async fetchBucket(timeBucket: string, albumId?: string): Promise<TimelineAsset[]> {
+		const albumParam = albumId ? `&albumId=${albumId}` : '';
+		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}${albumParam}`);
 		return transformColumnarResponse(columnar);
 	}
 
@@ -63,16 +64,27 @@ export class ImmichRepository implements PhotoRepository {
 
 	public async getAlbum(albumId: string): Promise<AlbumDetails> {
 		const details = await this.client.fetch<ImmichAlbumDetails>(`/albums/${albumId}`);
+		// Immich v2 no longer embeds assets in the album response; fetch them through the
+		// timeline endpoints filtered by albumId instead.
+		const assets = details.assets
+			? details.assets.map((a) => this.assetFromImmichAsset(a))
+			: await this.fetchAlbumAssetsViaTimeline(albumId);
 		return {
 			...this.mapAlbum(details),
-			assets: details.assets.map((a) => this.assetFromImmichAsset(a)),
+			assets,
 			order: details.order ?? 'desc',
 		};
 	}
 
+	private async fetchAlbumAssetsViaTimeline(albumId: string): Promise<TimelineAsset[]> {
+		const buckets = await this.client.fetch<TimelineBucket[]>(`/timeline/buckets?albumId=${albumId}`);
+		const bucketAssets = await Promise.all(buckets.map((b) => this.fetchBucket(b.timeBucket, albumId)));
+		return bucketAssets.flat();
+	}
+
 	private assetFromImmichAsset(a: ImmichAsset): TimelineAsset {
-		const w = a.exifInfo?.exifImageWidth;
-		const h = a.exifInfo?.exifImageHeight;
+		const w = a.exifInfo?.exifImageWidth ?? a.width;
+		const h = a.exifInfo?.exifImageHeight ?? a.height;
 		return {
 			id: a.id,
 			type: a.type === 'VIDEO' ? 'VIDEO' : 'IMAGE',
@@ -86,7 +98,7 @@ export class ImmichRepository implements PhotoRepository {
 		const response = await this.client.fetch<PeopleResponse>('/people');
 		return response.people
 			.filter((p) => !p.isHidden)
-			.sort((a, b) => b.assetCount - a.assetCount)
+			.sort((a, b) => (b.assetCount ?? 0) - (a.assetCount ?? 0))
 			.slice(0, PEOPLE_LIMIT)
 			.map((p) => this.mapPerson(p));
 	}
