@@ -2,8 +2,21 @@ import React from 'react';
 import {VideoPlayer as SandstoneVideoPlayer} from '@enact/sandstone/VideoPlayer';
 import css from './MediaViewer.module.less';
 
+// Subset of the imperative API exposed by Sandstone's ApiDecorator (available on a ref
+// to the decorated component).
+export interface VideoPlayerApi {
+	areControlsVisible: () => boolean;
+	showControls: () => void;
+	hideControls: () => void;
+}
+
 interface VideoPlayerProps {
 	src: string;
+	// Fired by Sandstone when its media controls show/hide. Documented as ({available}),
+	// but forwardCustom drops the payload — read `areControlsVisible()` instead.
+	onControlsAvailable?: (ev: {available?: boolean}) => void;
+	// Not Sandstone's `playerRef` prop (that one exposes the DOM node, not the API).
+	apiRef?: React.Ref<VideoPlayerApi>;
 }
 
 // Sandstone exposes VideoPlayer with a Slottable-only typing — `autoCloseTimeout`,
@@ -21,14 +34,20 @@ const PLAYER_PROPS = {
 	autoCloseTimeout: 5000,
 	jumpBy: 10,
 	noAutoPlay: false,
+	// Keep the transport bar closed on arrival: while hidden, left/right page between media
+	// (intercepted by MediaViewer); OK/down opens it and left/right become seek again.
+	noAutoShowMediaControls: true,
 	spotlightDisabled: false,
 	backButtonAriaLabel: HIDDEN_BACK_LABEL,
 };
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({src}) => (
-	<SandstoneVideoPlayer {...(PLAYER_PROPS as any)} className={css.viewerMedia}>
-		<source src={src} type="video/mp4" />
-	</SandstoneVideoPlayer>
-);
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({src, onControlsAvailable, apiRef}) => {
+	const playerProps = {...PLAYER_PROPS, onControlsAvailable, ref: apiRef};
+	return (
+		<SandstoneVideoPlayer {...(playerProps as any)} className={css.viewerMedia}>
+			<source src={src} type="video/mp4" />
+		</SandstoneVideoPlayer>
+	);
+};
 
 VideoPlayer.displayName = 'VideoPlayer';

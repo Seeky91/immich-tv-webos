@@ -4,6 +4,8 @@ interface UseWebOSKeysOptions {
 	onBack?: () => void;
 	onArrowLeft?: () => void;
 	onArrowRight?: () => void;
+	onArrowUp?: () => void;
+	onArrowDown?: () => void;
 }
 
 // LG remote Back fires a different keyCode depending on the webOS / WAM version. We support
@@ -77,22 +79,26 @@ function ensureBridgeInstalled(): void {
 	);
 }
 
-export const useWebOSKeys = ({onBack, onArrowLeft, onArrowRight}: UseWebOSKeysOptions = {}) => {
+export const useWebOSKeys = ({onBack, onArrowLeft, onArrowRight, onArrowUp, onArrowDown}: UseWebOSKeysOptions = {}) => {
 	useEffect(() => {
 		ensureBridgeInstalled();
 
 		if (onBack) backStack.push(onBack);
 
 		const handleArrowKeys = (event: KeyboardEvent) => {
-			if (event.key === 'ArrowLeft' && onArrowLeft) {
-				event.preventDefault();
-				onArrowLeft();
-			} else if (event.key === 'ArrowRight' && onArrowRight) {
-				event.preventDefault();
-				onArrowRight();
-			}
+			let handler: (() => void) | undefined;
+			if (event.key === 'ArrowLeft') handler = onArrowLeft;
+			else if (event.key === 'ArrowRight') handler = onArrowRight;
+			else if (event.key === 'ArrowUp') handler = onArrowUp;
+			else if (event.key === 'ArrowDown') handler = onArrowDown;
+			if (!handler) return;
+			event.preventDefault();
+			// A handler must be the sole consumer of the key: Spotlight (bubble) and Sandstone
+			// (e.g. VideoPlayer seek) listen to the same keydown.
+			event.stopImmediatePropagation();
+			handler();
 		};
-		const needsArrowListener = !!(onArrowLeft || onArrowRight);
+		const needsArrowListener = !!(onArrowLeft || onArrowRight || onArrowUp || onArrowDown);
 		if (needsArrowListener) {
 			window.addEventListener('keydown', handleArrowKeys, {capture: true});
 		}
@@ -106,5 +112,5 @@ export const useWebOSKeys = ({onBack, onArrowLeft, onArrowRight}: UseWebOSKeysOp
 				window.removeEventListener('keydown', handleArrowKeys, {capture: true});
 			}
 		};
-	}, [onBack, onArrowLeft, onArrowRight]);
+	}, [onBack, onArrowLeft, onArrowRight, onArrowUp, onArrowDown]);
 };
