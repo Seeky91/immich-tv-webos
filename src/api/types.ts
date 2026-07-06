@@ -33,11 +33,16 @@ export interface ImmichAsset {
 	exifInfo?: ExifInfo;
 	width?: number;
 	height?: number;
+	// 'timeline' | 'hidden' | 'archive' | 'locked'; absent on old servers
+	visibility?: string;
 }
 
 interface ExifInfo {
 	exifImageWidth?: number;
 	exifImageHeight?: number;
+	// Populated on /search/cities responses (all server versions, v3 included)
+	city?: string | null;
+	country?: string | null;
 }
 
 export interface ColumnarAssetResponse {

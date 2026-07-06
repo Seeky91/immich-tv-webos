@@ -1,7 +1,7 @@
 import {APIError, type APIClient} from './client';
 import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset, ImmichPerson, PeopleResponse} from './types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
-import type {Album, AlbumDetails, Person, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
+import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
 import {groupAssetsByDay, transformColumnarResponse} from '../domain/transforms';
 import {toDurationSeconds} from '../utils/FormattingService';
 
@@ -103,6 +103,19 @@ export class ImmichRepository implements PhotoRepository {
 			.map((p) => this.mapPerson(p));
 	}
 
+	public async getPlaces(): Promise<Place[]> {
+		// One representative asset per city, exifInfo populated on every server version
+		const assets = await this.client.fetch<ImmichAsset[]>('/search/cities');
+		if (!Array.isArray(assets)) return [];
+		return assets
+			.flatMap((a) => {
+				const city = a.exifInfo?.city;
+				if (!city) return [];
+				return [{city, country: a.exifInfo?.country ?? null, thumbnailAssetId: a.id}];
+			})
+			.sort((a, b) => a.city.localeCompare(b.city));
+	}
+
 	public async searchSmart(query: string): Promise<TimelineAsset[]> {
 		const response = await this.client.fetch<ImmichSearchResponse>('/search/smart', {
 			method: 'POST',
@@ -119,10 +132,21 @@ export class ImmichRepository implements PhotoRepository {
 		return this.searchItemsToAssets(response);
 	}
 
+	public async searchByCity(city: string): Promise<TimelineAsset[]> {
+		const response = await this.client.fetch<ImmichSearchResponse>('/search/metadata', {
+			method: 'POST',
+			body: JSON.stringify({city, size: SEARCH_PAGE_SIZE}),
+		});
+		return this.searchItemsToAssets(response);
+	}
+
 	private searchItemsToAssets(response: ImmichSearchResponse): TimelineAsset[] {
 		const items = response.assets?.items;
 		if (!Array.isArray(items)) return [];
-		return items.map((a) => this.assetFromImmichAsset(a));
+		return items
+			// Search returns hidden assets (live-photo companion videos) whose thumbnails 404
+			.filter((a) => a.visibility !== 'hidden' && a.visibility !== 'locked')
+			.map((a) => this.assetFromImmichAsset(a));
 	}
 
 	public thumbnailUrl(assetId: string): string {

@@ -1,4 +1,4 @@
-import type {Album, AlbumDetails, Person, TimelineAsset, TimelineBucket, TimelinePage} from './types';
+import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket, TimelinePage} from './types';
 
 export interface PhotoRepository {
 	getBuckets(): Promise<TimelineBucket[]>;
@@ -9,8 +9,11 @@ export interface PhotoRepository {
 
 	getPeople(): Promise<Person[]>;
 
+	getPlaces(): Promise<Place[]>;
+
 	searchSmart(query: string): Promise<TimelineAsset[]>;
 	searchByPerson(personId: string): Promise<TimelineAsset[]>;
+	searchByCity(city: string): Promise<TimelineAsset[]>;
 
 	thumbnailUrl(assetId: string): string;
 	previewUrl(assetId: string): string;

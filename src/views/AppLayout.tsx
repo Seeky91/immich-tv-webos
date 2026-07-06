@@ -4,6 +4,7 @@ import {createSpotlightContainer} from '../utils/spotlight';
 import {NavigationRail} from '../components/NavigationRail/NavigationRail';
 import MainPanel from './MainPanel';
 import AlbumsPanel from './AlbumsPanel';
+import PlacesPanel from './PlacesPanel';
 import SearchPanel from './SearchPanel';
 import type {View} from '../types/navigation';
 import css from './AppLayout.module.less';
@@ -48,6 +49,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({onOpenAccount, accountLetter, acco
 				{activeView === 'albums' && (
 					<div className={css.panelActive}>
 						<AlbumsPanel contentWidth={contentWidth} />
+					</div>
+				)}
+				{activeView === 'places' && (
+					<div className={css.panelActive}>
+						<PlacesPanel contentWidth={contentWidth} />
 					</div>
 				)}
 				{activeView === 'search' && (

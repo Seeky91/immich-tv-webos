@@ -1,1 +1,1 @@
-export type View = 'photos' | 'albums' | 'search';
+export type View = 'photos' | 'albums' | 'places' | 'search';

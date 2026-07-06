@@ -41,6 +41,12 @@ export interface AlbumDetails extends Album {
 	order: AssetOrder;
 }
 
+export interface Place {
+	city: string;
+	country: string | null;
+	thumbnailAssetId: string;
+}
+
 export interface Person {
 	id: string;
 	name: string;
