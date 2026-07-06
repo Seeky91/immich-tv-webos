@@ -27,9 +27,9 @@ export interface ImmichAsset {
 	id: string;
 	type: string;
 	fileCreatedAt: string;
-	// "H:MM:SS.mmm" on Immich < v2, milliseconds on newer servers
+	// "H:MM:SS.mmm" on Immich < v3, milliseconds on v3+
 	duration: string | number | null;
-	// Immich < v2 nests dimensions in exifInfo; v2 puts them at the top level
+	// Immich < v3 nests dimensions in exifInfo; v3 puts them at the top level
 	exifInfo?: ExifInfo;
 	width?: number;
 	height?: number;
@@ -62,7 +62,7 @@ export interface ImmichAlbum {
 }
 
 export interface ImmichAlbumDetails extends ImmichAlbum {
-	// Embedded on Immich < v2 only; v2 serves album assets through the timeline endpoints
+	// Embedded on Immich < v3 only; v3 serves album assets through the timeline endpoints
 	assets?: ImmichAsset[];
 	order?: AssetOrder;
 }
@@ -70,7 +70,7 @@ export interface ImmichAlbumDetails extends ImmichAlbum {
 export interface ImmichPerson {
 	id: string;
 	name: string;
-	// Removed in Immich v2
+	// Removed in Immich v3
 	assetCount?: number;
 	isHidden: boolean;
 }

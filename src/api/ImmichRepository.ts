@@ -64,7 +64,7 @@ export class ImmichRepository implements PhotoRepository {
 
 	public async getAlbum(albumId: string): Promise<AlbumDetails> {
 		const details = await this.client.fetch<ImmichAlbumDetails>(`/albums/${albumId}`);
-		// Immich v2 no longer embeds assets in the album response; fetch them through the
+		// Immich v3 no longer embeds assets in the album response; fetch them through the
 		// timeline endpoints filtered by albumId instead.
 		const assets = details.assets
 			? details.assets.map((a) => this.assetFromImmichAsset(a))

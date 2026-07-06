@@ -1,4 +1,4 @@
-// Immich servers before v2 send asset durations as "H:MM:SS.mmm" strings; newer ones send
+// Immich servers before v3 send asset durations as "H:MM:SS.mmm" strings; v3+ sends
 // milliseconds. Normalize both to seconds at the API boundary.
 export function toDurationSeconds(duration: string | number | null | undefined): number | null {
 	if (duration == null) return null;
