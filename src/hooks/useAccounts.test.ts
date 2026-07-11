@@ -117,6 +117,49 @@ describe('switchTo', () => {
 	});
 });
 
+describe('addPairedAccount', () => {
+	const paired = {baseUrl: 'http://immich.local', email: 'q@e.fr', accessToken: 'tok123'};
+
+	test('stores the account and activates it when the token validates', async () => {
+		const {result} = renderHook(() => useAccounts());
+		let login;
+		await act(async () => {
+			login = await result.current.addPairedAccount(paired);
+		});
+		expect(login).toEqual({success: true});
+		expect(result.current.accounts).toHaveLength(1);
+		const account = result.current.accounts[0];
+		expect(account?.method).toBe(AuthMethod.USER_CREDENTIALS);
+		expect(account?.email).toBe('q@e.fr');
+		expect(account?.accessToken).toBe('tok123');
+		expect(result.current.activeAccountId).toBe(account?.id);
+		expect(result.current.repository).not.toBeNull();
+	});
+
+	test('rejected token: no account stored, error returned', async () => {
+		mockValidate.mockResolvedValue(false);
+		const {result} = renderHook(() => useAccounts());
+		let login;
+		await act(async () => {
+			login = await result.current.addPairedAccount(paired);
+		});
+		expect(login).toMatchObject({success: false});
+		expect(result.current.accounts).toHaveLength(0);
+		expect(result.current.repository).toBeNull();
+	});
+
+	test('validation network error: no account stored, error returned', async () => {
+		mockValidate.mockRejectedValue(new Error('boom'));
+		const {result} = renderHook(() => useAccounts());
+		let login;
+		await act(async () => {
+			login = await result.current.addPairedAccount(paired);
+		});
+		expect(login).toMatchObject({success: false});
+		expect(result.current.accounts).toHaveLength(0);
+	});
+});
+
 describe('setAsDefault', () => {
 	const a: Account = {id: 'a', baseUrl: 'http://a', method: AuthMethod.API_KEY, apiKey: 'ka', addedAt: 1};
 	const b: Account = {id: 'b', baseUrl: 'http://b', method: AuthMethod.API_KEY, apiKey: 'kb', addedAt: 2};

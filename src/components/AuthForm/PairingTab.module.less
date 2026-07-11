@@ -1,0 +1,72 @@
+.pairing {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 0 1rem 4rem;
+}
+
+.qr {
+	width: 13rem;   // 312px @ FHD
+	height: 13rem;
+	border-radius: 0.5rem;
+	flex-shrink: 0;
+}
+
+.details {
+	display: flex;
+	flex-direction: column;
+	margin-left: 2.5rem;
+	max-width: 34rem;
+}
+
+// flex `gap` is Chrome 84+ (dropped on webOS 6 / Cr79) — use margins instead.
+.details > * + * {
+	margin-top: 0.9rem;
+}
+
+.step {
+	font-size: var(--font-body);
+	line-height: 1.4;
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.url {
+	color: #a5b4fc;
+	white-space: nowrap;
+}
+
+.codeRow {
+	display: flex;
+	align-items: baseline;
+}
+
+.codeLabel {
+	font-size: 0.65rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	opacity: 0.55;
+	font-weight: 500;
+	margin-right: 0.75rem;
+}
+
+.code {
+	font-size: 1.333rem; // 32px @ FHD
+	font-weight: 700;
+	letter-spacing: 0.25em;
+	color: #e2e8f0;
+}
+
+.status {
+	font-size: var(--font-body);
+	opacity: 0.6;
+}
+
+.message {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 2rem 0 1rem 4rem;
+}
+
+.retry {
+	margin-top: 1rem;
+}

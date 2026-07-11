@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Immich TV — Sign in</title>
+<style>
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+		background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+		color: #e2e8f0;
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+	}
+	.card { width: 100%; max-width: 420px; }
+	h1 { font-size: 22px; margin-bottom: 4px; }
+	.sub { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+	label { display: block; font-size: 13px; color: #94a3b8; margin: 14px 0 6px; }
+	input {
+		width: 100%;
+		padding: 12px 14px;
+		font-size: 16px;
+		color: #e2e8f0;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 10px;
+		outline: none;
+	}
+	input:focus { border-color: #6366f1; }
+	button {
+		width: 100%;
+		margin-top: 22px;
+		padding: 14px;
+		font-size: 16px;
+		font-weight: 600;
+		color: white;
+		background: #6366f1;
+		border: none;
+		border-radius: 10px;
+		cursor: pointer;
+	}
+	button:disabled { opacity: 0.6; }
+	.error {
+		display: none;
+		margin-top: 16px;
+		padding: 12px 14px;
+		font-size: 14px;
+		border-radius: 10px;
+		background: rgba(239, 68, 68, 0.15);
+		border: 1px solid rgba(239, 68, 68, 0.4);
+		color: #fca5a5;
+	}
+	.success { display: none; text-align: center; }
+	.success .check {
+		width: 72px; height: 72px;
+		margin: 0 auto 20px;
+		border-radius: 50%;
+		background: rgba(74, 222, 128, 0.15);
+		border: 2px solid #4ade80;
+		color: #4ade80;
+		font-size: 40px;
+		line-height: 68px;
+	}
+	.hint { color: #64748b; font-size: 12px; margin-top: 18px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card">
+	<form id="form" autocomplete="on">
+		<h1>Sign in to your TV</h1>
+		<p class="sub">Immich TV — your credentials go straight to your TV over your home network. Nothing leaves it.</p>
+		<label for="url">Immich server URL</label>
+		<input id="url" type="url" placeholder="https://immich.example.com" autocapitalize="off" autocorrect="off" required>
+		<label for="email">Email</label>
+		<input id="email" type="email" placeholder="you@example.com" autocapitalize="off" required>
+		<label for="password">Password</label>
+		<input id="password" type="password" placeholder="Password" required>
+		<div id="codeField" style="display:none">
+			<label for="code">Code shown on the TV</label>
+			<input id="code" placeholder="8-character code" autocapitalize="characters" autocorrect="off">
+		</div>
+		<button id="submit" type="submit">Connect TV</button>
+		<div id="error" class="error"></div>
+		<p class="hint">Your password is used once to sign in and is never stored.</p>
+	</form>
+	<div id="success" class="success">
+		<div class="check">✓</div>
+		<h1>You're all set</h1>
+		<p class="sub">Head back to your TV — it's signing in now.</p>
+	</div>
+</div>
+<script>
+(function () {
+	var params = {};
+	window.location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
+		var kv = pair.split('=');
+		if (kv[0]) params[kv[0]] = decodeURIComponent(kv[1] || '');
+	});
+	var qrCode = (params.c || '').toUpperCase();
+	if (!qrCode) document.getElementById('codeField').style.display = 'block';
+	if (params.u) document.getElementById('url').value = params.u;
+
+	var form = document.getElementById('form');
+	var button = document.getElementById('submit');
+	var errorBox = document.getElementById('error');
+
+	form.addEventListener('submit', function (event) {
+		event.preventDefault();
+		errorBox.style.display = 'none';
+		button.disabled = true;
+		button.textContent = 'Connecting…';
+		fetch('/approve', {
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({
+				code: qrCode || document.getElementById('code').value,
+				serverUrl: document.getElementById('url').value,
+				email: document.getElementById('email').value,
+				password: document.getElementById('password').value
+			})
+		})
+			.then(function (res) { return res.json(); })
+			.then(function (body) {
+				if (body.ok) {
+					form.style.display = 'none';
+					document.getElementById('success').style.display = 'block';
+					return;
+				}
+				showError(body.error || 'Something went wrong. Try again.');
+			})
+			.catch(function () {
+				showError("Couldn't reach the TV. Make sure you're on the same Wi-Fi network.");
+			});
+	});
+
+	function showError(message) {
+		errorBox.textContent = message;
+		errorBox.style.display = 'block';
+		button.disabled = false;
+		button.textContent = 'Connect TV';
+	}
+})();
+</script>
+</body>
+</html>

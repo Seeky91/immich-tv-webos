@@ -17,6 +17,7 @@
 
 ## ✨ Features
 
+- 📱 **Sign in with your phone** — scan a QR code and enter your credentials on your phone instead of typing them with the remote. Pairing happens entirely on your home network: the TV runs a small local service, your password is used for one login call and never stored, and nothing goes through any third-party server.
 - 🖼️ **Timeline** — infinite-scrolling photo & video timeline grouped by date, laid out in a justified grid that preserves original aspect ratios.
 - 📁 **Albums** — browse your Immich albums, each with its own date-grouped timeline.
 - 🔎 **Search** — smart text search powered by Immich's ML backend, plus face/person browsing through a People ribbon.
@@ -141,6 +142,7 @@ Immich TV is a layered, dependency-injected React app:
 - **`src/api/`** — the concrete `ImmichRepository`, the HTTP client, and the Immich response types.
 - **`src/hooks/`** — [TanStack Query](https://tanstack.com/query) wrappers for data (assets, albums, search, people, accounts) plus webOS UI hooks (D-pad keys, layout, media viewer).
 - **`src/views/` & `src/components/`** — the TV UI, built on Enact + Sandstone and navigated entirely through the webOS Spotlight (D-pad) focus system.
+- **`service/`** — a small webOS JS service (Node, zero dependencies) bundled in the `.ipk` that powers phone sign-in: it serves the pairing page over the local network and performs the Immich login on the TV, so self-signed HTTPS and no-CORS servers work. The app talks to it over the Luna bus; run `node service/dev.js` to develop against it in a desktop browser, and `npm run test-service` for its test suite.
 
 One webOS-specific build detail worth calling out: the production bundle is post-processed by `tools/transpile-legacy.mjs`, which re-targets it to Chromium 68 with esbuild. Enact's Babel pass excludes `node_modules`, so dependencies shipping modern syntax (e.g. `??=`) would otherwise reach the bundle untransformed and fail to parse on older webOS engines — leaving a black screen. See `CLAUDE.md` for the full pipeline.
 
