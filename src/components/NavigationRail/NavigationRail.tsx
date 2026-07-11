@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useMemo} from 'react';
 import Icon from '@enact/sandstone/Icon';
 import {createSpotlightContainer} from '../../utils/spotlight';
 import type {View} from '../../types/navigation';
@@ -22,45 +22,13 @@ const NAV_ITEMS: {view: View; icon: string; label: string}[] = [
 const RailContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
 export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({activeView, onNavigate, onOpenAccount, accountLetter, accountGradient}) => {
-	const [isExpanded, setIsExpanded] = useState(false);
-	const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const handleFocus = useCallback(() => {
-		if (blurTimerRef.current !== null) {
-			clearTimeout(blurTimerRef.current);
-			blurTimerRef.current = null;
-		}
-		setIsExpanded(true);
-	}, []);
-
-	const handleBlur = useCallback(() => {
-		blurTimerRef.current = setTimeout(() => {
-			setIsExpanded(false);
-			blurTimerRef.current = null;
-		}, 50);
-	}, []);
-
-	useEffect(() => {
-		return () => {
-			if (blurTimerRef.current !== null) {
-				clearTimeout(blurTimerRef.current);
-			}
-		};
-	}, []);
-
 	const navHandlers = useMemo(
 		() => Object.fromEntries(NAV_ITEMS.map(({view}) => [view, () => onNavigate(view)])),
 		[onNavigate]
 	);
 
-	const railClass = [css.rail, isExpanded ? css.expanded : ''].filter(Boolean).join(' ');
-
 	return (
-		<RailContainer
-			className={railClass}
-			onFocusCapture={handleFocus}
-			onBlurCapture={handleBlur}
-		>
+		<RailContainer className={css.rail}>
 			{NAV_ITEMS.map(({view, icon, label}) => (
 				<button
 					key={view}
@@ -68,7 +36,7 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 					onClick={navHandlers[view]}
 				>
 					<div className={css.iconContainer}>
-						<Icon>{icon}</Icon>
+						<Icon size="tiny">{icon}</Icon>
 					</div>
 					<span className={css.label}>{label}</span>
 				</button>

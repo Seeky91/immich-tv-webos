@@ -2,24 +2,22 @@
 // (per CSS spec) regardless of `position`, which would trap the rail at z-index 10 in the
 // root context. Without it the rail paints in normal document order, leaving MediaViewer
 // (position:fixed z-index:1000 inside ViewContainer) free to overlay it.
+// Width is fixed (no focus-driven expand): animating `width` reflows the whole grid on
+// every frame, which stutters on TV hardware. Authored px are 4K-space (postcss-ri),
+// so 360px renders 180 CSS px at FHD — keep in sync with SIDEBAR_WIDTH (constants.ts).
 .rail {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   flex-shrink: 0;
-  width: 160px;
-  min-width: 160px;
+  width: 360px;
+  min-width: 360px;
   height: 100%;
   background: #1e293b;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding: 32px 0 24px;
   overflow: hidden;
-  transition: width 0.3s ease-in-out;
   box-sizing: border-box;
-}
-
-.rail.expanded {
-  width: 450px;
 }
 
 /* ── Pill ── */
@@ -27,9 +25,9 @@
 .navItem {
   display: flex;
   align-items: center;
-  width: calc(100% - 32px); // Largeur de la pilule = 128px
+  width: calc(100% - 32px);
   margin: 0 16px 12px;
-  padding: 12px 0;         // ON ENLÈVE LE PADDING HORIZONTAL (Le secret est là)
+  padding: 12px 0;
   border-radius: 28px;
   cursor: pointer;
   background: transparent;
@@ -55,27 +53,26 @@
   color: white;
 }
 
-/* ── Zone Icône (Sans Flex, avec largeur fixe) ── */
-
+// Fixed icon column so glyphs stay vertically aligned across items.
 .iconContainer {
-  display: block;      // On repasse en block standard
-  text-align: center;  // Centrage horizontal classique
-  width: 128px;        // On prend TOUTE la largeur de la pilule (160 - 32)
-  min-width: 128px;
-  overflow: visible;   // On laisse déborder si besoin
+  display: block;
+  text-align: center;
+  width: 96px;
+  min-width: 96px;
+  overflow: visible;
 }
 
 // Avatar for the Account rail item: the bare letter has only line-height of body
 // text, which makes the colored gradient render as a thin stripe. Wrap it in a
-// circle sized to roughly match the Sandstone Icon footprint used by sibling items.
+// circle sized to roughly match the tiny Sandstone Icon footprint of sibling items.
 .avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1;
   color: white;
@@ -84,19 +81,9 @@
 /* ── Label ── */
 
 .label {
-  max-width: 0;
-  overflow: hidden;
-  opacity: 0;
-  font-size: var(--font-title);
+  font-size: var(--font-body);
   white-space: nowrap;
   pointer-events: none;
-  transition: max-width 0.3s ease, opacity 0.2s ease;
-}
-
-.expanded .label {
-  max-width: 300px;
-  opacity: 1;
-  margin-left: -10px; // On le ramène un peu vers l'icône car le container icône est large
 }
 
 .spacer { flex: 1; }

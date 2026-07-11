@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {SIDEBAR_COLLAPSED_WIDTH} from '../utils/constants';
+import {SIDEBAR_WIDTH} from '../utils/constants';
 import {createSpotlightContainer} from '../utils/spotlight';
 import {NavigationRail} from '../components/NavigationRail/NavigationRail';
 import MainPanel from './MainPanel';
@@ -19,10 +19,10 @@ const ViewContainer = createSpotlightContainer({enterTo: 'last-focused'});
 
 const AppLayout: React.FC<AppLayoutProps> = ({onOpenAccount, accountLetter, accountGradient}) => {
 	const [activeView, setActiveView] = useState<View>('photos');
-	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
+	const [contentWidth, setContentWidth] = useState(window.innerWidth - SIDEBAR_WIDTH);
 
 	useEffect(() => {
-		const handleResize = () => setContentWidth(window.innerWidth - SIDEBAR_COLLAPSED_WIDTH);
+		const handleResize = () => setContentWidth(window.innerWidth - SIDEBAR_WIDTH);
 		window.addEventListener('resize', handleResize);
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
