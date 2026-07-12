@@ -31,7 +31,6 @@ export function deriveLabel(account: Account): string {
 	return hostFromUrl(account.baseUrl);
 }
 
-// First visible glyph of the label, uppercased, for the avatar tile. '?' when the label is blank.
 export function deriveInitial(account: Account): string {
 	return (deriveLabel(account).match(/\S/)?.[0] ?? '?').toUpperCase();
 }

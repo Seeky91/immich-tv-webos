@@ -26,8 +26,7 @@ export type AuthConfig = UserCredentialsConfig | ApiKeyConfig;
 // One shared result for every auth path (credentials, API key, phone pairing); keep it single-source to avoid drift.
 export type AuthSubmitResult = {success: true} | {success: false; errorMessage: string};
 
-// Credentials an auth form collects for a new account, consumed by useAccounts. Single-source
-// so the form (producer) and the hook (consumer) can't drift — mirrors AuthSubmitResult on the result side.
+// Credentials an auth form collects for a new account, consumed by useAccounts; single-source so form and hook can't drift.
 interface AuthFormCredentialsPayload {
 	method: AuthMethod.USER_CREDENTIALS;
 	baseUrl: string;
