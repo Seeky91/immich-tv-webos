@@ -4,12 +4,9 @@ import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
 import {useInfiniteTimeline} from '../hooks/useAssets';
 import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
+import type {RoutePanelProps} from '../types/navigation';
 
-interface MainPanelProps {
-	contentWidth: number;
-}
-
-const MainPanel: React.FC<MainPanelProps> = ({contentWidth}) => {
+const MainPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const {data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, allBuckets} = useInfiniteTimeline();
 
 	const loadedGroups = useMemo(() => data?.pages.flatMap((p) => p.groups) ?? [], [data]);

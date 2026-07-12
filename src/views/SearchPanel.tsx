@@ -9,15 +9,12 @@ import {useSearch} from '../hooks/useSearch';
 import type {SearchQuery} from '../hooks/useSearch';
 import {createSpotlightContainer} from '../utils/spotlight';
 import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
+import type {RoutePanelProps} from '../types/navigation';
 import css from './SearchPanel.module.less';
-
-interface SearchPanelProps {
-	contentWidth: number;
-}
 
 const Container = createSpotlightContainer({enterTo: 'default-element'});
 
-const SearchPanel: React.FC<SearchPanelProps> = ({contentWidth}) => {
+const SearchPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const [activeQuery, setActiveQuery] = useState<SearchQuery | null>(null);
 	const [inputValue, setInputValue] = useState('');
 

@@ -4,13 +4,10 @@ import {PlaceCard} from '../components/PlaceCard';
 import {QueryStateView} from '../components/QueryStateView';
 import PlaceView from './PlaceView';
 import {usePlaces} from '../hooks/usePlaces';
+import type {RoutePanelProps} from '../types/navigation';
 import css from './PlacesPanel.module.less';
 
-interface PlacesPanelProps {
-	contentWidth: number;
-}
-
-const PlacesPanel: React.FC<PlacesPanelProps> = ({contentWidth}) => {
+const PlacesPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const [selectedCity, setSelectedCity] = useState<string | null>(null);
 	const {data: places, isLoading, error} = usePlaces();
 

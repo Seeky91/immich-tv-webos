@@ -4,13 +4,10 @@ import {AlbumCard} from '../components/AlbumCard';
 import {QueryStateView} from '../components/QueryStateView';
 import AlbumView from './AlbumView';
 import {useAlbums} from '../hooks/useAlbums';
+import type {RoutePanelProps} from '../types/navigation';
 import css from './AlbumsPanel.module.less';
 
-interface AlbumsPanelProps {
-	contentWidth: number;
-}
-
-const AlbumsPanel: React.FC<AlbumsPanelProps> = ({contentWidth}) => {
+const AlbumsPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
 	const {data: albums, isLoading, error} = useAlbums();
 
