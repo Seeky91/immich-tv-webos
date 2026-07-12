@@ -2,8 +2,6 @@ import {useCallback} from 'react';
 import {SCROLL_THRESHOLD_ITEMS} from '../utils/constants';
 
 interface ScrollEvent {
-	scrollTop: number;
-	scrollLeft: number;
 	moreInfo?: {firstVisibleIndex: number; lastVisibleIndex: number};
 }
 
@@ -12,19 +10,18 @@ interface UseScrollPaginationOptions {
 	isFetchingNextPage: boolean;
 	fetchNextPage: () => void;
 	loadedGroupCount: number;
-	threshold?: number;
 }
 
-export const useScrollPagination = ({hasNextPage, isFetchingNextPage, fetchNextPage, loadedGroupCount, threshold = SCROLL_THRESHOLD_ITEMS}: UseScrollPaginationOptions) => {
+export const useScrollPagination = ({hasNextPage, isFetchingNextPage, fetchNextPage, loadedGroupCount}: UseScrollPaginationOptions) => {
 	const handleScroll = useCallback(
 		({moreInfo}: ScrollEvent) => {
 			if (!hasNextPage || isFetchingNextPage) return;
 			const lastVisible = moreInfo?.lastVisibleIndex ?? 0;
-			if (lastVisible >= loadedGroupCount - threshold) {
+			if (lastVisible >= loadedGroupCount - SCROLL_THRESHOLD_ITEMS) {
 				fetchNextPage();
 			}
 		},
-		[hasNextPage, isFetchingNextPage, fetchNextPage, loadedGroupCount, threshold]
+		[hasNextPage, isFetchingNextPage, fetchNextPage, loadedGroupCount]
 	);
 
 	return {handleScroll};

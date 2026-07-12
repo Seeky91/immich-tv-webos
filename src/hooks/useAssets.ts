@@ -25,6 +25,5 @@ export const useInfiniteTimeline = () => {
 		...infiniteQuery,
 		isLoading: isBucketsLoading || infiniteQuery.isLoading,
 		allBuckets: allBuckets || [],
-		totalBucketCount: allBuckets?.length || 0,
 	};
 };
