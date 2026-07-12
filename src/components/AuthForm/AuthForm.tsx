@@ -5,27 +5,12 @@ import {ErrorMessage} from '../ErrorMessage';
 import {FieldRow} from '../FieldRow/FieldRow';
 import {UrlInput} from '../UrlInput/UrlInput';
 import {PairingTab} from './PairingTab';
-import {AuthMethod, type AuthSubmitResult} from '../../api/types';
+import {AuthMethod, type AuthSubmitResult, type AuthFormPayload} from '../../api/types';
 import type {PairingDriver, PairedAccountResult} from '../../pairing/types';
 import css from './AuthForm.module.less';
 
-// Canonical auth-attempt result lives in api/types; re-exported here for the form's consumers.
-export type {AuthSubmitResult};
-
-interface AuthFormCredentialsPayload {
-	method: AuthMethod.USER_CREDENTIALS;
-	baseUrl: string;
-	email: string;
-	password: string;
-}
-
-interface AuthFormApiKeyPayload {
-	method: AuthMethod.API_KEY;
-	baseUrl: string;
-	apiKey: string;
-}
-
-export type AuthFormPayload = AuthFormCredentialsPayload | AuthFormApiKeyPayload;
+// Canonical auth-attempt types live in api/types; re-exported here for the form's consumers.
+export type {AuthSubmitResult, AuthFormPayload};
 
 interface AuthFormProps {
 	initialUrl: string;

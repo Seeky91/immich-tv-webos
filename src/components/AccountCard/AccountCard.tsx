@@ -1,7 +1,7 @@
 import React, {useCallback, useMemo} from 'react';
 import {SpottableDiv} from '../../utils/spotlight';
 import type {Account} from '../../utils/accountsStore';
-import {deriveLabel, pickGradient} from '../../utils/accountVisual';
+import {deriveLabel, deriveInitial, pickGradient, hostFromUrl} from '../../utils/accountVisual';
 import css from './AccountCard.module.less';
 
 interface AccountCardProps {
@@ -14,16 +14,10 @@ interface AccountCardProps {
 export const AccountCard: React.FC<AccountCardProps> = ({account, isActive, isDefault, onSelect}) => {
 	const label = useMemo(() => deriveLabel(account), [account]);
 	const gradient = useMemo(() => pickGradient(account.id), [account.id]);
-	const letter = useMemo(() => (label.match(/\S/)?.[0] ?? '?').toUpperCase(), [label]);
+	const letter = useMemo(() => deriveInitial(account), [account]);
 	const handleClick = useCallback(() => onSelect(account.id), [account.id, onSelect]);
 
-	const host = useMemo(() => {
-		try {
-			return new URL(account.baseUrl).hostname;
-		} catch {
-			return account.baseUrl;
-		}
-	}, [account.baseUrl]);
+	const host = useMemo(() => hostFromUrl(account.baseUrl), [account.baseUrl]);
 
 	return (
 		<SpottableDiv

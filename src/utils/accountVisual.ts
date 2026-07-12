@@ -12,7 +12,7 @@ export const GRADIENT_PALETTE: readonly string[] = [
 	'linear-gradient(135deg, #5fd35f, #5fbfd3)',
 ] as const;
 
-const hostFromUrl = (url: string): string => {
+export const hostFromUrl = (url: string): string => {
 	try {
 		const u = new URL(url);
 		return u.hostname || url;
@@ -29,6 +29,11 @@ export function deriveLabel(account: Account): string {
 		return account.email;
 	}
 	return hostFromUrl(account.baseUrl);
+}
+
+// First visible glyph of the label, uppercased, for the avatar tile. '?' when the label is blank.
+export function deriveInitial(account: Account): string {
+	return (deriveLabel(account).match(/\S/)?.[0] ?? '?').toUpperCase();
 }
 
 const hash = (s: string): number => {

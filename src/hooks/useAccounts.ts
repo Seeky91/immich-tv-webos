@@ -1,7 +1,7 @@
 import {useState, useEffect, useCallback, useMemo} from 'react';
 import {APIClient} from '../api/client';
 import {ImmichRepository, validateAuth} from '../api/ImmichRepository';
-import {AuthMethod, type ApiKeyConfig, type UserCredentialsConfig} from '../api/types';
+import {AuthMethod, type ApiKeyConfig, type UserCredentialsConfig, type AuthSubmitResult, type AuthFormPayload} from '../api/types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
 import {
 	readAccountsStore,
@@ -16,23 +16,6 @@ import {
 import {randomId} from '../utils/uuid';
 import {makeAuthErrorMessage} from './_authHelpers';
 import type {PairedAccountResult} from '../pairing/types';
-
-export type LoginResult = {success: true} | {success: false; errorMessage: string};
-
-export interface AddAccountCredentialsInput {
-	method: AuthMethod.USER_CREDENTIALS;
-	baseUrl: string;
-	email: string;
-	password: string;
-}
-
-export interface AddAccountApiKeyInput {
-	method: AuthMethod.API_KEY;
-	baseUrl: string;
-	apiKey: string;
-}
-
-export type AddAccountInput = AddAccountCredentialsInput | AddAccountApiKeyInput;
 
 const accountToConfig = (acc: Account): UserCredentialsConfig | ApiKeyConfig => {
 	if (acc.method === AuthMethod.API_KEY) {
@@ -109,7 +92,7 @@ export const useAccounts = () => {
 	}, []);
 
 	const addAccount = useCallback(
-		async (input: AddAccountInput): Promise<LoginResult> => {
+		async (input: AuthFormPayload): Promise<AuthSubmitResult> => {
 			setIsValidating(true);
 			setValidationError('');
 			try {
@@ -167,7 +150,7 @@ export const useAccounts = () => {
 	// Phone-pairing login: the token was already minted by the service, so this
 	// only validates it and reuses the regular persist → repository tail.
 	const addPairedAccount = useCallback(
-		async (input: PairedAccountResult): Promise<LoginResult> => {
+		async (input: PairedAccountResult): Promise<AuthSubmitResult> => {
 			setIsValidating(true);
 			setValidationError('');
 			try {

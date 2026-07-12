@@ -1,5 +1,5 @@
 import {AuthMethod} from '../api/types';
-import {deriveLabel, pickGradient, GRADIENT_PALETTE} from './accountVisual';
+import {deriveLabel, deriveInitial, pickGradient, GRADIENT_PALETTE} from './accountVisual';
 import type {Account} from './accountsStore';
 
 const make = (over: Partial<Account>): Account => ({
@@ -31,6 +31,13 @@ describe('deriveLabel', () => {
 
 	test('API_KEY tolerates baseUrl without scheme', () => {
 		expect(deriveLabel(make({method: AuthMethod.API_KEY, baseUrl: '192.168.1.42:2283'}))).toBe('192.168.1.42');
+	});
+});
+
+describe('deriveInitial', () => {
+	test('uppercases the first visible glyph of the label', () => {
+		expect(deriveInitial(make({method: AuthMethod.USER_CREDENTIALS, email: 'marie@example.com'}))).toBe('M');
+		expect(deriveInitial(make({method: AuthMethod.API_KEY, baseUrl: 'https://immich.home.local'}))).toBe('I');
 	});
 });
 

@@ -8,7 +8,7 @@ import {RepositoryProvider} from '../domain/RepositoryContext';
 import {APIError} from '../api/client';
 import AppLayout from '../views/AppLayout';
 import {AccountPanel} from '../views/AccountPanel/AccountPanel';
-import {deriveLabel, pickGradient} from '../utils/accountVisual';
+import {deriveInitial, pickGradient} from '../utils/accountVisual';
 import {createPairingDriver} from '../pairing/createPairingDriver';
 import type {PairedAccountResult} from '../pairing/types';
 import type {AuthFormPayload, AuthSubmitResult} from '../components/AuthForm/AuthForm';
@@ -42,9 +42,7 @@ const AppBase: React.FC = () => {
 
 	const activeAccount = accounts.find(a => a.id === activeAccountId) ?? null;
 
-	const accountLetter = activeAccount
-		? (deriveLabel(activeAccount).match(/\S/)?.[0] ?? '?').toUpperCase()
-		: '?';
+	const accountLetter = activeAccount ? deriveInitial(activeAccount) : '?';
 	const accountGradient = activeAccount ? pickGradient(activeAccount.id) : '#333';
 
 	const handleSwitch = useCallback(
