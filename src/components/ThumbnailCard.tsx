@@ -9,7 +9,7 @@ interface ThumbnailCardProps {
 	onClick: () => void;
 }
 
-/** Square poster card: thumbnail (or placeholder), title and optional secondary line, focusable via D-pad. */
+/** Square poster card, focusable via D-pad. */
 export const ThumbnailCard: React.FC<ThumbnailCardProps> = React.memo(({thumbnailUrl, title, secondaryLine, onClick}) => (
 	<SpottableDiv className={css.card} onClick={onClick}>
 		{thumbnailUrl
