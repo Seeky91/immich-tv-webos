@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
 import {AssetCard} from '../AssetCard';
@@ -8,6 +8,7 @@ import {ErrorBoundary} from '../ErrorBoundary';
 import {useMediaViewer} from '../../hooks/useMediaViewer';
 import {useTimelineLayout} from '../../hooks/useTimelineLayout';
 import {useScrollPagination} from '../../hooks/useScrollPagination';
+import {useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
 import {ESTIMATED_ROW_HEIGHT_PX, MEDIA_VIEWER_PREFETCH_THRESHOLD} from '../../utils/constants';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
@@ -35,6 +36,11 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	const totalCount = flatAssets.length;
 	const getAssetAt = useCallback((i: number): TimelineAsset | null => flatAssets[i] ?? null, [flatAssets]);
 	const viewer = useMediaViewer(totalCount);
+	const viewportRef = useRef<HTMLDivElement>(null);
+
+	// Own D-pad navigation of the grid so scroll-moves don't jump (disabled while the media viewer
+	// owns the keys). See useTimelineViewportFocus for the why.
+	useTimelineViewportFocus({enabled: !viewer.state, viewportRef});
 
 	const {layoutMap, heightMap, placeholderHeight} = useTimelineLayout({
 		allBuckets: pagination?.allBuckets ?? [],
@@ -116,17 +122,19 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	return (
 		<>
 			<ErrorBoundary>
-				<VirtualList
-					dataSize={virtualItems.length}
-					itemSize={{minSize: ri.scale(ESTIMATED_ROW_HEIGHT_PX), size: itemSizes}}
-					itemRenderer={renderItem}
-					direction="vertical"
-					scrollMode="native"
-					verticalScrollbar="visible"
-					onScroll={pagination ? handleScroll : undefined}
-					onScrollStop={pagination ? handleScroll : undefined}
-					style={style}
-				/>
+				<div ref={viewportRef} className={css.timelineViewport}>
+					<VirtualList
+						dataSize={virtualItems.length}
+						itemSize={{minSize: ri.scale(ESTIMATED_ROW_HEIGHT_PX), size: itemSizes}}
+						itemRenderer={renderItem}
+						direction="vertical"
+						scrollMode="native"
+						verticalScrollbar="visible"
+						onScroll={pagination ? handleScroll : undefined}
+						onScrollStop={pagination ? handleScroll : undefined}
+						style={style}
+					/>
+				</div>
 			</ErrorBoundary>
 			{viewer.state && (
 				<ErrorBoundary>
