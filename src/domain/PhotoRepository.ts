@@ -17,7 +17,6 @@ export interface PhotoRepository {
 
 	thumbnailUrl(assetId: string): string;
 	previewUrl(assetId: string): string;
-	originalUrl(assetId: string): string;
 	videoPlaybackUrl(assetId: string): string;
 	faceUrl(personId: string): string;
 }

@@ -1,20 +1,6 @@
-import type {ColumnarAssetResponse} from '../api/types';
-import {toDurationSeconds} from '../utils/FormattingService';
 import type {TimelineAsset, DayGroup, AssetOrder} from './types';
 
 const dayKey = (isoDate: string): string => isoDate.slice(0, 10);
-
-export function transformColumnarResponse(columnar: ColumnarAssetResponse): TimelineAsset[] {
-	const len = columnar.id.length;
-	const ratios = columnar.ratio?.length === len ? columnar.ratio : null;
-	return columnar.id.map((id, i) => ({
-		id,
-		type: columnar.isImage[i]! ? 'IMAGE' : 'VIDEO',
-		ratio: ratios ? ratios[i]! : 1,
-		fileCreatedAt: columnar.fileCreatedAt[i]!,
-		durationSeconds: toDurationSeconds(columnar.duration[i]),
-	}));
-}
 
 // Day buckets are sorted by `order`; within-day order is preserved from the input array
 // (Immich pre-sorts album assets by its `order` preference, so insertion order is already correct).

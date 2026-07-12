@@ -2,7 +2,7 @@ import {APIError, type APIClient} from './client';
 import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset, ImmichPerson, PeopleResponse} from './types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
 import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
-import {groupAssetsByDay, transformColumnarResponse} from '../domain/transforms';
+import {groupAssetsByDay} from '../domain/transforms';
 import {toDurationSeconds} from '../utils/FormattingService';
 
 interface ImmichSearchResponse {
@@ -11,6 +11,19 @@ interface ImmichSearchResponse {
 
 const PEOPLE_LIMIT = 50;
 const SEARCH_PAGE_SIZE = 500;
+
+// Immich's bucket timeline returns assets column-wise (parallel arrays); map to row-wise domain assets.
+function transformColumnarResponse(columnar: ColumnarAssetResponse): TimelineAsset[] {
+	const len = columnar.id.length;
+	const ratios = columnar.ratio?.length === len ? columnar.ratio : null;
+	return columnar.id.map((id, i) => ({
+		id,
+		type: columnar.isImage[i]! ? 'IMAGE' : 'VIDEO',
+		ratio: ratios ? ratios[i]! : 1,
+		fileCreatedAt: columnar.fileCreatedAt[i]!,
+		durationSeconds: toDurationSeconds(columnar.duration[i]),
+	}));
+}
 
 export class ImmichRepository implements PhotoRepository {
 	private client: APIClient;
@@ -155,10 +168,6 @@ export class ImmichRepository implements PhotoRepository {
 
 	public previewUrl(assetId: string): string {
 		return this.client.getThumbnailUrl(assetId, 'preview');
-	}
-
-	public originalUrl(assetId: string): string {
-		return this.client.getAssetUrl(assetId);
 	}
 
 	public videoPlaybackUrl(assetId: string): string {

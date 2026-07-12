@@ -42,7 +42,14 @@ export class APIClient {
 	}
 
 	private getMediaAuthParam(): {name: string; value: string} {
-		return this.authConfig.method === 'USER_CREDENTIALS' ? {name: 'sessionKey', value: this.authConfig.accessToken || ''} : {name: 'apiKey', value: this.authConfig.apiKey};
+		return this.authConfig.method === AuthMethod.USER_CREDENTIALS ? {name: 'sessionKey', value: this.authConfig.accessToken || ''} : {name: 'apiKey', value: this.authConfig.apiKey};
+	}
+
+	// Media URLs carry auth as a query param so <img>/<video> tags load them directly.
+	private buildMediaUrl(path: string): string {
+		const {name, value} = this.getMediaAuthParam();
+		const sep = path.includes('?') ? '&' : '?';
+		return `${this.baseUrl}${path}${sep}${name}=${value}`;
 	}
 
 	public async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -70,36 +77,15 @@ export class APIClient {
 		}
 	}
 
-	public async fetchBlob(endpoint: string): Promise<Blob> {
-		const url = `${this.baseUrl}${endpoint}`;
-		const {name, value} = this.getMediaAuthParam();
-		const urlWithAuth = url.includes('?') ? `${url}&${name}=${value}` : `${url}?${name}=${value}`;
-
-		const response = await fetch(urlWithAuth);
-		if (!response.ok) {
-			throw new APIError(`Failed to fetch blob: ${response.statusText}`, response.status);
-		}
-
-		return response.blob();
-	}
-
 	public getThumbnailUrl(assetId: string, size: 'preview' | 'thumbnail' = 'thumbnail'): string {
-		const {name, value} = this.getMediaAuthParam();
-		return `${this.baseUrl}/assets/${assetId}/thumbnail?size=${size}&${name}=${value}`;
+		return this.buildMediaUrl(`/assets/${assetId}/thumbnail?size=${size}`);
 	}
 
 	public getFaceThumbnailUrl(personId: string): string {
-		const {name, value} = this.getMediaAuthParam();
-		return `${this.baseUrl}/people/${personId}/thumbnail?${name}=${value}`;
-	}
-
-	public getAssetUrl(assetId: string): string {
-		const {name, value} = this.getMediaAuthParam();
-		return `${this.baseUrl}/assets/${assetId}/original?${name}=${value}`;
+		return this.buildMediaUrl(`/people/${personId}/thumbnail`);
 	}
 
 	public getVideoPlaybackUrl(assetId: string): string {
-		const {name, value} = this.getMediaAuthParam();
-		return `${this.baseUrl}/assets/${assetId}/video/playback?${name}=${value}`;
+		return this.buildMediaUrl(`/assets/${assetId}/video/playback`);
 	}
 }
