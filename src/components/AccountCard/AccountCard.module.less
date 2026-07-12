@@ -1,3 +1,5 @@
+@import '../../styles/_mixins.less';
+
 .card {
 	width: 12rem;
 	min-height: 12rem;
@@ -11,6 +13,9 @@
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+	transition: transform 0.2s ease, outline 0.1s ease;
+
+	.spottable-card-focus();
 }
 
 .active {

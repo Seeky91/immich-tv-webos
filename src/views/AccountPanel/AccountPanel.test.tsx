@@ -1,5 +1,6 @@
 import React from 'react';
 import {render, screen, fireEvent} from '@testing-library/react';
+import Spotlight from '@enact/spotlight';
 import {AuthMethod} from '../../api/types';
 import type {Account} from '../../utils/accountsStore';
 import {AccountPanel} from './AccountPanel';
@@ -78,6 +79,76 @@ const noopHandlers = {
 };
 
 describe('AccountPanel', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	test('temporarily leaves pointer mode to focus the overlay when opened with the Magic Remote cursor', () => {
+		jest.spyOn(Spotlight, 'getPointerMode').mockReturnValueOnce(true);
+		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+		const focus = jest.spyOn(Spotlight, 'focus');
+
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+			/>,
+		);
+
+		expect(setPointerMode).toHaveBeenNthCalledWith(1, false);
+		expect(focus).toHaveBeenCalledWith('account-overlay');
+		expect(setPointerMode).toHaveBeenNthCalledWith(2, true);
+	});
+
+	test('recaptures escaped focus before Spotlight handles a directional key', () => {
+		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+		const focus = jest.spyOn(Spotlight, 'focus');
+
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+			/>,
+		);
+
+		setPointerMode.mockClear();
+		focus.mockClear();
+		(document.activeElement as HTMLElement).blur();
+		fireEvent.keyDown(window, {keyCode: 39});
+
+		expect(setPointerMode).toHaveBeenCalledWith(false);
+		expect(focus).toHaveBeenCalledWith('account-overlay');
+	});
+
+	test('keeps dead-space pointer movement from clearing modal focus', () => {
+		const onWindowMouseMove = jest.fn();
+		window.addEventListener('mousemove', onWindowMouseMove);
+
+		render(
+			<AccountPanel
+				mode="overlay"
+				accounts={[acc]}
+				activeAccountId="a"
+				defaultAccountId={null}
+				{...noopHandlers}
+			/>,
+		);
+
+		const overlay = document.querySelector('[data-spotlight-id="account-overlay"]')!;
+		fireEvent.mouseMove(overlay, {clientX: 1, clientY: 1});
+		expect(onWindowMouseMove).not.toHaveBeenCalled();
+
+		const card = screen.getByText('me@example.com').closest('[role="button"]')!;
+		fireEvent.mouseMove(card, {clientX: 2, clientY: 2});
+		expect(onWindowMouseMove).toHaveBeenCalledTimes(1);
+
+		window.removeEventListener('mousemove', onWindowMouseMove);
+	});
+
 	test('first-launch shows the welcome screen', () => {
 		render(
 			<AccountPanel
@@ -101,6 +172,7 @@ describe('AccountPanel', () => {
 				{...noopHandlers}
 			/>,
 		);
+		expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBe('true');
 		expect(screen.getByText('me@example.com')).toBeTruthy();
 		expect(screen.getByText(/Add account/i)).toBeTruthy();
 	});

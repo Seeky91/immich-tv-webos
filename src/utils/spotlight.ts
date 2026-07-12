@@ -5,8 +5,11 @@ import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDeco
 
 type DivProps = React.HTMLAttributes<HTMLDivElement>;
 type SpottableDivProps = DivProps & SpottableProps;
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+type SpottableButtonProps = ButtonProps & SpottableProps;
 
 export const SpottableDiv = Spottable('div') as React.ComponentType<SpottableDivProps>;
+export const SpottableButton = Spottable('button') as React.ComponentType<SpottableButtonProps>;
 
 interface SpotlightContainerOptions {
 	enterTo?: 'last-focused' | 'default-element' | 'topmost';

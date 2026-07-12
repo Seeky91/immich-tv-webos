@@ -1,3 +1,5 @@
+@import '../../styles/_mixins.less';
+
 .wrap {
 	color: #eee;
 }
@@ -30,6 +32,9 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	transition: transform 0.2s ease, outline 0.1s ease;
+
+	.spottable-card-focus();
 }
 
 .addTile > * + * {

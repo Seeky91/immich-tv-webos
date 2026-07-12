@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import Icon from '@enact/sandstone/Icon';
-import {createSpotlightContainer} from '../../utils/spotlight';
+import {createSpotlightContainer, SpottableButton} from '../../utils/spotlight';
+import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../../utils/constants';
 import type {View} from '../../types/navigation';
 import css from './NavigationRail.module.less';
 
@@ -28,9 +29,9 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 	);
 
 	return (
-		<RailContainer className={css.rail}>
+		<RailContainer className={css.rail} spotlightId={NAVIGATION_RAIL_SPOTLIGHT_ID}>
 			{NAV_ITEMS.map(({view, icon, label}) => (
-				<button
+				<SpottableButton
 					key={view}
 					className={[css.navItem, activeView === view ? css.active : ''].filter(Boolean).join(' ')}
 					onClick={navHandlers[view]}
@@ -39,18 +40,18 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 						<Icon size="tiny">{icon}</Icon>
 					</div>
 					<span className={css.label}>{label}</span>
-				</button>
+				</SpottableButton>
 			))}
 			<div className={css.spacer} />
 			<div className={css.divider} />
-			<button className={css.navItem} onClick={onOpenAccount}>
+			<SpottableButton className={css.navItem} onClick={onOpenAccount}>
 				<div className={css.iconContainer}>
 					<span className={css.avatar} style={{background: accountGradient}}>
 						{accountLetter}
 					</span>
 				</div>
 				<span className={css.label}>Account</span>
-			</button>
+			</SpottableButton>
 		</RailContainer>
 	);
 });

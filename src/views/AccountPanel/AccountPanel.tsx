@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import Button from '@enact/sandstone/Button';
-import Spotlight from '@enact/spotlight';
+import Spotlight, {getDirection} from '@enact/spotlight';
 import {AccountGrid} from './AccountGrid';
 import {AuthForm, type AuthFormPayload, type AuthSubmitResult} from '../../components/AuthForm/AuthForm';
 import {createSpotlightContainer} from '../../utils/spotlight';
@@ -51,6 +51,15 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 
 	const goForm = useCallback(() => setSubMode('form'), []);
 	const goGrid = useCallback(() => setSubMode('grid'), []);
+	const handleOverlayMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+		const target = event.target;
+		// Moving the Magic Remote over dead overlay space makes Spotlight blur its current
+		// target. Keep the existing focus there; movement over a spottable still reaches
+		// Spotlight normally and transfers focus to the hovered control.
+		if (!(target instanceof Element) || !target.closest('.spottable')) {
+			event.stopPropagation();
+		}
+	}, []);
 
 	const activeBaseUrl = accounts.find(a => a.id === activeAccountId)?.baseUrl ?? '';
 
@@ -89,8 +98,35 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 
 	// Pull 5-way focus into the overlay on open: last focus lives on the rail/timeline
 	// behind it, and spotlightRestrict only applies once focus is inside the container.
+	// Spotlight intentionally refuses programmatic focus while the Magic Remote cursor is
+	// visible, so briefly enter 5-way mode for the focus call, then restore pointer mode.
 	useEffect(() => {
-		if (mode === 'overlay') Spotlight.focus(OVERLAY_SPOTLIGHT_ID);
+		if (mode !== 'overlay') return;
+
+		const wasPointerMode = Spotlight.getPointerMode();
+		if (wasPointerMode) Spotlight.setPointerMode(false);
+		Spotlight.focus(OVERLAY_SPOTLIGHT_ID);
+		if (wasPointerMode) Spotlight.setPointerMode(true);
+	}, [mode]);
+
+	// Last-resort modal trap: a pointer event or a disappearing control can still leave DOM
+	// focus outside the overlay. Recapture before Spotlight handles the same directional key,
+	// so the first press both restores focus and performs the requested move.
+	useEffect(() => {
+		if (mode !== 'overlay') return;
+
+		const recaptureFocus = (event: KeyboardEvent) => {
+			if (!getDirection(event.keyCode)) return;
+
+			const overlay = document.querySelector<HTMLElement>(`[data-spotlight-id="${OVERLAY_SPOTLIGHT_ID}"]`);
+			if (!overlay || overlay.contains(document.activeElement)) return;
+
+			Spotlight.setPointerMode(false);
+			Spotlight.focus(OVERLAY_SPOTLIGHT_ID);
+		};
+
+		window.addEventListener('keydown', recaptureFocus, true);
+		return () => window.removeEventListener('keydown', recaptureFocus, true);
 	}, [mode]);
 
 	if (mode === 'first-launch') {
@@ -117,7 +153,14 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 	}
 
 	return (
-		<OverlayContainer spotlightId={OVERLAY_SPOTLIGHT_ID} spotlightRestrict="self-only" className={css.overlay}>
+		<OverlayContainer
+			spotlightId={OVERLAY_SPOTLIGHT_ID}
+			spotlightRestrict="self-only"
+			role="dialog"
+			aria-modal="true"
+			className={css.overlay}
+			onMouseMove={handleOverlayMouseMove}
+		>
 			<div className={css.panel}>
 				{subMode === 'grid' ? (
 					<AccountGrid

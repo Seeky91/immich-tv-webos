@@ -12,4 +12,5 @@ export const BUCKET_HEADER_MARGIN_PX = 40;
 // Runtime CSS px at FHD. Must match .rail width in NavigationRail.module.less,
 // which is authored in 4K-space px (360px there = 180 CSS px at FHD).
 export const SIDEBAR_WIDTH = 180;
+export const NAVIGATION_RAIL_SPOTLIGHT_ID = 'navigation-rail';
 export const MEDIA_VIEWER_PREFETCH_THRESHOLD = 5;

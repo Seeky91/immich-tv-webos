@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import type {RefObject} from 'react';
 import Spotlight, {getDirection} from '@enact/spotlight';
 import {spottableClass} from '@enact/spotlight/Spottable';
+import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
 
 interface UseTimelineViewportFocusOptions {
 	enabled: boolean;
@@ -13,7 +14,7 @@ const spotlight = Spotlight as unknown as {
 	getCurrent(): HTMLElement | null;
 	getPointerMode(): boolean;
 	setPointerMode(pointerMode: boolean): void;
-	focus(target: HTMLElement): boolean;
+	focus(target: HTMLElement | string): boolean;
 };
 
 type Direction = 'up' | 'down' | 'left' | 'right';
@@ -51,6 +52,10 @@ export const useTimelineViewportFocus = ({enabled, viewportRef}: UseTimelineView
 		const handleKeyDown = (event: KeyboardEvent) => {
 			const dir = getDirection(event.keyCode) as Direction | false;
 			if (!dir) return;
+			// A modal owns 5-way navigation even if pointer movement temporarily blurred its
+			// focused control. Re-anchoring the timeline here would consume the key before the
+			// modal's own focus trap can recover.
+			if (document.querySelector('[aria-modal="true"]')) return;
 			const viewport = viewportRef.current;
 			if (!viewport) return;
 
@@ -94,10 +99,16 @@ export const useTimelineViewportFocus = ({enabled, viewportRef}: UseTimelineView
 			} else if (dir === 'up' && scrollNode && scrollNode.scrollTop > VISIBILITY_EPSILON_PX) {
 				scrollAndRefocus(scrollNode, viewport, cr, -1);
 				consume(event);
+			} else if (dir === 'left') {
+				// At the first card of any row, make the rail the explicit destination. Relying on
+				// Spotlight's global geometry here is unreliable with the nested VirtualList.
+				spotlight.setPointerMode(false);
+				spotlight.focus(NAVIGATION_RAIL_SPOTLIGHT_ID);
+				consume(event);
 			} else if (dir === 'right') {
 				consume(event); // right edge of a row: no-op rather than let Spotlight wrap-and-jump
 			}
-			// up-at-top / left-at-first-column: fall through so Spotlight exits to the header/rail.
+			// Up at the top falls through so Spotlight can exit to a view header when present.
 		};
 
 		// Capture phase + stopImmediatePropagation beats Spotlight, which listens for keydown on
