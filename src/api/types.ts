@@ -23,7 +23,7 @@ export interface ApiKeyConfig extends BaseAuthConfig {
 
 export type AuthConfig = UserCredentialsConfig | ApiKeyConfig;
 
-// Outcome of an auth attempt (credentials, API key, or phone pairing): success or a displayable error.
+// One shared result for every auth path (credentials, API key, phone pairing); keep it single-source to avoid drift.
 export type AuthSubmitResult = {success: true} | {success: false; errorMessage: string};
 
 export interface ImmichAsset {

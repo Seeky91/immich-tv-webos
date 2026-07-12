@@ -1,8 +1,7 @@
 import type {PairingStartInfo, PairingPollResult, PairedAccountResult} from './types';
 
-// Raw envelope returned by the pairing service, identical whether it arrives over
-// the luna bus (TV) or the dev HTTP mirror. Both drivers parse this one contract
-// so a service change lands in a single place instead of two parallel copies.
+// One envelope for both pairing transports (luna on TV, HTTP mirror in dev), so a
+// service change lands in a single place instead of two parallel copies.
 export interface PairingServiceResponse {
 	returnValue: boolean;
 	errorText?: string;
