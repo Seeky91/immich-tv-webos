@@ -1,13 +1,12 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {PairingDriver, PairedAccountResult} from '../pairing/types';
+import type {AuthSubmitResult} from '../api/types';
 
 export type PhonePairingState =
 	| {phase: 'starting'}
 	| {phase: 'waiting'; url: string; code: string}
 	| {phase: 'finalizing'}
 	| {phase: 'error'; message: string; atStart: boolean};
-
-export type PairedLoginResult = {success: true} | {success: false; errorMessage: string};
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_CONSECUTIVE_POLL_FAILURES = 5;
@@ -20,7 +19,7 @@ const STARTING: PhonePairingState = {phase: 'starting'};
 export const usePhonePairing = (
 	driver: PairingDriver,
 	suggestedUrl: string,
-	onPaired: (result: PairedAccountResult) => Promise<PairedLoginResult>,
+	onPaired: (result: PairedAccountResult) => Promise<AuthSubmitResult>,
 ) => {
 	// Async updates are tagged with their attempt so a canceled session can never
 	// overwrite the state of the next one; until the current attempt reports, the

@@ -5,20 +5,21 @@ import {ErrorMessage} from '../ErrorMessage';
 import {FieldRow} from '../FieldRow/FieldRow';
 import {UrlInput} from '../UrlInput/UrlInput';
 import {PairingTab} from './PairingTab';
-import {AuthMethod} from '../../api/types';
+import {AuthMethod, type AuthSubmitResult} from '../../api/types';
 import type {PairingDriver, PairedAccountResult} from '../../pairing/types';
 import css from './AuthForm.module.less';
 
-export type AuthSubmitResult = {success: true} | {success: false; errorMessage: string};
+// Canonical auth-attempt result lives in api/types; re-exported here for the form's consumers.
+export type {AuthSubmitResult};
 
-export interface AuthFormCredentialsPayload {
+interface AuthFormCredentialsPayload {
 	method: AuthMethod.USER_CREDENTIALS;
 	baseUrl: string;
 	email: string;
 	password: string;
 }
 
-export interface AuthFormApiKeyPayload {
+interface AuthFormApiKeyPayload {
 	method: AuthMethod.API_KEY;
 	baseUrl: string;
 	apiKey: string;
@@ -33,6 +34,13 @@ interface AuthFormProps {
 	pairingDriver?: PairingDriver | null;
 	onPairedLogin?: (result: PairedAccountResult) => Promise<AuthSubmitResult>;
 }
+
+const LabeledField: React.FC<{label: string; children: React.ReactNode}> = ({label, children}) => (
+	<div className={css.field}>
+		<label className={css.label}>{label}</label>
+		{children}
+	</div>
+);
 
 export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack, pairingDriver, onPairedLogin}) => {
 	const [url, setUrl] = useState(initialUrl);
@@ -103,8 +111,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 	tabs.push(
 		<Tab title="Email" tabKey="creds" key="creds">
 			<div className={css.tabContent}>
-				<div className={css.field}>
-					<label className={css.label}>Server URL</label>
+				<LabeledField label="Server URL">
 					<UrlInput
 						value={url}
 						onChange={setUrl}
@@ -112,9 +119,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 						placeholder="http(s)://…"
 						autoFocus
 					/>
-				</div>
-				<div className={css.field}>
-					<label className={css.label}>Email</label>
+				</LabeledField>
+				<LabeledField label="Email">
 					<FieldRow
 						value={email}
 						onChange={setEmail}
@@ -122,9 +128,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 						disabled={submitting}
 						clearLabel="Clear Email"
 					/>
-				</div>
-				<div className={css.field}>
-					<label className={css.label}>Password</label>
+				</LabeledField>
+				<LabeledField label="Password">
 					<FieldRow
 						value={password}
 						onChange={setPassword}
@@ -133,7 +138,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 						disabled={submitting}
 						clearLabel="Clear Password"
 					/>
-				</div>
+				</LabeledField>
 				<div className={css.actions}>
 					<Button onClick={submitCreds} disabled={submitting} backgroundOpacity="opaque">
 						{submitting ? 'Connecting…' : 'Connect'}
@@ -145,17 +150,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 	tabs.push(
 		<Tab title="API Key" tabKey="apikey" key="apikey">
 			<div className={css.tabContent}>
-				<div className={css.field}>
-					<label className={css.label}>Server URL</label>
+				<LabeledField label="Server URL">
 					<UrlInput
 						value={url}
 						onChange={setUrl}
 						disabled={submitting}
 						placeholder="http(s)://…"
 					/>
-				</div>
-				<div className={css.field}>
-					<label className={css.label}>API Key</label>
+				</LabeledField>
+				<LabeledField label="API Key">
 					<FieldRow
 						value={apiKey}
 						onChange={setApiKey}
@@ -163,7 +166,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 						disabled={submitting}
 						clearLabel="Clear API Key"
 					/>
-				</div>
+				</LabeledField>
 				<div className={css.actions}>
 					<Button onClick={submitApi} disabled={submitting} backgroundOpacity="opaque">
 						{submitting ? 'Connecting…' : 'Connect'}

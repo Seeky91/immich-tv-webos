@@ -2,14 +2,15 @@ import React, {useEffect, useRef} from 'react';
 import Button from '@enact/sandstone/Button';
 import {ErrorMessage} from '../ErrorMessage';
 import {QrCode} from '../QrCode/QrCode';
-import {usePhonePairing, type PairedLoginResult} from '../../hooks/usePhonePairing';
+import {usePhonePairing} from '../../hooks/usePhonePairing';
+import type {AuthSubmitResult} from '../../api/types';
 import type {PairingDriver, PairedAccountResult} from '../../pairing/types';
 import css from './PairingTab.module.less';
 
 interface PairingTabProps {
 	driver: PairingDriver;
 	suggestedUrl: string;
-	onPaired: (result: PairedAccountResult) => Promise<PairedLoginResult>;
+	onPaired: (result: PairedAccountResult) => Promise<AuthSubmitResult>;
 	// Fired when the pairing service can't even start (e.g. broken install):
 	// lets AuthForm fall back to the Email tab.
 	onStartFailed?: () => void;

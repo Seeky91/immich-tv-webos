@@ -23,6 +23,9 @@ export interface ApiKeyConfig extends BaseAuthConfig {
 
 export type AuthConfig = UserCredentialsConfig | ApiKeyConfig;
 
+// Outcome of an auth attempt (credentials, API key, or phone pairing): success or a displayable error.
+export type AuthSubmitResult = {success: true} | {success: false; errorMessage: string};
+
 export interface ImmichAsset {
 	id: string;
 	type: string;
