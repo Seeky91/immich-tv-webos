@@ -11,7 +11,7 @@ import {useTimelineLayout} from '../../hooks/useTimelineLayout';
 import {focusTimelineViewport, useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
 import {monthKey} from '../../domain/transforms';
 import {DATE_SCRUBBER_SPOTLIGHT_ID, DATE_SCRUBBER_WIDTH_PX, ESTIMATED_ROW_HEIGHT_PX} from '../../utils/constants';
-import type {RequestMonthsOptions} from '../../hooks/useAssets';
+import type {RequestMonthsOptions} from '../../hooks/useTimeline';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
@@ -50,6 +50,47 @@ export function bucketIndexAtOffset(bucketOffsets: number[], bucketHeights: numb
 	return Math.max(0, Math.min(bucketOffsets.length - 1, low));
 }
 
+// VirtualList only re-resolves its render window when a scroll event breaches thresholds it
+// computed in the *previous* position space, so after a relayout the months under the viewport
+// can stay blank even though they're loaded. Kick it with scroll events until the rendered
+// window matches the DOM position again (bounded retries; verified on the rig).
+function scheduleRenderWindowKick(
+	getScrollNode: () => HTMLElement | null,
+	timeline: TimelineGridTimeline,
+	bucketOffsets: number[],
+	bucketHeights: number[]
+): () => void {
+	const monthRenderedAtViewport = () => {
+		const node = getScrollNode();
+		if (!node) return true;
+		const topIndex = bucketIndexAtOffset(bucketOffsets, bucketHeights, node.scrollTop);
+		const topBucket = timeline.allBuckets[topIndex];
+		if (!topBucket || !timeline.loadedMonths.has(topBucket.timeBucket)) return true;
+		const viewportRect = node.getBoundingClientRect();
+		return Array.from(node.querySelectorAll<HTMLElement>(`.${css.dateGroup}`)).some((group) => {
+			const rect = group.getBoundingClientRect();
+			return rect.bottom > viewportRect.top && rect.top < viewportRect.bottom;
+		});
+	};
+	let attempts = 0;
+	let timerId = 0;
+	const kick = () => {
+		const node = getScrollNode();
+		if (!node) return;
+		node.dispatchEvent(new Event('scroll'));
+		if (attempts >= 4) return;
+		attempts += 1;
+		timerId = window.setTimeout(() => {
+			if (!monthRenderedAtViewport()) kick();
+		}, 80);
+	};
+	const rafId = requestAnimationFrame(kick);
+	return () => {
+		cancelAnimationFrame(rafId);
+		window.clearTimeout(timerId);
+	};
+}
+
 function findTimelineScrollNode(viewport: HTMLElement): HTMLElement | null {
 	const virtualList = viewport.querySelector<HTMLElement>(`.${css.virtualList}`);
 	if (!virtualList) return null;
@@ -63,8 +104,6 @@ function findTimelineScrollNode(viewport: HTMLElement): HTMLElement | null {
 }
 
 export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, timeline}) => {
-	// Timeline mode derives the day groups itself so item order, asset order, and month
-	// membership all come from the same allBuckets iteration.
 	const dayGroups = useMemo(
 		() => (timeline ? timeline.allBuckets.flatMap((bucket) => timeline.loadedMonths.get(bucket.timeBucket) ?? []) : groups ?? EMPTY_GROUPS),
 		[groups, timeline]
@@ -89,8 +128,6 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 		return scrollNodeRef.current;
 	}, []);
 
-	// Own D-pad navigation of the grid so scroll-moves don't jump (disabled while the media viewer
-	// owns the keys). See useTimelineViewportFocus for the why.
 	useTimelineViewportFocus({
 		enabled: !viewer.state,
 		viewportRef,
@@ -138,7 +175,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 		});
 	}, [virtualItems, heightMap, bucketHeights]);
 
-	// Load whatever intersects the viewport ± one screen, like the web client's ±500px margin.
+	// Prefetch one viewport past each edge to reduce loading gaps during scrolling.
 	const requestVisibleRange = useCallback(
 		(scrollTop: number, options?: RequestMonthsOptions) => {
 			if (!timeline || bucketOffsets.length === 0) return;
@@ -191,8 +228,6 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	// change (estimate → actual), re-derive the anchor month from the previous geometry and restore
 	// its fractional position, so content doesn't shift under the viewport.
 	const previousLayoutRef = useRef<{offsets: number[]; heights: number[]} | null>(null);
-	const relayoutKickRef = useRef(0);
-	const kickTimerRef = useRef(0);
 	useLayoutEffect(() => {
 		const previous = previousLayoutRef.current;
 		previousLayoutRef.current = {offsets: bucketOffsets, heights: bucketHeights};
@@ -208,45 +243,9 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 			scrollNode.scrollTop = target;
 			scrollTopRef.current = target;
 		}
-
-		// VirtualList only re-resolves its render window when a scroll event breaches thresholds it
-		// computed in the *previous* position space, so after a relayout the months under the
-		// viewport can stay blank even though they're loaded. Kick it with scroll events until the
-		// rendered window matches the DOM position again (bounded retries; verified on the rig).
-		const monthRenderedAtViewport = () => {
-			const node = getScrollNode();
-			if (!node) return true;
-			const topIndex = bucketIndexAtOffset(bucketOffsets, bucketHeights, node.scrollTop);
-			const topBucket = timeline.allBuckets[topIndex];
-			if (!topBucket || !timeline.loadedMonths.has(topBucket.timeBucket)) return true;
-			const viewportRect = node.getBoundingClientRect();
-			return Array.from(node.querySelectorAll<HTMLElement>(`.${css.dateGroup}`)).some((group) => {
-				const rect = group.getBoundingClientRect();
-				return rect.bottom > viewportRect.top && rect.top < viewportRect.bottom;
-			});
-		};
-		let attempts = 0;
-		const kick = () => {
-			const node = getScrollNode();
-			if (!node) return;
-			node.dispatchEvent(new Event('scroll'));
-			if (attempts >= 4) return;
-			attempts += 1;
-			kickTimerRef.current = window.setTimeout(() => {
-				if (!monthRenderedAtViewport()) kick();
-			}, 80);
-		};
-		cancelAnimationFrame(relayoutKickRef.current);
-		window.clearTimeout(kickTimerRef.current);
-		relayoutKickRef.current = requestAnimationFrame(kick);
-		return () => {
-			cancelAnimationFrame(relayoutKickRef.current);
-			window.clearTimeout(kickTimerRef.current);
-		};
+		return scheduleRenderWindowKick(getScrollNode, timeline, bucketOffsets, bucketHeights);
 	}, [timeline, bucketOffsets, bucketHeights, getScrollNode]);
 
-	// A jump is just a scroll to the month's (possibly estimated) offset; the range loader picks
-	// it up. retryFailed lets an explicit jump retry months that errored earlier.
 	const handleJump = useCallback(
 		(timeBucket: string) => {
 			if (!timeline) return;

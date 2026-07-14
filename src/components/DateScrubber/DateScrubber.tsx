@@ -1,5 +1,6 @@
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {SpottableDiv} from '../../utils/spotlight';
+import {formatBucketMonth} from '../../utils/FormattingService';
 import {DATE_SCRUBBER_SPOTLIGHT_ID} from '../../utils/constants';
 import type {TimelineBucket} from '../../domain/types';
 import css from './DateScrubber.module.less';
@@ -8,7 +9,6 @@ interface DateScrubberProps {
 	buckets: TimelineBucket[];
 	bucketHeights: number[];
 	activeIndex: number;
-	// Status of the month at the viewport top: still fetching / failed to fetch.
 	isLoading: boolean;
 	hasError: boolean;
 	onJump: (timeBucket: string) => void;
@@ -22,7 +22,6 @@ interface ScrubberMarker {
 	showYear: boolean;
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MAX_YEAR_LABELS = 14;
 const RAIL_PADDING_PERCENT = 3;
 const RAIL_CONTENT_PERCENT = 100 - RAIL_PADDING_PERCENT * 2;
@@ -61,12 +60,6 @@ export function buildScrubberMarkers(buckets: TimelineBucket[], bucketHeights: n
 		offset += height;
 		return {index, topPercent, year, showYear};
 	});
-}
-
-function formatBucketMonth(timeBucket: string): string {
-	const [year, month] = timeBucket.split('-').map(Number);
-	const monthName = month ? MONTH_NAMES[month - 1] : undefined;
-	return monthName && year ? `${monthName} ${year}` : timeBucket;
 }
 
 export const DateScrubber: React.FC<DateScrubberProps> = React.memo(
@@ -145,7 +138,7 @@ export const DateScrubber: React.FC<DateScrubberProps> = React.memo(
 			if (!isDragging) setHoveredIndex(null);
 		}, [isDragging]);
 
-		React.useEffect(() => {
+		useEffect(() => {
 			if (!isDragging) return undefined;
 			const handleWindowMouseMove = (event: MouseEvent) => {
 				const index = indexFromClientY(event.clientY);

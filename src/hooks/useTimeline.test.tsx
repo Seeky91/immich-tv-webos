@@ -5,7 +5,7 @@ import {APIError} from '../api/client';
 import {RepositoryProvider} from '../domain/RepositoryContext';
 import type {PhotoRepository} from '../domain/PhotoRepository';
 import type {TimelineAsset} from '../domain/types';
-import {useTimeline} from './useAssets';
+import {useTimeline} from './useTimeline';
 
 const asset = (id: string, localDateTime: string): TimelineAsset => ({id, type: 'IMAGE', ratio: 1, localDateTime, durationSeconds: null});
 

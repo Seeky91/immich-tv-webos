@@ -8,7 +8,6 @@ interface ViewerState {
 
 interface MediaViewerControls {
 	state: ViewerState | null;
-	isOpen: boolean;
 	open: (index: number) => void;
 	close: () => void;
 	navigate: (direction: 'prev' | 'next') => void;
@@ -42,5 +41,5 @@ export const useMediaViewer = (assets: TimelineAsset[]): MediaViewerControls => 
 		[assets]
 	);
 
-	return {state, isOpen: state !== null, open, close, navigate};
+	return {state, open, close, navigate};
 };

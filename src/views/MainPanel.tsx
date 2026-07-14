@@ -2,7 +2,7 @@ import React, {useMemo} from 'react';
 import ri from '@enact/ui/resolution';
 import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
-import {useTimeline} from '../hooks/useAssets';
+import {useTimeline} from '../hooks/useTimeline';
 import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
 import type {RoutePanelProps} from '../types/navigation';
 
