@@ -1,9 +1,7 @@
 'use strict';
 
-// Luna bus entry point (TV only). Owns the pairing session and the phone-facing
-// HTTP server lifecycle. The app keeps the service alive by polling `status`
-// every couple of seconds while the QR screen is visible; an ActivityManager
-// activity covers the gaps between polls where the platform supports it.
+// Luna services may be reclaimed between calls. Polling keeps this one alive
+// while pairing is visible; ActivityManager covers gaps when available.
 
 const Service = require('webos-service');
 const pairing = require('./lib/pairing');
@@ -27,8 +25,7 @@ function holdActivity() {
 			activity = a;
 		});
 	} catch (e) {
-		// Older firmwares without ActivityManager: the app's poll cadence alone
-		// keeps the service alive.
+		// Polling alone keeps the service alive on firmwares without ActivityManager.
 	}
 }
 
@@ -37,7 +34,7 @@ function releaseActivity() {
 	try {
 		service.activityManager.complete(activity);
 	} catch (e) {
-		// Best effort.
+		// Local cleanup must continue if ActivityManager rejects completion.
 	}
 	activity = null;
 }
@@ -49,21 +46,11 @@ function teardown() {
 		try {
 			httpServer.close();
 		} catch (e) {
-			// Best effort.
+			// Clear local state even if the server is already closed.
 		}
 		httpServer = null;
 		httpPort = null;
 	}
-}
-
-function pairingUrl(port, code) {
-	const ip = serverLib.lanIp();
-	if (!ip) return null;
-	let url = 'http://' + ip + ':' + port + '/?c=' + code;
-	if (session && session.suggestedUrl) {
-		url += '&u=' + encodeURIComponent(session.suggestedUrl);
-	}
-	return url;
 }
 
 function ensureServer() {
@@ -86,14 +73,13 @@ function ensureServer() {
 service.register('start', function (message) {
 	const params = message.payload || {};
 	const now = Date.now();
-	// Idempotent while a session is pending, so an app-side remount doesn't
-	// churn the code the user may already be typing.
+	// Reuse a pending session so remounting cannot invalidate a code being entered.
 	if (pairing.statusOf(session, now) !== 'pending') {
 		session = pairing.createSession(now, {suggestedUrl: params.suggestedUrl});
 	}
 	ensureServer().then(
 		function (port) {
-			const url = pairingUrl(port, session.code);
+			const url = serverLib.buildPairingUrl(serverLib.lanIp(), port, session);
 			if (!url) {
 				teardown();
 				message.respond({returnValue: false, errorText: 'TV has no network address'});

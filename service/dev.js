@@ -1,10 +1,7 @@
 'use strict';
 
-// Standalone dev harness: the same pairing server plus HTTP control routes
-// standing in for the luna bus, so the app (HttpPairingDriver) and e2e tests
-// can drive pairing on a desktop. Never runs on the TV.
-//
-//   node service/dev.js [port]
+// Desktop-only stand-in for the Luna bus, sharing the production pairing server
+// so the app and end-to-end tests exercise the same protocol.
 
 const pairing = require('./lib/pairing');
 const serverLib = require('./lib/server');
@@ -21,13 +18,6 @@ const CORS_HEADERS = {
 
 let listeningPort = null;
 
-function pairingUrl() {
-	const host = serverLib.lanIp() || '127.0.0.1';
-	let url = 'http://' + host + ':' + listeningPort + '/?c=' + session.code;
-	if (session.suggestedUrl) url += '&u=' + encodeURIComponent(session.suggestedUrl);
-	return url;
-}
-
 function controlRoutes(req, res, pathname) {
 	if (req.method === 'OPTIONS') {
 		res.writeHead(204, CORS_HEADERS);
@@ -42,16 +32,17 @@ function controlRoutes(req, res, pathname) {
 			try {
 				params = JSON.parse(raw) || {};
 			} catch (e) {
-				// Empty body is fine.
+				// Start requests may omit the optional suggested URL.
 			}
 			const now = Date.now();
 			if (pairing.statusOf(session, now) !== 'pending') {
 				session = pairing.createSession(now, {suggestedUrl: params.suggestedUrl});
 			}
+			const url = serverLib.buildPairingUrl(serverLib.lanIp() || '127.0.0.1', listeningPort, session);
 			serverLib.sendJson(
 				res,
 				200,
-				{returnValue: true, url: pairingUrl(), code: session.code, port: listeningPort, nodeVersion: process.version},
+				{returnValue: true, url: url, code: session.code, port: listeningPort, nodeVersion: process.version},
 				CORS_HEADERS
 			);
 		});

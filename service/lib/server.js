@@ -1,8 +1,7 @@
 'use strict';
 
-// Phone-facing HTTP server. Exposes only the sign-in page and POST /approve;
-// session control (start/status/cancel) stays on the luna bus on the TV, or
-// on dev.js control routes on a desktop.
+// Session control stays on the TV's Luna bus; the phone-facing server exposes
+// only sign-in and approval. dev.js adds desktop-only control routes.
 
 /* global __dirname */
 const http = require('http');
@@ -36,6 +35,13 @@ function lanIp() {
 	return null;
 }
 
+function buildPairingUrl(host, port, session) {
+	if (!host) return null;
+	let url = 'http://' + host + ':' + port + '/?c=' + session.code;
+	if (session.suggestedUrl) url += '&u=' + encodeURIComponent(session.suggestedUrl);
+	return url;
+}
+
 function readBody(req) {
 	return new Promise(function (resolve, reject) {
 		let size = 0;
@@ -67,8 +73,6 @@ function sendJson(res, status, body, extraHeaders) {
 	res.end(payload);
 }
 
-// context: {getSession(), now(), extraRoutes?: (req, res, pathname) => boolean}.
-// extraRoutes lets dev.js graft its control endpoints onto the same server.
 function createPairingServer(context) {
 	const now = context.now || Date.now;
 
@@ -79,7 +83,7 @@ function createPairingServer(context) {
 				try {
 					body = JSON.parse(raw);
 				} catch (e) {
-					// Falls through to the invalid-request branch below.
+					// Invalid JSON is handled by the request validation below.
 				}
 				if (!body || !body.serverUrl || !body.email || !body.password) {
 					sendJson(res, 400, {ok: false, error: 'Fill in every field'});
@@ -95,7 +99,7 @@ function createPairingServer(context) {
 					sendJson(res, 400, {ok: false, error: message});
 					return;
 				}
-				// Wrong password must not burn the session: login first, approve after.
+				// Authenticate before approval so a bad password leaves the session retryable.
 				immich.login(body.serverUrl, body.email, body.password).then(function (login) {
 					if (!login.ok) {
 						sendJson(res, 401, {ok: false, error: login.error});
@@ -132,7 +136,6 @@ function createPairingServer(context) {
 	return server;
 }
 
-// Binds to the first free port of [basePort, basePort + tries).
 function listenOnFreePort(server, basePort, tries) {
 	return new Promise(function (resolve, reject) {
 		let attempt = 0;
@@ -155,4 +158,4 @@ function listenOnFreePort(server, basePort, tries) {
 	});
 }
 
-module.exports = {createPairingServer, listenOnFreePort, sendJson, readBody, lanIp};
+module.exports = {createPairingServer, listenOnFreePort, sendJson, readBody, lanIp, buildPairingUrl};

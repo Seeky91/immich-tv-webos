@@ -1,8 +1,7 @@
 'use strict';
 
-// Server-side Immich login proxy. The phone page can't call Immich directly:
-// its origin is the TV's pairing server, so the browser enforces CORS. Node
-// has no CORS and can also accept self-signed certificates.
+// Proxy login through the TV because the phone page's origin is subject to CORS.
+// Self-signed Immich certificates are accepted for private LAN servers.
 
 const http = require('http');
 const https = require('https');
@@ -15,8 +14,7 @@ function normalizeBaseUrl(raw) {
 	return String(raw || '').trim().replace(/\/+$/, '');
 }
 
-// Mirrors APIClient's normalization (src/api/client.ts) so stored accounts
-// behave identically whether they were added on the TV or via the phone.
+// Keep phone-paired accounts aligned with APIClient's base-URL normalization.
 function apiUrl(base) {
 	const b = normalizeBaseUrl(base);
 	return /\/api$/.test(b) ? b : b + '/api';
@@ -60,7 +58,7 @@ function postJson(urlString, body) {
 				try {
 					json = data ? JSON.parse(data) : null;
 				} catch (e) {
-					// Non-JSON body (proxy error page, …): status alone decides.
+					// Proxy error pages may be non-JSON; the status is still sufficient.
 				}
 				resolve({status: res.statusCode, json: json});
 			});
@@ -74,8 +72,7 @@ function postJson(urlString, body) {
 	});
 }
 
-// Resolves {ok: true, accessToken} or {ok: false, error: <user-facing message>}.
-// Never rejects; the password is used for this one call and never stored.
+// Failures resolve to user-facing errors; the password is never retained.
 function login(serverUrl, email, password) {
 	const base = normalizeBaseUrl(serverUrl);
 	if (!/^https?:\/\//.test(base)) {
@@ -103,4 +100,4 @@ function login(serverUrl, email, password) {
 	);
 }
 
-module.exports = {login, normalizeBaseUrl, apiUrl, postJson, REQUEST_TIMEOUT_MS};
+module.exports = {login, normalizeBaseUrl, apiUrl, postJson};

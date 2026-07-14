@@ -1,6 +1,5 @@
 'use strict';
 
-// Pairing session state machine. Pure logic, no I/O — exercised by service/test.js.
 // Target runtime is the TV's Node 8 (webOS 5/6): no ??/?. operators here.
 
 const CODE_LENGTH = 8;
@@ -24,9 +23,9 @@ function createSession(now, options) {
 		code: generateCode(opts.randomFn),
 		suggestedUrl: opts.suggestedUrl || '',
 		expiresAt: now + SESSION_TTL_MS,
-		state: 'pending', // pending | approved | consumed
+		state: 'pending',
 		codeFailures: 0,
-		result: null // {baseUrl, email, accessToken} once approved
+		result: null
 	};
 }
 
@@ -38,8 +37,7 @@ function statusOf(session, now) {
 	return 'pending';
 }
 
-// Validates a code typed/scanned on the phone. Repeated failures burn the
-// session so the 8-char code can't be brute-forced over the LAN.
+// Expire repeated failures to limit brute-force attempts over the LAN.
 function checkCode(session, now, code) {
 	const status = statusOf(session, now);
 	if (status !== 'pending') return status === 'expired' || status === 'none' ? 'expired' : 'not_pending';
@@ -59,7 +57,7 @@ function markApproved(session, now, result) {
 	return true;
 }
 
-// Single delivery: the result is handed out once, then dropped from memory.
+// Drop credentials from memory after their first delivery.
 function consumeResult(session) {
 	if (!session || session.state !== 'approved') return null;
 	const result = session.result;
@@ -74,7 +72,6 @@ module.exports = {
 	checkCode,
 	markApproved,
 	consumeResult,
-	generateCode,
 	CODE_LENGTH,
 	CODE_ALPHABET,
 	SESSION_TTL_MS,
