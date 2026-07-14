@@ -7,6 +7,7 @@ import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
 interface UseTimelineViewportFocusOptions {
 	enabled: boolean;
 	viewportRef: RefObject<HTMLElement | null>;
+	rightEdgeSpotlightId?: string;
 }
 
 // Enact types getCurrent()/focus() around ReactNode, but at runtime they deal in DOM nodes.
@@ -45,7 +46,7 @@ interface Card {
  * suppressed, and scrolls it just into view itself (minimal + correct). It only declines — letting
  * Spotlight move focus out to the rail/header — at the grid's own edges.
  */
-export const useTimelineViewportFocus = ({enabled, viewportRef}: UseTimelineViewportFocusOptions) => {
+export const useTimelineViewportFocus = ({enabled, viewportRef, rightEdgeSpotlightId}: UseTimelineViewportFocusOptions) => {
 	useEffect(() => {
 		if (!enabled) return undefined;
 
@@ -106,7 +107,11 @@ export const useTimelineViewportFocus = ({enabled, viewportRef}: UseTimelineView
 				spotlight.focus(NAVIGATION_RAIL_SPOTLIGHT_ID);
 				consume(event);
 			} else if (dir === 'right') {
-				consume(event); // right edge of a row: no-op rather than let Spotlight wrap-and-jump
+				if (rightEdgeSpotlightId) {
+					spotlight.setPointerMode(false);
+					spotlight.focus(rightEdgeSpotlightId);
+				}
+				consume(event); // right edge without a destination: no-op rather than wrap-and-jump
 			}
 			// Up at the top falls through so Spotlight can exit to a view header when present.
 		};
@@ -115,8 +120,17 @@ export const useTimelineViewportFocus = ({enabled, viewportRef}: UseTimelineView
 		// window in the bubble phase (same trick as useAutoHideControls).
 		window.addEventListener('keydown', handleKeyDown, {capture: true});
 		return () => window.removeEventListener('keydown', handleKeyDown, {capture: true});
-	}, [enabled, viewportRef]);
+	}, [enabled, rightEdgeSpotlightId, viewportRef]);
 };
+
+export function focusTimelineViewport(viewport: HTMLElement): boolean {
+	const viewportRect = viewport.getBoundingClientRect();
+	const cards = renderedCards(viewport);
+	const target = topLeftInView(cards, viewportRect) ?? nearestToView(cards, viewportRect);
+	if (!target) return false;
+	focusCard(target, viewport);
+	return true;
+}
 
 function consume(event: KeyboardEvent): void {
 	event.preventDefault();

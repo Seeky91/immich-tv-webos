@@ -7,11 +7,12 @@ import type {TimelineBucket, DayGroup} from '../domain/types';
 
 interface UseTimelineLayoutOptions {
 	allBuckets: TimelineBucket[];
+	loadedMonths: ReadonlyMap<string, DayGroup[]>;
 	loadedGroups: DayGroup[];
 	viewportWidth: number;
 }
 
-export const useTimelineLayout = ({allBuckets, loadedGroups, viewportWidth}: UseTimelineLayoutOptions) => {
+export const useTimelineLayout = ({allBuckets, loadedMonths, loadedGroups, viewportWidth}: UseTimelineLayoutOptions) => {
 	const headerBlock = ri.scale(BUCKET_HEADER_HEIGHT_PX) + ri.scale(BUCKET_HEADER_MARGIN_PX);
 
 	const layoutMap = useMemo(() => {
@@ -31,17 +32,44 @@ export const useTimelineLayout = ({allBuckets, loadedGroups, viewportWidth}: Use
 		return map;
 	}, [layoutMap, headerBlock]);
 
-	const placeholderHeight = useMemo(() => {
+	// Frozen estimate for unloaded months, mirroring the Immich web client: assume 3:2 assets
+	// with a 0.7 packing factor, plus one header. Depending only on count + viewport width keeps
+	// every unloaded offset stable, so heights only change at the (compensable) moment a month loads.
+	const estimatedMonthHeights = useMemo(() => {
 		const rowHeight = ri.scale(TARGET_ROW_HEIGHT_PX);
 		const gap = ri.scale(GRID_GAP_PX);
-		const rowCapacity = Math.max(1, Math.floor((viewportWidth - ri.scale(GRID_HORIZONTAL_PADDING_PX)) / rowHeight));
-		const loadedAssetCount = loadedGroups.reduce((sum, g) => sum + g.count, 0);
-		const totalAssets = allBuckets.reduce((sum, b) => sum + b.count, 0);
-		const unloadedAssets = Math.max(0, totalAssets - loadedAssetCount);
-		const unloadedBuckets = Math.max(0, allBuckets.length - heightMap.size);
-		const estimatedRows = Math.ceil(unloadedAssets / rowCapacity);
-		return Math.max(0, estimatedRows * (rowHeight + gap) + unloadedBuckets * headerBlock);
-	}, [heightMap, headerBlock, allBuckets, loadedGroups, viewportWidth]);
+		const usableWidth = Math.max(rowHeight, viewportWidth - ri.scale(GRID_HORIZONTAL_PADDING_PX));
+		return allBuckets.map((bucket) => {
+			const unwrappedWidth = 1.5 * bucket.count * rowHeight * 0.7;
+			const rows = Math.max(1, Math.ceil(unwrappedWidth / usableWidth));
+			return headerBlock + rows * (rowHeight + gap);
+		});
+	}, [allBuckets, headerBlock, viewportWidth]);
 
-	return {layoutMap, heightMap, placeholderHeight};
+	const bucketHeights = useMemo(
+		() =>
+			allBuckets.map((bucket, index) => {
+				const monthGroups = loadedMonths.get(bucket.timeBucket);
+				if (!monthGroups) return estimatedMonthHeights[index] ?? 0;
+				return monthGroups.reduce((sum, group) => sum + (heightMap.get(group.timeBucket) ?? 0), 0);
+			}),
+		[allBuckets, estimatedMonthHeights, heightMap, loadedMonths]
+	);
+
+	const bucketOffsets = useMemo(() => {
+		const offsets = new Array<number>(bucketHeights.length);
+		let offset = 0;
+		for (let index = 0; index < bucketHeights.length; index++) {
+			offsets[index] = offset;
+			offset += bucketHeights[index] ?? 0;
+		}
+		return offsets;
+	}, [bucketHeights]);
+
+	return {
+		layoutMap,
+		heightMap,
+		bucketHeights,
+		bucketOffsets,
+	};
 };

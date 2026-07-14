@@ -1,89 +1,284 @@
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
 import {AssetCard} from '../AssetCard';
+import {DateScrubber} from '../DateScrubber/DateScrubber';
 import {DateHeader} from '../DateHeader';
 import {MediaViewer} from '../MediaViewer/MediaViewer';
 import {ErrorBoundary} from '../ErrorBoundary';
 import {useMediaViewer} from '../../hooks/useMediaViewer';
 import {useTimelineLayout} from '../../hooks/useTimelineLayout';
-import {useScrollPagination} from '../../hooks/useScrollPagination';
-import {useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
-import {ESTIMATED_ROW_HEIGHT_PX, MEDIA_VIEWER_PREFETCH_THRESHOLD} from '../../utils/constants';
+import {focusTimelineViewport, useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
+import {monthKey} from '../../domain/transforms';
+import {DATE_SCRUBBER_SPOTLIGHT_ID, DATE_SCRUBBER_WIDTH_PX, ESTIMATED_ROW_HEIGHT_PX} from '../../utils/constants';
+import type {RequestMonthsOptions} from '../../hooks/useAssets';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
-interface TimelineGridPagination {
+interface TimelineGridTimeline {
 	allBuckets: TimelineBucket[];
-	hasNextPage: boolean;
-	isFetchingNextPage: boolean;
-	fetchNextPage: () => void;
+	loadedMonths: ReadonlyMap<string, DayGroup[]>;
+	failedMonths: ReadonlySet<string>;
+	requestMonths: (timeBuckets: string[], options?: RequestMonthsOptions) => void;
 }
 
 interface TimelineGridProps {
-	groups: DayGroup[];
+	groups?: DayGroup[];
 	contentWidth: number;
 	style?: React.CSSProperties;
-	pagination?: TimelineGridPagination;
+	timeline?: TimelineGridTimeline;
 }
 
 type GroupVirtualItem = DayGroup & {kind: 'group'; globalStartIndex: number};
-type PlaceholderVirtualItem = {kind: 'placeholder'; height: number; globalStartIndex: number};
+type PlaceholderVirtualItem = {kind: 'placeholder'; bucketIndex: number};
 type VirtualItem = GroupVirtualItem | PlaceholderVirtualItem;
 
-export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, pagination}) => {
-	const flatAssets = useMemo(() => groups.flatMap((g) => g.assets), [groups]);
+const EMPTY_GROUPS: DayGroup[] = [];
+const EMPTY_MONTHS: ReadonlyMap<string, DayGroup[]> = new Map();
+
+export function bucketIndexAtOffset(bucketOffsets: number[], bucketHeights: number[], scrollTop: number): number {
+	let low = 0;
+	let high = bucketOffsets.length - 1;
+	while (low <= high) {
+		const middle = Math.floor((low + high) / 2);
+		const start = bucketOffsets[middle] ?? 0;
+		const end = start + (bucketHeights[middle] ?? 0);
+		if (scrollTop < start) high = middle - 1;
+		else if (scrollTop >= end) low = middle + 1;
+		else return middle;
+	}
+	return Math.max(0, Math.min(bucketOffsets.length - 1, low));
+}
+
+function findTimelineScrollNode(viewport: HTMLElement): HTMLElement | null {
+	const virtualList = viewport.querySelector<HTMLElement>(`.${css.virtualList}`);
+	if (!virtualList) return null;
+	const candidates = [virtualList, ...Array.from(virtualList.querySelectorAll<HTMLElement>('*'))];
+	return (
+		candidates.find((node) => {
+			const overflowY = window.getComputedStyle(node).overflowY;
+			return node.scrollHeight > node.clientHeight && (overflowY === 'auto' || overflowY === 'scroll');
+		}) ?? null
+	);
+}
+
+export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, timeline}) => {
+	// Timeline mode derives the day groups itself so item order, asset order, and month
+	// membership all come from the same allBuckets iteration.
+	const dayGroups = useMemo(
+		() => (timeline ? timeline.allBuckets.flatMap((bucket) => timeline.loadedMonths.get(bucket.timeBucket) ?? []) : groups ?? EMPTY_GROUPS),
+		[groups, timeline]
+	);
+	const flatAssets = useMemo(() => dayGroups.flatMap((g) => g.assets), [dayGroups]);
 	const totalCount = flatAssets.length;
 	const getAssetAt = useCallback((i: number): TimelineAsset | null => flatAssets[i] ?? null, [flatAssets]);
-	const viewer = useMediaViewer(totalCount);
+	const viewer = useMediaViewer(flatAssets);
 	const viewportRef = useRef<HTMLDivElement>(null);
+	const scrollTopRef = useRef(0);
+	const [activeBucketIndex, setActiveBucketIndex] = useState(0);
+	const gridWidth = Math.max(0, contentWidth - (timeline ? ri.scale(DATE_SCRUBBER_WIDTH_PX) : 0));
+
+	// The DOM node is the single source of truth for scroll position: Enact's onScroll payload can
+	// lag behind programmatic writes and mid-commit relayouts, so we never read event.scrollTop.
+	const scrollNodeRef = useRef<HTMLElement | null>(null);
+	const getScrollNode = useCallback((): HTMLElement | null => {
+		const cached = scrollNodeRef.current;
+		if (cached && cached.isConnected) return cached;
+		const viewport = viewportRef.current;
+		scrollNodeRef.current = viewport ? findTimelineScrollNode(viewport) : null;
+		return scrollNodeRef.current;
+	}, []);
 
 	// Own D-pad navigation of the grid so scroll-moves don't jump (disabled while the media viewer
 	// owns the keys). See useTimelineViewportFocus for the why.
-	useTimelineViewportFocus({enabled: !viewer.state, viewportRef});
-
-	const {layoutMap, heightMap, placeholderHeight} = useTimelineLayout({
-		allBuckets: pagination?.allBuckets ?? [],
-		loadedGroups: groups,
-		viewportWidth: contentWidth,
+	useTimelineViewportFocus({
+		enabled: !viewer.state,
+		viewportRef,
+		rightEdgeSpotlightId: timeline ? DATE_SCRUBBER_SPOTLIGHT_ID : undefined,
 	});
 
+	const {layoutMap, heightMap, bucketHeights, bucketOffsets} = useTimelineLayout({
+		allBuckets: timeline?.allBuckets ?? [],
+		loadedMonths: timeline?.loadedMonths ?? EMPTY_MONTHS,
+		loadedGroups: dayGroups,
+		viewportWidth: gridWidth,
+	});
+
+	// One VirtualList item per loaded day group, one placeholder per unloaded month — the full
+	// skeleton exists from the start, so any point of the timeline is scrollable before it loads.
 	const virtualItems = useMemo<VirtualItem[]>(() => {
 		const items: VirtualItem[] = [];
 		let globalStart = 0;
-		for (const group of groups) {
-			const item: GroupVirtualItem = {...group, kind: 'group', globalStartIndex: globalStart};
-			items.push(item);
-			globalStart += group.count;
+		if (!timeline) {
+			for (const group of dayGroups) {
+				items.push({...group, kind: 'group', globalStartIndex: globalStart});
+				globalStart += group.count;
+			}
+			return items;
 		}
-		if (pagination && placeholderHeight > 0) {
-			items.push({kind: 'placeholder', height: placeholderHeight, globalStartIndex: globalStart});
-		}
+		timeline.allBuckets.forEach((bucket, bucketIndex) => {
+			const monthGroups = timeline.loadedMonths.get(bucket.timeBucket);
+			if (!monthGroups) {
+				items.push({kind: 'placeholder', bucketIndex});
+				return;
+			}
+			for (const group of monthGroups) {
+				items.push({...group, kind: 'group', globalStartIndex: globalStart});
+				globalStart += group.count;
+			}
+		});
 		return items;
-	}, [groups, pagination, placeholderHeight]);
+	}, [dayGroups, timeline]);
 
 	const itemSizes = useMemo(() => {
 		const fallback = ri.scale(ESTIMATED_ROW_HEIGHT_PX);
 		return virtualItems.map((item) => {
-			if (item.kind === 'placeholder') return item.height;
+			if (item.kind === 'placeholder') return Math.max(1, Math.round(bucketHeights[item.bucketIndex] ?? fallback));
 			return heightMap.get(item.timeBucket) ?? fallback;
 		});
-	}, [virtualItems, heightMap]);
+	}, [virtualItems, heightMap, bucketHeights]);
 
-	const {handleScroll} = useScrollPagination({
-		hasNextPage: pagination?.hasNextPage ?? false,
-		isFetchingNextPage: pagination?.isFetchingNextPage ?? false,
-		fetchNextPage: pagination?.fetchNextPage ?? noop,
-		loadedGroupCount: groups.length,
-	});
+	// Load whatever intersects the viewport ± one screen, like the web client's ±500px margin.
+	const requestVisibleRange = useCallback(
+		(scrollTop: number, options?: RequestMonthsOptions) => {
+			if (!timeline || bucketOffsets.length === 0) return;
+			const viewHeight = viewportRef.current?.clientHeight || window.innerHeight;
+			const first = bucketIndexAtOffset(bucketOffsets, bucketHeights, Math.max(0, scrollTop - viewHeight));
+			const last = bucketIndexAtOffset(bucketOffsets, bucketHeights, scrollTop + 2 * viewHeight);
+			timeline.requestMonths(
+				timeline.allBuckets.slice(first, last + 1).map((bucket) => bucket.timeBucket),
+				options
+			);
+		},
+		[timeline, bucketOffsets, bucketHeights]
+	);
 
+	const syncViewportState = useCallback(
+		(scrollTop: number, options?: RequestMonthsOptions) => {
+			if (!timeline || bucketOffsets.length === 0) return;
+			requestVisibleRange(scrollTop, options);
+			const index = bucketIndexAtOffset(bucketOffsets, bucketHeights, scrollTop);
+			setActiveBucketIndex((current) => (current === index ? current : index));
+		},
+		[timeline, bucketOffsets, bucketHeights, requestVisibleRange]
+	);
+
+	const handleTimelineScroll = useCallback(() => {
+		const scrollNode = getScrollNode();
+		if (!scrollNode) return;
+		scrollTopRef.current = scrollNode.scrollTop;
+		syncViewportState(scrollNode.scrollTop);
+	}, [getScrollNode, syncViewportState]);
+
+	// Enact's debounced onScrollStop replays the callback captured when scrolling began, so a
+	// directly-passed handler can run with month offsets from several commits ago (wrong active
+	// month, spurious loads — seen on the rig). The ref indirection makes any cached callback
+	// execute the current logic.
+	const scrollHandlerRef = useRef(handleTimelineScroll);
+	useLayoutEffect(() => {
+		scrollHandlerRef.current = handleTimelineScroll;
+	}, [handleTimelineScroll]);
+	const stableScrollHandler = useCallback(() => scrollHandlerRef.current(), []);
+
+	// Covers initial mount and every layout/data change. Scroll events processed mid-commit can
+	// carry stale offsets (wrong active month, spurious month requests); re-syncing from the fresh
+	// offsets after each commit self-heals both.
 	useEffect(() => {
-		if (!pagination || !viewer.state) return;
-		if (!pagination.hasNextPage || pagination.isFetchingNextPage) return;
-		if (viewer.state.assetIndex >= totalCount - MEDIA_VIEWER_PREFETCH_THRESHOLD) {
-			pagination.fetchNextPage();
+		syncViewportState(scrollTopRef.current);
+	}, [syncViewportState]);
+
+	// Scroll compensation, mirroring Immich web's TimelineMonth height setter: when month heights
+	// change (estimate → actual), re-derive the anchor month from the previous geometry and restore
+	// its fractional position, so content doesn't shift under the viewport.
+	const previousLayoutRef = useRef<{offsets: number[]; heights: number[]} | null>(null);
+	const relayoutKickRef = useRef(0);
+	const kickTimerRef = useRef(0);
+	useLayoutEffect(() => {
+		const previous = previousLayoutRef.current;
+		previousLayoutRef.current = {offsets: bucketOffsets, heights: bucketHeights};
+		if (!timeline || !previous || previous.offsets.length === 0 || bucketOffsets.length === 0) return undefined;
+		const scrollNode = getScrollNode();
+		if (!scrollNode) return undefined;
+		const scrollTop = scrollNode.scrollTop;
+		const index = bucketIndexAtOffset(previous.offsets, previous.heights, scrollTop);
+		const previousHeight = previous.heights[index] ?? 0;
+		const ratio = previousHeight > 0 ? Math.min(1, Math.max(0, (scrollTop - (previous.offsets[index] ?? 0)) / previousHeight)) : 0;
+		const target = (bucketOffsets[index] ?? 0) + ratio * (bucketHeights[index] ?? 0);
+		if (Math.abs(target - scrollTop) > 1) {
+			scrollNode.scrollTop = target;
+			scrollTopRef.current = target;
 		}
-	}, [viewer.state, totalCount, pagination]);
+
+		// VirtualList only re-resolves its render window when a scroll event breaches thresholds it
+		// computed in the *previous* position space, so after a relayout the months under the
+		// viewport can stay blank even though they're loaded. Kick it with scroll events until the
+		// rendered window matches the DOM position again (bounded retries; verified on the rig).
+		const monthRenderedAtViewport = () => {
+			const node = getScrollNode();
+			if (!node) return true;
+			const topIndex = bucketIndexAtOffset(bucketOffsets, bucketHeights, node.scrollTop);
+			const topBucket = timeline.allBuckets[topIndex];
+			if (!topBucket || !timeline.loadedMonths.has(topBucket.timeBucket)) return true;
+			const viewportRect = node.getBoundingClientRect();
+			return Array.from(node.querySelectorAll<HTMLElement>(`.${css.dateGroup}`)).some((group) => {
+				const rect = group.getBoundingClientRect();
+				return rect.bottom > viewportRect.top && rect.top < viewportRect.bottom;
+			});
+		};
+		let attempts = 0;
+		const kick = () => {
+			const node = getScrollNode();
+			if (!node) return;
+			node.dispatchEvent(new Event('scroll'));
+			if (attempts >= 4) return;
+			attempts += 1;
+			kickTimerRef.current = window.setTimeout(() => {
+				if (!monthRenderedAtViewport()) kick();
+			}, 80);
+		};
+		cancelAnimationFrame(relayoutKickRef.current);
+		window.clearTimeout(kickTimerRef.current);
+		relayoutKickRef.current = requestAnimationFrame(kick);
+		return () => {
+			cancelAnimationFrame(relayoutKickRef.current);
+			window.clearTimeout(kickTimerRef.current);
+		};
+	}, [timeline, bucketOffsets, bucketHeights, getScrollNode]);
+
+	// A jump is just a scroll to the month's (possibly estimated) offset; the range loader picks
+	// it up. retryFailed lets an explicit jump retry months that errored earlier.
+	const handleJump = useCallback(
+		(timeBucket: string) => {
+			if (!timeline) return;
+			const index = timeline.allBuckets.findIndex((bucket) => bucket.timeBucket === timeBucket);
+			if (index < 0) return;
+			const scrollNode = getScrollNode();
+			const target = bucketOffsets[index] ?? 0;
+			if (scrollNode) {
+				scrollNode.scrollTop = target;
+				scrollTopRef.current = target;
+			}
+			syncViewportState(target, {retryFailed: true});
+		},
+		[timeline, bucketOffsets, getScrollNode, syncViewportState]
+	);
+
+	const handleExitScrubber = useCallback(() => {
+		const viewport = viewportRef.current;
+		if (viewport) focusTimelineViewport(viewport);
+	}, []);
+
+	// Keep the months around the viewed asset loaded so viewer navigation rarely hits a gap.
+	useEffect(() => {
+		if (!timeline || !viewer.state) return;
+		const asset = flatAssets[viewer.state.assetIndex];
+		if (!asset) return;
+		const month = monthKey(asset.localDateTime);
+		const index = timeline.allBuckets.findIndex((bucket) => monthKey(bucket.timeBucket) === month);
+		if (index < 0) return;
+		const neighbours = timeline.allBuckets.slice(Math.max(0, index - 1), index + 2);
+		timeline.requestMonths(neighbours.map((bucket) => bucket.timeBucket));
+	}, [viewer.state, flatAssets, timeline]);
 
 	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer]);
 
@@ -119,21 +314,40 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 		[virtualItems, layoutMap, handleSelectAsset]
 	);
 
+	const activeBucket = timeline?.allBuckets[activeBucketIndex];
+	const isActiveMonthLoading =
+		!!timeline && !!activeBucket && !timeline.loadedMonths.has(activeBucket.timeBucket) && !timeline.failedMonths.has(activeBucket.timeBucket);
+	const hasActiveMonthError = !!timeline && !!activeBucket && timeline.failedMonths.has(activeBucket.timeBucket);
+
 	return (
 		<>
 			<ErrorBoundary>
-				<div ref={viewportRef} className={css.timelineViewport}>
-					<VirtualList
-						dataSize={virtualItems.length}
-						itemSize={{minSize: ri.scale(ESTIMATED_ROW_HEIGHT_PX), size: itemSizes}}
-						itemRenderer={renderItem}
-						direction="vertical"
-						scrollMode="native"
-						verticalScrollbar="visible"
-						onScroll={pagination ? handleScroll : undefined}
-						onScrollStop={pagination ? handleScroll : undefined}
-						style={style}
-					/>
+				<div className={css.timelineShell}>
+					<div ref={viewportRef} className={css.timelineViewport}>
+						<VirtualList
+							className={css.virtualList}
+							dataSize={virtualItems.length}
+							itemSize={{minSize: ri.scale(ESTIMATED_ROW_HEIGHT_PX), size: itemSizes}}
+							itemRenderer={renderItem}
+							direction="vertical"
+							scrollMode="native"
+							verticalScrollbar={timeline ? 'hidden' : 'visible'}
+							onScroll={timeline ? stableScrollHandler : undefined}
+							onScrollStop={timeline ? stableScrollHandler : undefined}
+							style={style}
+						/>
+					</div>
+					{timeline && timeline.allBuckets.length > 0 && (
+						<DateScrubber
+							buckets={timeline.allBuckets}
+							bucketHeights={bucketHeights}
+							activeIndex={activeBucketIndex}
+							isLoading={isActiveMonthLoading}
+							hasError={hasActiveMonthError}
+							onJump={handleJump}
+							onExit={handleExitScrubber}
+						/>
+					)}
 				</div>
 			</ErrorBoundary>
 			{viewer.state && (
@@ -152,5 +366,3 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 };
 
 TimelineGrid.displayName = 'TimelineGrid';
-
-const noop = () => {};

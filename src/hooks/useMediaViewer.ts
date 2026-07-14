@@ -1,6 +1,8 @@
 import {useCallback, useState} from 'react';
+import type {TimelineAsset} from '../domain/types';
 
 interface ViewerState {
+	assetId: string;
 	assetIndex: number;
 }
 
@@ -12,27 +14,32 @@ interface MediaViewerControls {
 	navigate: (direction: 'prev' | 'next') => void;
 }
 
-export const useMediaViewer = (totalAssets: number): MediaViewerControls => {
-	const [state, setState] = useState<ViewerState | null>(null);
+export const useMediaViewer = (assets: TimelineAsset[]): MediaViewerControls => {
+	const [assetId, setAssetId] = useState<string | null>(null);
+	const assetIndex = assetId ? assets.findIndex((asset) => asset.id === assetId) : -1;
+	const state = assetId && assetIndex >= 0 ? {assetId, assetIndex} : null;
 
-	const open = useCallback((index: number) => {
-		setState({assetIndex: index});
-	}, []);
+	const open = useCallback(
+		(index: number) => {
+			const asset = assets[index];
+			if (asset) setAssetId(asset.id);
+		},
+		[assets]
+	);
 
-	const close = useCallback(() => setState(null), []);
+	const close = useCallback(() => setAssetId(null), []);
 
 	const navigate = useCallback(
 		(direction: 'prev' | 'next') => {
-			setState((prev) => {
-				if (!prev) return null;
-				const newIndex =
-					direction === 'prev'
-						? Math.max(0, prev.assetIndex - 1)
-						: Math.min(totalAssets - 1, prev.assetIndex + 1);
-				return {...prev, assetIndex: newIndex};
+			setAssetId((currentAssetId) => {
+				if (!currentAssetId) return null;
+				const currentIndex = assets.findIndex((asset) => asset.id === currentAssetId);
+				if (currentIndex < 0) return currentAssetId;
+				const newIndex = direction === 'prev' ? Math.max(0, currentIndex - 1) : Math.min(assets.length - 1, currentIndex + 1);
+				return assets[newIndex]?.id ?? currentAssetId;
 			});
 		},
-		[totalAssets]
+		[assets]
 	);
 
 	return {state, isOpen: state !== null, open, close, navigate};

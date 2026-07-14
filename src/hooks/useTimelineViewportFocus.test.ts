@@ -1,7 +1,7 @@
 import {act, renderHook} from '@testing-library/react';
 import Spotlight from '@enact/spotlight';
 import {spottableClass} from '@enact/spotlight/Spottable';
-import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
+import {DATE_SCRUBBER_SPOTLIGHT_ID, NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
 import {useTimelineViewportFocus} from './useTimelineViewportFocus';
 
 function makeRect(left: number, top: number, width: number, height: number): DOMRect {
@@ -39,6 +39,13 @@ function pressLeft(): KeyboardEvent {
 	return event;
 }
 
+function pressRight(): KeyboardEvent {
+	const event = new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true});
+	Object.defineProperty(event, 'keyCode', {value: 39});
+	act(() => window.dispatchEvent(event));
+	return event;
+}
+
 describe('useTimelineViewportFocus', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
@@ -69,5 +76,25 @@ describe('useTimelineViewportFocus', () => {
 
 		expect(focus).toHaveBeenCalledWith(cards[0]);
 		expect(focus).not.toHaveBeenCalledWith(NAVIGATION_RAIL_SPOTLIGHT_ID);
+	});
+
+	test('moves focus to the date scrubber from the rightmost card in a row', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
+		jest.spyOn(Spotlight, 'getCurrent').mockReturnValue(cards[1] as never);
+		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+		const focus = jest.spyOn(Spotlight, 'focus').mockReturnValue(true);
+
+		renderHook(() =>
+			useTimelineViewportFocus({
+				enabled: true,
+				viewportRef: {current: viewport},
+				rightEdgeSpotlightId: DATE_SCRUBBER_SPOTLIGHT_ID,
+			})
+		);
+		const event = pressRight();
+
+		expect(setPointerMode).toHaveBeenCalledWith(false);
+		expect(focus).toHaveBeenCalledWith(DATE_SCRUBBER_SPOTLIGHT_ID);
+		expect(event.defaultPrevented).toBe(true);
 	});
 });

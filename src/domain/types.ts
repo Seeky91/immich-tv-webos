@@ -4,7 +4,9 @@ export interface TimelineAsset {
 	id: string;
 	type: AssetType;
 	ratio: number;
-	fileCreatedAt: string;
+	// Local wall-clock time; day grouping must use it to match the server's month buckets,
+	// which are cut on localDateTime, not UTC.
+	localDateTime: string;
 	durationSeconds: number | null;
 }
 
@@ -17,13 +19,6 @@ export interface DayGroup {
 	timeBucket: string;
 	assets: TimelineAsset[];
 	count: number;
-}
-
-export interface TimelinePage {
-	groups: DayGroup[];
-	totalAssets: number;
-	nextCursor?: number;
-	hasMore: boolean;
 }
 
 export interface Album {

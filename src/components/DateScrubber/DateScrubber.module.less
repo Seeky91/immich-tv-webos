@@ -1,0 +1,109 @@
+.scrubberHost {
+	position: relative;
+	flex: 0 0 240px;
+	width: 240px;
+	height: 100%;
+	overflow: visible;
+	z-index: 2;
+}
+
+.scrubber {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	background: rgba(5, 10, 20, 0.82);
+	border-left: 2px solid rgba(255, 255, 255, 0.08);
+	cursor: ns-resize;
+	user-select: none;
+	overflow: visible;
+	transition: background 0.15s ease, border-color 0.15s ease;
+
+	&:focus {
+		outline: none;
+		background: rgba(15, 23, 42, 0.98);
+		border-left-color: #818cf8;
+	}
+}
+
+.track {
+	position: absolute;
+	top: 60px;
+	bottom: 60px;
+	right: 43px;
+	width: 2px;
+	background: rgba(255, 255, 255, 0.14);
+}
+
+.marker {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+}
+
+.dot {
+	position: absolute;
+	right: 34px;
+	top: -5px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.9);
+	transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.markerSelected .dot {
+	background: #a5b4fc;
+	transform: scale(1.8);
+}
+
+.year {
+	position: absolute;
+	right: 66px;
+	top: -0.58rem;
+	font-family: monospace;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.88);
+	white-space: nowrap;
+}
+
+.positionLine {
+	position: absolute;
+	right: 0;
+	width: 94px;
+	height: 4px;
+	background: #a5b4fc;
+	transform: translateY(-2px);
+	pointer-events: none;
+}
+
+.dateBubble {
+	position: absolute;
+	right: 52px;
+	min-width: 188px;
+	padding: 10px 16px;
+	border-radius: 10px 0 0 10px;
+	background: rgba(15, 23, 42, 0.96);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #fff;
+	white-space: nowrap;
+	text-align: center;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.status,
+.error {
+	display: block;
+	font-size: 0.58rem;
+	font-weight: 400;
+	color: rgba(255, 255, 255, 0.65);
+}
+
+.error {
+	color: #fca5a5;
+}

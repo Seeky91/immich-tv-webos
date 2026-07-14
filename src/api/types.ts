@@ -46,6 +46,8 @@ export interface ImmichAsset {
 	id: string;
 	type: string;
 	fileCreatedAt: string;
+	// Local wall-clock time; present on full asset DTOs (albums, search) on all supported servers
+	localDateTime?: string;
 	// "H:MM:SS.mmm" on Immich < v3, milliseconds on v3+
 	duration: string | number | null;
 	// Immich < v3 nests dimensions in exifInfo; v3 puts them at the top level
@@ -69,6 +71,10 @@ export interface ColumnarAssetResponse {
 	duration: (string | number | null)[];
 	isImage: boolean[];
 	fileCreatedAt: string[];
+	// Recent servers ship the UTC→local delta instead of localDateTime…
+	localOffsetHours?: number[];
+	// …older ones ship localDateTime directly
+	localDateTime?: string[];
 	ownerId: string[];
 	ratio: number[];
 	thumbhash: (string | null)[];

@@ -1,8 +1,7 @@
 import {APIError, type APIClient} from './client';
 import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset, ImmichPerson, PeopleResponse} from './types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
-import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket, TimelinePage} from '../domain/types';
-import {groupAssetsByDay} from '../domain/transforms';
+import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket} from '../domain/types';
 import {toDurationSeconds} from '../utils/FormattingService';
 
 interface ImmichSearchResponse {
@@ -11,6 +10,20 @@ interface ImmichSearchResponse {
 
 const PEOPLE_LIMIT = 50;
 const SEARCH_PAGE_SIZE = 500;
+// Matches the official web client's main timeline: without visibility=timeline the server
+// defaults to ('archive','timeline') and archived assets leak in.
+const TIMELINE_FILTER_PARAMS = 'visibility=timeline&withPartners=true&withStacked=true';
+
+// The server buckets months on localDateTime but its columnar payload only carries UTC
+// fileCreatedAt (+ localOffsetHours on recent servers, localDateTime array on older ones).
+function columnarLocalDateTime(columnar: ColumnarAssetResponse, i: number): string {
+	const fileCreatedAt = columnar.fileCreatedAt[i]!;
+	const offsetHours = columnar.localOffsetHours?.[i];
+	if (typeof offsetHours === 'number') {
+		return new Date(new Date(fileCreatedAt).getTime() + offsetHours * 3600 * 1000).toISOString();
+	}
+	return columnar.localDateTime?.[i] ?? fileCreatedAt;
+}
 
 // Immich's bucket timeline returns assets column-wise (parallel arrays); map to row-wise domain assets.
 function transformColumnarResponse(columnar: ColumnarAssetResponse): TimelineAsset[] {
@@ -20,7 +33,7 @@ function transformColumnarResponse(columnar: ColumnarAssetResponse): TimelineAss
 		id,
 		type: columnar.isImage[i]! ? 'IMAGE' : 'VIDEO',
 		ratio: ratios ? ratios[i]! : 1,
-		fileCreatedAt: columnar.fileCreatedAt[i]!,
+		localDateTime: columnarLocalDateTime(columnar, i),
 		durationSeconds: toDurationSeconds(columnar.duration[i]),
 	}));
 }
@@ -47,26 +60,21 @@ export class ImmichRepository implements PhotoRepository {
 	}
 
 	public async getBuckets(): Promise<TimelineBucket[]> {
-		return this.client.fetch<TimelineBucket[]>('/timeline/buckets');
+		return this.client.fetch<TimelineBucket[]>(`/timeline/buckets?${TIMELINE_FILTER_PARAMS}`);
 	}
 
-	public async getTimelinePage(allBuckets: TimelineBucket[], skip: number, take: number): Promise<TimelinePage> {
-		const pageBuckets = allBuckets.slice(skip, skip + take);
-		const bucketAssets = await Promise.all(pageBuckets.map((b) => this.fetchBucket(b.timeBucket)));
-		const allAssets = bucketAssets.flat();
-		const groups = groupAssetsByDay(allAssets);
-
-		return {
-			groups,
-			totalAssets: groups.reduce((sum, g) => sum + g.count, 0),
-			nextCursor: skip + take < allBuckets.length ? skip + take : undefined,
-			hasMore: skip + take < allBuckets.length,
-		};
+	public async getBucketAssets(timeBucket: string, signal?: AbortSignal): Promise<TimelineAsset[]> {
+		const columnar = await this.client.fetch<ColumnarAssetResponse>(
+			`/timeline/bucket?timeBucket=${timeBucket}&${TIMELINE_FILTER_PARAMS}`,
+			{signal}
+		);
+		return transformColumnarResponse(columnar);
 	}
 
-	private async fetchBucket(timeBucket: string, albumId?: string): Promise<TimelineAsset[]> {
-		const albumParam = albumId ? `&albumId=${albumId}` : '';
-		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}${albumParam}`);
+	// Album buckets are unfiltered on purpose: archived assets stay visible inside albums,
+	// mirroring the official web client.
+	private async fetchAlbumBucket(timeBucket: string, albumId: string): Promise<TimelineAsset[]> {
+		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}&albumId=${albumId}`);
 		return transformColumnarResponse(columnar);
 	}
 
@@ -91,7 +99,7 @@ export class ImmichRepository implements PhotoRepository {
 
 	private async fetchAlbumAssetsViaTimeline(albumId: string): Promise<TimelineAsset[]> {
 		const buckets = await this.client.fetch<TimelineBucket[]>(`/timeline/buckets?albumId=${albumId}`);
-		const bucketAssets = await Promise.all(buckets.map((b) => this.fetchBucket(b.timeBucket, albumId)));
+		const bucketAssets = await Promise.all(buckets.map((b) => this.fetchAlbumBucket(b.timeBucket, albumId)));
 		return bucketAssets.flat();
 	}
 
@@ -102,7 +110,7 @@ export class ImmichRepository implements PhotoRepository {
 			id: a.id,
 			type: a.type === 'VIDEO' ? 'VIDEO' : 'IMAGE',
 			ratio: w && h ? w / h : 1,
-			fileCreatedAt: a.fileCreatedAt,
+			localDateTime: a.localDateTime ?? a.fileCreatedAt,
 			durationSeconds: toDurationSeconds(a.duration),
 		};
 	}
