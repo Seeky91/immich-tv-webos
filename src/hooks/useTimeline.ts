@@ -1,8 +1,9 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useMemo, useRef, useState} from 'react';
 import {useQueryClient} from '@tanstack/react-query';
 import {ASSETS_QUERY_CONFIG, useRepositoryQuery} from './queryConfig';
 import {useRepository} from '../domain/RepositoryContext';
 import {groupAssetsByDay} from '../domain/transforms';
+import type {PhotoRepository} from '../domain/PhotoRepository';
 import type {DayGroup} from '../domain/types';
 
 const useBuckets = () =>
@@ -13,6 +14,18 @@ export interface RequestMonthsOptions {
 	// while passive scrolling doesn't hammer a broken server.
 	retryFailed?: boolean;
 }
+
+// Mutable request-tracking mirrors, replaced wholesale on account switch so completions
+// belonging to a previous repository can be discarded by identity.
+interface MonthMirrors {
+	repository: PhotoRepository;
+	loaded: Map<string, DayGroup[]>;
+	failed: Set<string>;
+	pending: Set<string>;
+}
+
+const NO_LOADED_MONTHS: ReadonlyMap<string, DayGroup[]> = new Map();
+const NO_FAILED_MONTHS: ReadonlySet<string> = new Set();
 
 /**
  * Timeline data mirroring the Immich web client's TimelineManager: the bucket index gives a
@@ -26,34 +39,31 @@ export const useTimeline = () => {
 	const {data: allBuckets, isLoading, isError, error} = useBuckets();
 	const buckets = useMemo(() => allBuckets ?? [], [allBuckets]);
 
-	const [loadedMonths, setLoadedMonths] = useState<ReadonlyMap<string, DayGroup[]>>(new Map());
-	const [failedMonths, setFailedMonths] = useState<ReadonlySet<string>>(new Set());
-	const loadedRef = useRef<Map<string, DayGroup[]>>(new Map());
-	const failedRef = useRef<Set<string>>(new Set());
-	const pendingRef = useRef<Set<string>>(new Set());
-
-	// Account switch: drop the per-instance mirrors so months from the previous repository
-	// can't bleed into the new one (in-flight loads are discarded via the instance check below).
-	useEffect(() => {
-		loadedRef.current = new Map();
-		failedRef.current = new Set();
-		pendingRef.current = new Set();
-		setLoadedMonths(new Map());
-		setFailedMonths(new Set());
-	}, [repository]);
+	// Month state is tagged with its owning repository and derives as empty after an account
+	// switch — no reset effect (react-hooks/set-state-in-effect, Enact CI strict), and a late
+	// completion from the previous account tags itself with the old repository, so it can
+	// never surface under the new one.
+	const [loadedState, setLoadedState] = useState<{repository: PhotoRepository; months: ReadonlyMap<string, DayGroup[]>} | null>(null);
+	const [failedState, setFailedState] = useState<{repository: PhotoRepository; months: ReadonlySet<string>} | null>(null);
+	const loadedMonths = loadedState && loadedState.repository === repository ? loadedState.months : NO_LOADED_MONTHS;
+	const failedMonths = failedState && failedState.repository === repository ? failedState.months : NO_FAILED_MONTHS;
+	const mirrorsRef = useRef<MonthMirrors | null>(null);
 
 	const requestMonths = useCallback(
 		(timeBuckets: string[], {retryFailed = false}: RequestMonthsOptions = {}) => {
-			if (retryFailed && failedRef.current.size > 0) {
-				failedRef.current = new Set();
-				setFailedMonths(new Set());
+			if (!mirrorsRef.current || mirrorsRef.current.repository !== repository) {
+				mirrorsRef.current = {repository, loaded: new Map(), failed: new Set(), pending: new Set()};
 			}
-			const loadedAtRequest = loadedRef.current;
+			const mirrors = mirrorsRef.current;
+			if (retryFailed && mirrors.failed.size > 0) {
+				mirrors.failed = new Set();
+				setFailedState({repository, months: new Set()});
+			}
 			for (const timeBucket of timeBuckets) {
-				if (loadedAtRequest.has(timeBucket) || pendingRef.current.has(timeBucket) || failedRef.current.has(timeBucket)) {
+				if (mirrors.loaded.has(timeBucket) || mirrors.pending.has(timeBucket) || mirrors.failed.has(timeBucket)) {
 					continue;
 				}
-				pendingRef.current.add(timeBucket);
+				mirrors.pending.add(timeBucket);
 				queryClient
 					.fetchQuery({
 						queryKey: ['timeline-bucket', timeBucket],
@@ -63,16 +73,16 @@ export const useTimeline = () => {
 						retry: ASSETS_QUERY_CONFIG.retry,
 					})
 					.then((dayGroups) => {
-						if (loadedRef.current !== loadedAtRequest) return;
-						loadedAtRequest.set(timeBucket, dayGroups);
-						setLoadedMonths(new Map(loadedAtRequest));
+						if (mirrorsRef.current !== mirrors) return;
+						mirrors.loaded.set(timeBucket, dayGroups);
+						setLoadedState({repository, months: new Map(mirrors.loaded)});
 					})
 					.catch(() => {
-						if (loadedRef.current !== loadedAtRequest) return;
-						failedRef.current.add(timeBucket);
-						setFailedMonths(new Set(failedRef.current));
+						if (mirrorsRef.current !== mirrors) return;
+						mirrors.failed.add(timeBucket);
+						setFailedState({repository, months: new Set(mirrors.failed)});
 					})
-					.then(() => pendingRef.current.delete(timeBucket));
+					.then(() => mirrors.pending.delete(timeBucket));
 			}
 		},
 		[queryClient, repository]
