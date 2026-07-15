@@ -4,7 +4,9 @@
 	width: 100%;
 	height: 100vh;
 	overflow: hidden;
-	background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+	// Vertical gradient (varies only by Y) so the transparent rail and the content stay the
+	// same shade at every height — no seam. Lighter up top so sparse days aren't a dark void.
+	background: linear-gradient(180deg, #22304a 0%, #151f31 100%);
 }
 
 .viewContainer {

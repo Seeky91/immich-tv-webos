@@ -13,8 +13,10 @@
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
-	background: rgba(5, 10, 20, 0.82);
-	border-left: 2px solid rgba(255, 255, 255, 0.08);
+	// Transparent at rest so it shares the layout backdrop (no dark band against the content);
+	// focus adds a dark wash so the date bubble and markers stay legible while scrubbing.
+	background: transparent;
+	border-left: 1px solid rgba(255, 255, 255, 0.08);
 	cursor: ns-resize;
 	user-select: none;
 	overflow: visible;
@@ -22,7 +24,7 @@
 
 	&:focus {
 		outline: none;
-		background: rgba(15, 23, 42, 0.98);
+		background: rgba(15, 23, 42, 0.9);
 		border-left-color: #818cf8;
 	}
 }

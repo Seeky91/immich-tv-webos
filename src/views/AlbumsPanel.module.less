@@ -1,10 +1,12 @@
 .scroller {
 	height: 100%;
-	padding: 32px;
 }
 
+// Inset lives on the grid (inside the scroll clip box), not on the Scroller (outside it),
+// so focused cards on the edges have room for the focus scale instead of being clipped.
 .grid {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 24px;
+	padding: 32px;
 }

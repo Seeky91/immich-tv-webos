@@ -296,13 +296,25 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 					<div className={css.assetsGrid} style={layout ? {height: layout.totalHeight} : undefined}>
 						{item.assets.map((asset, assetIdx) => {
 							const pos = layout?.assetLayouts[assetIdx];
+							// Row-start cards sit flush against the scroll container's left clip edge; a
+							// center-origin focus scale would clip their left side, so pin the origin left.
+							const cardStyle: React.CSSProperties | undefined = pos
+								? {
+										position: 'absolute',
+										top: pos.top,
+										left: pos.left,
+										width: pos.width,
+										height: pos.height,
+										...(pos.left < 1 ? {transformOrigin: 'left center'} : null),
+									}
+								: undefined;
 							return (
 								<AssetCard
 									key={asset.id}
 									asset={asset}
 									index={item.globalStartIndex + assetIdx}
 									onSelect={handleSelectAsset}
-									style={pos ? {position: 'absolute', top: pos.top, left: pos.left, width: pos.width, height: pos.height} : undefined}
+									style={cardStyle}
 								/>
 							);
 						})}
