@@ -47,6 +47,34 @@ interface Card {
  * Spotlight move focus out to the rail/header — at the grid's own edges.
  */
 export const useTimelineViewportFocus = ({enabled, viewportRef, rightEdgeSpotlightId}: UseTimelineViewportFocusOptions) => {
+	// Enact's scroll-on-focus also fires when Spotlight moves focus into the grid from
+	// outside on its own — rail hand-back, restoreFocus after the media viewer closes.
+	// Nested AssetCards carry no VirtualList item index, so Enact resolves their list
+	// position to 0 and rams the timeline back to the very top. Suppress it for any
+	// focus arriving from outside the viewport (same pointer-mode trick as focusCard),
+	// then bring the card into view minimally ourselves. Always on: there is no state
+	// in which Enact's index math is right for our cards.
+	useEffect(() => {
+		const handleFocusIn = (event: FocusEvent) => {
+			const viewport = viewportRef.current;
+			const target = event.target;
+			if (ownFocusInFlight || !viewport || !(target instanceof HTMLElement) || !viewport.contains(target)) return;
+			const related = event.relatedTarget;
+			if (related instanceof Node && viewport.contains(related)) return;
+			const wasPointerMode = spotlight.getPointerMode();
+			spotlight.setPointerMode(true);
+			// Microtasks run after every listener of this dispatch — Enact's handler (bubble,
+			// on its scroll node) sees pointer mode on and skips calculatePositionOnFocus.
+			Promise.resolve().then(() => {
+				spotlight.setPointerMode(wasPointerMode);
+				scrollCardIntoView(target, viewport);
+			});
+		};
+		// Capture on window beats Enact's focusin listener regardless of mount order.
+		window.addEventListener('focusin', handleFocusIn, {capture: true});
+		return () => window.removeEventListener('focusin', handleFocusIn, {capture: true});
+	}, [viewportRef]);
+
 	useEffect(() => {
 		if (!enabled) return undefined;
 
@@ -204,15 +232,13 @@ function pickNeighbour(cr: DOMRect, focused: HTMLElement, dir: Direction, cards:
 	return best;
 }
 
-// Focus a card without triggering Enact's (broken-for-us) scroll-on-focus, then scroll it into view
-// ourselves. Focusing while pointer mode is on makes Enact's handleFocus skip its scrollTo; we flip
-// straight back to 5-way so the focus ring shows.
-function focusCard(el: HTMLElement, viewport: HTMLElement): void {
-	spotlight.setPointerMode(true);
-	spotlight.focus(el);
-	spotlight.setPointerMode(false);
-	// Scroll it into view ourselves, against the same viewport rect we measure with, so the card
-	// clears the edges by SCROLL_MARGIN_PX rather than sitting flush (and possibly clipped).
+// True while focusCard's own Spotlight.focus is dispatching, so the outside-entry focusin
+// guard doesn't re-handle (and re-toggle pointer mode around) a focus we initiated.
+let ownFocusInFlight = false;
+
+// Scroll a card into view against the viewport rect, clearing the edges by SCROLL_MARGIN_PX
+// rather than sitting flush (and possibly clipped).
+function scrollCardIntoView(el: HTMLElement, viewport: HTMLElement): void {
 	const scrollNode = scrollNodeFor(el, viewport);
 	if (!scrollNode) return;
 	const vr = viewport.getBoundingClientRect();
@@ -222,6 +248,18 @@ function focusCard(el: HTMLElement, viewport: HTMLElement): void {
 	} else if (r.bottom > vr.bottom - SCROLL_MARGIN_PX) {
 		scrollNode.scrollTop += r.bottom - (vr.bottom - SCROLL_MARGIN_PX);
 	}
+}
+
+// Focus a card without triggering Enact's (broken-for-us) scroll-on-focus, then scroll it into view
+// ourselves. Focusing while pointer mode is on makes Enact's handleFocus skip its scrollTo; we flip
+// straight back to 5-way so the focus ring shows.
+function focusCard(el: HTMLElement, viewport: HTMLElement): void {
+	ownFocusInFlight = true;
+	spotlight.setPointerMode(true);
+	spotlight.focus(el);
+	spotlight.setPointerMode(false);
+	ownFocusInFlight = false;
+	scrollCardIntoView(el, viewport);
 }
 
 // The next row isn't rendered yet: scroll one row in `sign` direction, then focus the row that

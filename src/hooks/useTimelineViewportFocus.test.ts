@@ -97,4 +97,34 @@ describe('useTimelineViewportFocus', () => {
 		expect(focus).toHaveBeenCalledWith(DATE_SCRUBBER_SPOTLIGHT_ID);
 		expect(event.defaultPrevented).toBe(true);
 	});
+
+	test('suppresses Enact scroll-on-focus when focus enters the grid from outside', async () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150));
+		jest.spyOn(Spotlight, 'getPointerMode').mockReturnValue(false);
+		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		const outside = document.createElement('button');
+		document.body.appendChild(outside);
+		act(() => {
+			cards[0]!.dispatchEvent(new FocusEvent('focusin', {bubbles: true, relatedTarget: outside}));
+		});
+
+		// Pointer mode is flipped on for the dispatch (Enact skips its scrollTo), restored after.
+		expect(setPointerMode).toHaveBeenCalledWith(true);
+		await act(async () => Promise.resolve());
+		expect(setPointerMode).toHaveBeenLastCalledWith(false);
+	});
+
+	test('leaves in-grid focus moves alone (no pointer-mode toggling)', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
+		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		act(() => {
+			cards[1]!.dispatchEvent(new FocusEvent('focusin', {bubbles: true, relatedTarget: cards[0]}));
+		});
+
+		expect(setPointerMode).not.toHaveBeenCalled();
+	});
 });
