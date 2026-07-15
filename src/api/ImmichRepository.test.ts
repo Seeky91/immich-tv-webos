@@ -78,6 +78,35 @@ describe('ImmichRepository timeline endpoints', () => {
 
 		expect(assets[0]).toEqual({id: 'legacy', type: 'VIDEO', ratio: 1.78, localDateTime: '2026-03-01T00:30:00.000Z', durationSeconds: 4});
 	});
+
+	test('reconstructs localDateTime byte-identically to toISOString across offset kinds', async () => {
+		// The hand-rolled getUTC* formatter must stay byte-identical to the native toISOString it
+		// replaced across whole, fractional, negative, and boundary-crossing offsets.
+		const fileCreatedAt = [
+			'2026-03-15T12:00:00.123Z',
+			'2026-03-01T02:00:00.000Z',
+			'2026-03-01T03:30:45.007Z', // -8h crosses back to Feb 28
+			'2026-12-31T23:30:00.999Z', // +2h crosses the year boundary
+		];
+		const localOffsetHours = [2, 5.5, -8, 2];
+		const fetch = jest.fn().mockResolvedValue({
+			id: ['a', 'b', 'c', 'd'],
+			isImage: [true, true, true, true],
+			ratio: [1, 1, 1, 1],
+			fileCreatedAt,
+			localOffsetHours,
+			duration: [null, null, null, null],
+		});
+
+		const assets = await repoWithFetch(fetch).getBucketAssets('2026-03-01');
+
+		assets.forEach((asset, i) => {
+			const reference = new Date(new Date(fileCreatedAt[i]!).getTime() + localOffsetHours[i]! * 3600 * 1000).toISOString();
+			expect(asset.localDateTime).toBe(reference);
+		});
+		expect(assets[2]?.localDateTime).toBe('2026-02-28T19:30:45.007Z');
+		expect(assets[3]?.localDateTime).toBe('2027-01-01T01:30:00.999Z');
+	});
 });
 
 describe('ImmichRepository.getPlaces', () => {
