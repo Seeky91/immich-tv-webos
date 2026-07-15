@@ -15,8 +15,20 @@ interface UseWebOSKeysOptions {
 //   - 8     : Backspace fallback (some firmwares re-map Back to it) — gated on text-editing focus, see below
 //   - 10009 : Tizen-style back (Tizen TVs and a handful of LG firmwares)
 //   - 27    : Escape, for dev browsers
+// key === 'GoBack' is also accepted directly: it's the semantic webOS Back regardless of code.
 const BACK_KEYCODES = new Set([461, 1536, 8, 10009, 27]);
 const BACKSPACE_KEYCODE = 8;
+const WHEEL_KEYCODE = 1536;
+
+// The LG magic-remote scroll WHEEL emits keyCode 1536 with key 'Unidentified' while scrolling in
+// 5-way mode — the same numeric code webOS 10.x uses for Back. That exact pair is the wheel, not a
+// Back press: treating it as Back makes a scroll spuriously pop the current view (the album/viewer
+// exits mid-scroll — reproduced on device). The real Back button always carries a meaningful key
+// ('GoBack'), so we filter out only the 1536 + 'Unidentified' signature and honor everything else.
+function isBackKey(event: KeyboardEvent): boolean {
+	if (event.keyCode === WHEEL_KEYCODE && event.key === 'Unidentified') return false;
+	return BACK_KEYCODES.has(event.keyCode) || event.key === 'GoBack';
+}
 
 // Backspace is overloaded: it's the on-remote Back on a few firmwares AND the
 // delete-previous-character key on any input (USB keyboard or webOS virtual keyboard).
@@ -65,7 +77,7 @@ function ensureBridgeInstalled(): void {
 	window.addEventListener(
 		'keydown',
 		(event: KeyboardEvent) => {
-			if (!BACK_KEYCODES.has(event.keyCode)) return;
+			if (!isBackKey(event)) return;
 			if (event.keyCode === BACKSPACE_KEYCODE && isEditingText(event.target)) return;
 			if (fireTopBack()) {
 				event.preventDefault();
