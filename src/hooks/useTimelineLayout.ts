@@ -5,6 +5,12 @@ import type {JustifiedLayoutResult} from '../utils/justifiedLayout';
 import {TARGET_ROW_HEIGHT_PX, GRID_GAP_PX, GRID_HORIZONTAL_PADDING_PX, BUCKET_HEADER_HEIGHT_PX, BUCKET_HEADER_MARGIN_PX} from '../utils/constants';
 import type {TimelineBucket, DayGroup} from '../domain/types';
 
+// loadedGroups gets a fresh array identity every month-load; without this cache the memo would
+// recompute every already-loaded group's layout (frozen once loaded), not just new ones — O(months^2)
+// over a deep scroll session. Keyed by DayGroup identity (not the 'YYYY-MM-DD' string) so same-day
+// groups from different accounts can't collide. Module-scoped (not a ref) to stay render-pure.
+const layoutCache = new WeakMap<DayGroup, {width: number; layout: JustifiedLayoutResult}>();
+
 interface UseTimelineLayoutOptions {
 	allBuckets: TimelineBucket[];
 	loadedMonths: ReadonlyMap<string, DayGroup[]>;
@@ -18,8 +24,16 @@ export const useTimelineLayout = ({allBuckets, loadedMonths, loadedGroups, viewp
 	const layoutMap = useMemo(() => {
 		const map = new Map<string, JustifiedLayoutResult>();
 		for (const group of loadedGroups) {
-			const ratios = group.assets.map((a) => a.ratio);
-			map.set(group.timeBucket, calculateJustifiedLayout(ratios, viewportWidth));
+			const cached = layoutCache.get(group);
+			let layout = cached && cached.width === viewportWidth ? cached.layout : undefined;
+			if (!layout) {
+				layout = calculateJustifiedLayout(
+					group.assets.map((a) => a.ratio),
+					viewportWidth
+				);
+				layoutCache.set(group, {width: viewportWidth, layout});
+			}
+			map.set(group.timeBucket, layout);
 		}
 		return map;
 	}, [loadedGroups, viewportWidth]);
