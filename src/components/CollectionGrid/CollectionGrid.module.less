@@ -1,0 +1,36 @@
+@import '../../styles/_theme.less';
+
+.scroller {
+	height: 100%;
+}
+
+// Insets live inside the scroll clip box, not on the Scroller, so focused cards on the
+// edges have room for the focus scale and ring.
+.page {
+	padding: @page-inset-top @page-inset-x 96px;
+}
+
+.header {
+	display: flex;
+	align-items: baseline;
+	margin-bottom: 56px;
+}
+
+.title {
+	font-size: var(--font-display);
+	font-weight: 600;
+	color: @text;
+}
+
+.subtitle {
+	margin-left: 24px;
+	font-size: var(--font-caption);
+	color: @text-subtle;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	column-gap: 32px;
+	row-gap: 48px;
+}

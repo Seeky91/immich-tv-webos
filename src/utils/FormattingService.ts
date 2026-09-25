@@ -19,6 +19,10 @@ export function formatDuration(durationSeconds: number): string {
 		: `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+export function formatCount(count: number, noun: string): string {
+	return `${count.toLocaleString('en-US')} ${noun}${count === 1 ? '' : 's'}`;
+}
+
 export function formatBucketMonth(timeBucket: string): string {
 	const [year, month] = timeBucket.split('-').map(Number);
 	if (!year || !month || month < 1 || month > 12) return timeBucket;

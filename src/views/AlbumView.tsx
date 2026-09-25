@@ -3,6 +3,7 @@ import {useAlbumDetails} from '../hooks/useAlbumDetails';
 import {useTimeline} from '../hooks/useTimeline';
 import {AssetGridView} from '../components/AssetGridView';
 import type {TimelineScope} from '../domain/types';
+import {formatCount} from '../utils/FormattingService';
 
 interface AlbumViewProps {
 	albumId: string;
@@ -20,7 +21,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) =>
 	return (
 		<AssetGridView
 			title={album?.albumName ?? ''}
-			subtitle={album ? `${album.assetCount} items` : ''}
+			subtitle={album ? formatCount(album.assetCount, 'item') : ''}
 			timeline={timeline}
 			isLoading={isAlbumLoading || isTimelineLoading}
 			error={albumError ?? timelineError}

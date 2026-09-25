@@ -1,3 +1,5 @@
+@import '../styles/_theme.less';
+
 .view {
 	display: flex;
 	flex-direction: column;
@@ -7,20 +9,41 @@
 .header {
 	display: flex;
 	align-items: center;
-	gap: 16px;
-	padding: 16px 0;
 	flex-shrink: 0;
+	min-width: 0;
+	padding: 40px 0 0;
+	padding-right: @page-inset-x;
+}
+
+// Cancels the small Button's own inline margin so it lines up with the grid below.
+.back {
+	margin-left: -0.75rem;
+}
+
+.heading {
+	display: flex;
+	align-items: baseline;
+	flex: 0 1 auto;
+	min-width: 0;
+	margin: 0 24px 0 16px;
 }
 
 .title {
-	font-size: var(--font-title);
+	min-width: 0;
+	font-size: var(--font-display);
 	font-weight: 600;
-	color: #fff;
+	color: @text;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .count {
+	flex-shrink: 0;
+	margin-left: 24px;
 	font-size: var(--font-caption);
-	color: rgba(255, 255, 255, 0.6);
+	color: @text-subtle;
+	white-space: nowrap;
 }
 
 .listContainer {

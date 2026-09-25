@@ -44,8 +44,8 @@ export const PeopleRibbon: React.FC<PeopleRibbonProps> = React.memo(({people, se
 
 	return (
 		<div className={css.ribbonWrapper}>
-			<Scroller direction="horizontal" scrollMode="native" horizontalScrollbar="hidden" style={{height: ri.scale(208)}}>
-				<div className={css.ribbon} style={{paddingLeft: ri.scale(8)}}>
+			<Scroller direction="horizontal" scrollMode="native" horizontalScrollbar="hidden" style={{height: ri.scale(264)}}>
+				<div className={css.ribbon} style={{paddingLeft: ri.scale(16)}}>
 					{people.map((person) => (
 						<PersonItem
 							key={person.id}

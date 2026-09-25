@@ -1,12 +1,13 @@
+@import '../styles/_theme.less';
+
 .layout {
 	display: flex;
 	flex-direction: row;
 	width: 100%;
 	height: 100vh;
 	overflow: hidden;
-	// Vertical gradient (varies only by Y) so the transparent rail and the content stay the
-	// same shade at every height — no seam. Lighter up top so sparse days aren't a dark void.
-	background: linear-gradient(180deg, #22304a 0%, #151f31 100%);
+	// Varies only by Y, so the transparent rail and the content share one seamless backdrop.
+	background: linear-gradient(180deg, @bg-top 0%, @bg-bottom 100%);
 }
 
 .viewContainer {

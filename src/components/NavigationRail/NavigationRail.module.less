@@ -1,3 +1,5 @@
+@import '../../styles/_mixins.less';
+
 // No z-index here on purpose: flex items with z-index != auto create a stacking context
 // (per CSS spec) regardless of `position`, which would trap the rail at z-index 10 in the
 // root context. Without it the rail paints in normal document order, leaving MediaViewer
@@ -13,11 +15,10 @@
   width: 360px;
   min-width: 360px;
   height: 100%;
-  // Transparent so the rail shares the layout backdrop (no seam with the content); the
-  // hairline border-right is the only separator.
+  // Transparent so the rail shares the layout backdrop; the hairline is the only separator.
   background: transparent;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 32px 0 56px;
+  border-right: 1px solid @hairline;
+  padding: @page-inset-top 0 48px;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -26,31 +27,27 @@
   display: flex;
   align-items: center;
   width: calc(100% - 32px);
-  margin: 0 16px 12px;
-  padding: 12px 0;
-  border-radius: 28px;
+  margin: 0 16px 8px;
+  padding: 14px 0;
+  border-radius: @radius-pill;
   cursor: pointer;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: @text-subtle;
   box-sizing: border-box;
-  transition: background 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
-  &:focus {
-    outline: none;
-    background: #6366f1;
-    color: white;
-  }
+  .spottable-fill-focus();
 }
 
 .navItem.active {
-  background: rgba(99, 102, 241, 0.18);
-  color: rgba(255, 255, 255, 0.7);
-}
+  background: rgba(255, 255, 255, 0.08);
+  color: @text;
 
-.navItem.active:focus {
-  background: #6366f1;
-  color: white;
+  &:focus {
+    background: @focus-bg;
+    color: @focus-text;
+  }
 }
 
 // Fixed icon column so glyphs stay vertically aligned across items.
@@ -62,9 +59,8 @@
   overflow: visible;
 }
 
-// Avatar for the Account rail item: the bare letter has only line-height of body
-// text, which makes the colored gradient render as a thin stripe. Wrap it in a
-// circle sized to roughly match the tiny Sandstone Icon footprint of sibling items.
+// The bare letter only has body-text line-height, which squashes the gradient into a
+// stripe; the circle matches the tiny Sandstone Icon footprint of the sibling items.
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -79,7 +75,7 @@
 }
 
 .label {
-  margin-left: 16px;
+  margin-left: 12px;
   font-size: var(--font-body);
   white-space: nowrap;
   pointer-events: none;
@@ -88,8 +84,8 @@
 .spacer { flex: 1; }
 
 .divider {
-  width: calc(100% - 32px);
+  width: calc(100% - 64px);
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 4px 16px 32px;
+  background: @hairline;
+  margin: 8px 32px 24px;
 }

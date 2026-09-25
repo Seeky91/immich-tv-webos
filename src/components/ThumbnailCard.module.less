@@ -1,52 +1,63 @@
 @import '../styles/_mixins.less';
 
 .card {
-	position: relative;
-	border-radius: 12px;
-	overflow: hidden;
+	display: block;
 	cursor: pointer;
-	aspect-ratio: 1;
-	background: #1e293b;
-	transition: transform 0.2s ease, outline 0.1s ease;
+	transition: transform 0.15s ease-out;
 
-	.spottable-card-focus();
+	&:focus {
+		outline: none;
+		transform: scale(@focus-scale);
+	}
+}
+
+// padding-top keeps the cover square: aspect-ratio is Chrome 88+ and ignored on webOS 5/6.
+.cover {
+	position: relative;
+	padding-top: 100%;
+	border-radius: @radius-card;
+	overflow: hidden;
+	background: @surface;
+
+	.card:focus & {
+		.focus-ring();
+	}
 }
 
 .thumbnail {
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
 }
 
-.placeholder {
-	width: 100%;
-	height: 100%;
-	background: #334155;
-}
-
-.info {
+.placeholderIcon {
 	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	padding: 20px 24px;
-	background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
+	top: 50%;
+	left: 50%;
+	margin: 0;
+	transform: translate(-50%, -50%);
+	color: @text-subtle;
 }
 
 .title {
-	color: #ffffff;
-	font-size: var(--font-title);
+	margin-top: 20px;
+	font-size: var(--font-body);
 	font-weight: 600;
+	color: @text;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .secondary {
-	color: rgba(255, 255, 255, 0.7);
-	font-size: var(--font-body);
+	margin-top: 4px;
+	font-size: var(--font-caption);
+	color: @text-subtle;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

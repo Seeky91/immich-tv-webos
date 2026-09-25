@@ -4,7 +4,7 @@ import Button from '@enact/sandstone/Button';
 import ri from '@enact/ui/resolution';
 import {useWebOSKeys} from '../hooks/useWebOSKeys';
 import {createSpotlightContainer} from '../utils/spotlight';
-import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
+import {GRID_INSET_LEFT_PX} from '../utils/constants';
 import {TimelineGrid, type TimelineGridHandle, type TimelineGridTimeline} from './TimelineGrid/TimelineGrid';
 import {QueryStateView} from './QueryStateView';
 import type {DayGroup} from '../domain/types';
@@ -57,36 +57,37 @@ export const AssetGridView: React.FC<AssetGridViewProps> = ({
 		return () => cancelAnimationFrame(raf);
 	}, [hasContent, spotlightId]);
 
+	// Empty or failed collections have no grid to land on: rest focus on the back button.
+	const backSpotlightId = `${spotlightId}-back`;
+	const hasNothingToShow = !isLoading && (!!error || isEmpty);
+	useEffect(() => {
+		if (!hasNothingToShow) return;
+		const raf = requestAnimationFrame(() => Spotlight.focus(backSpotlightId));
+		return () => cancelAnimationFrame(raf);
+	}, [hasNothingToShow, backSpotlightId]);
+
 	return (
-		<QueryStateView
-			isLoading={isLoading}
-			error={error}
-			isEmpty={isEmpty}
-			loadingText="Loading…"
-			emptyText={emptyText}
-		>
-			<Container className={css.view}>
-				<div className={css.header} style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX)}}>
-					<Button icon="arrowlargeleft" size="small" onClick={onBack} />
-					<span className={css.title}>{title}</span>
-					<span className={css.count}>{subtitle}</span>
-					{hasContent && (
-						<Button icon="play" size="small" backgroundOpacity="transparent" onClick={startSlideshow}>
-							Slideshow
-						</Button>
-					)}
+		<Container className={css.view}>
+			<div className={css.header} style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX)}}>
+				<div className={css.back}>
+					<Button icon="arrowlargeleft" size="small" backgroundOpacity="transparent" spotlightId={backSpotlightId} onClick={onBack} />
 				</div>
-				<GridContainer spotlightId={spotlightId} className={css.listContainer}>
-					<TimelineGrid
-						ref={gridRef}
-						groups={groups}
-						timeline={timeline}
-						contentWidth={contentWidth}
-						style={{paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}}
-					/>
-				</GridContainer>
-			</Container>
-		</QueryStateView>
+				<div className={css.heading}>
+					<span className={css.title}>{title}</span>
+					{subtitle && !isLoading && <span className={css.count}>{subtitle}</span>}
+				</div>
+				{hasContent && (
+					<Button icon="play" size="small" backgroundOpacity="transparent" onClick={startSlideshow}>
+						Slideshow
+					</Button>
+				)}
+			</div>
+			<GridContainer spotlightId={spotlightId} className={css.listContainer}>
+				<QueryStateView isLoading={isLoading} error={error} isEmpty={isEmpty} loadingText="Loading…" emptyText={emptyText}>
+					<TimelineGrid ref={gridRef} groups={groups} timeline={timeline} contentWidth={contentWidth} />
+				</QueryStateView>
+			</GridContainer>
+		</Container>
 	);
 };
 

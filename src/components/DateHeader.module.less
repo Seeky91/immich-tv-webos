@@ -1,17 +1,18 @@
-.dateHeader {
-	padding: 24px 0 16px;
-	font-size: var(--font-display);
-	font-weight: 700;
-	color: #ffffff;
-	background: transparent;
-	width: 100%;
-	display: flex;
-	align-items: center;
-}
+@import '../styles/_theme.less';
 
-.count {
-	color: rgba(255, 255, 255, 0.6);
-	font-size: var(--font-heading);
-	font-weight: 400;
-	margin-left: 16px;
+// Fixed height: must equal BUCKET_HEADER_HEIGHT_PX (utils/constants.ts), which the virtualized
+// layout reserves for each day header.
+.dateHeader {
+	display: flex;
+	align-items: flex-end;
+	height: 128px;
+	padding-bottom: 20px;
+	box-sizing: border-box;
+	font-size: var(--font-title);
+	font-weight: 600;
+	line-height: 1.2;
+	color: @text;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

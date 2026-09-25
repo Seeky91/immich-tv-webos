@@ -29,13 +29,12 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, index, on
 			<img src={thumbnailUrl} alt="" className={css.thumbnail} loading="lazy" />
 
 			{isVideo && (
-				<>
-					<div className={css.playIconOverlay}>
-						<Icon size={48}>play</Icon>
-					</div>
-
-					{asset.durationSeconds !== null && <div className={css.durationBadge}>{formatDuration(asset.durationSeconds)}</div>}
-				</>
+				<div className={css.videoBadge}>
+					<Icon size="tiny" className={css.videoIcon}>
+						play
+					</Icon>
+					{asset.durationSeconds !== null && formatDuration(asset.durationSeconds)}
+				</div>
 			)}
 		</SpottableDiv>
 	);

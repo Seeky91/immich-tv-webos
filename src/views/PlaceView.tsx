@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import {useSearch, type SearchQuery} from '../hooks/useSearch';
 import {AssetGridView} from '../components/AssetGridView';
+import {formatCount} from '../utils/FormattingService';
 
 interface PlaceViewProps {
 	city: string;
@@ -17,7 +18,7 @@ const PlaceView: React.FC<PlaceViewProps> = ({city, onBack, contentWidth}) => {
 	return (
 		<AssetGridView
 			title={city}
-			subtitle={`${assetCount} items`}
+			subtitle={formatCount(assetCount, 'item')}
 			groups={groups}
 			isLoading={isLoading}
 			error={error}

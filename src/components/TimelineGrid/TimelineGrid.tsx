@@ -13,7 +13,7 @@ import {useViewerPosition} from '../../hooks/useViewerPosition';
 import {focusTimelineViewport, useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
 import {monthKey} from '../../domain/transforms';
 import type {SlideshowSource} from '../../domain/slideshow';
-import {DATE_SCRUBBER_SPOTLIGHT_ID, DATE_SCRUBBER_WIDTH_PX, ESTIMATED_ROW_HEIGHT_PX} from '../../utils/constants';
+import {DATE_SCRUBBER_SPOTLIGHT_ID, DATE_SCRUBBER_WIDTH_PX, ESTIMATED_ROW_HEIGHT_PX, GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../../utils/constants';
 import type {RequestMonthsOptions} from '../../hooks/useTimeline';
 import type {DayGroup, TimelineAsset, TimelineBucket, TimelineScope} from '../../domain/types';
 import css from './TimelineGrid.module.less';
@@ -30,7 +30,6 @@ export interface TimelineGridTimeline {
 interface TimelineGridProps {
 	groups?: DayGroup[];
 	contentWidth: number;
-	style?: React.CSSProperties;
 	timeline?: TimelineGridTimeline;
 }
 
@@ -117,7 +116,7 @@ function findTimelineScrollNode(viewport: HTMLElement): HTMLElement | null {
 	);
 }
 
-export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({groups, contentWidth, style, timeline}, ref) => {
+export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({groups, contentWidth, timeline}, ref) => {
 	const dayGroups = useMemo(
 		() => (timeline ? timeline.allBuckets.flatMap((bucket) => timeline.loadedMonths.get(bucket.timeBucket) ?? []) : groups ?? EMPTY_GROUPS),
 		[groups, timeline]
@@ -327,6 +326,10 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 		[slideshow, timeline, viewer]
 	);
 
+	// The inset lives on each item, inside the list's scroll clip box, so focus rings and scaled
+	// cards at the row edges aren't cropped.
+	const groupInsetStyle = useMemo(() => ({paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}), []);
+
 	const renderItem = useCallback(
 		({index}: {index: number}) => {
 			const item = virtualItems[index];
@@ -335,24 +338,13 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 			}
 			const layout = layoutMap.get(item.timeBucket);
 			return (
-				<div className={css.dateGroup}>
-					<div className={css.dateHeaderDivider}>
-						<DateHeader timeBucket={item.timeBucket} count={item.count} />
-					</div>
+				<div className={css.dateGroup} style={groupInsetStyle}>
+					<DateHeader timeBucket={item.timeBucket} />
 					<div className={css.assetsGrid} style={layout ? {height: layout.totalHeight} : undefined}>
 						{item.assets.map((asset, assetIdx) => {
 							const pos = layout?.assetLayouts[assetIdx];
-							// Row-start cards sit flush against the scroll container's left clip edge; a
-							// center-origin focus scale would clip their left side, so pin the origin left.
 							const cardStyle: React.CSSProperties | undefined = pos
-								? {
-										position: 'absolute',
-										top: pos.top,
-										left: pos.left,
-										width: pos.width,
-										height: pos.height,
-										...(pos.left < 1 ? {transformOrigin: 'left center'} : null),
-									}
+								? {position: 'absolute', top: pos.top, left: pos.left, width: pos.width, height: pos.height}
 								: undefined;
 							return (
 								<AssetCard
@@ -368,7 +360,7 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 				</div>
 			);
 		},
-		[virtualItems, layoutMap, handleSelectAsset]
+		[virtualItems, layoutMap, handleSelectAsset, groupInsetStyle]
 	);
 
 	const activeBucket = timeline?.allBuckets[activeBucketIndex];
@@ -391,7 +383,6 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 							verticalScrollbar={timeline ? 'hidden' : 'visible'}
 							onScroll={timeline ? stableScrollHandler : undefined}
 							onScrollStop={timeline ? stableScrollHandler : undefined}
-							style={style}
 						/>
 					</div>
 					{timeline && timeline.allBuckets.length > 0 && (

@@ -1,11 +1,11 @@
 import React, {useCallback, useState} from 'react';
-import Scroller from '@enact/sandstone/Scroller';
 import {PlaceCard} from '../components/PlaceCard';
+import {CollectionGrid} from '../components/CollectionGrid/CollectionGrid';
 import {QueryStateView} from '../components/QueryStateView';
 import PlaceView from './PlaceView';
 import {usePlaces} from '../hooks/usePlaces';
 import type {RoutePanelProps} from '../types/navigation';
-import css from './PlacesPanel.module.less';
+import {formatCount} from '../utils/FormattingService';
 
 const PlacesPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -29,13 +29,11 @@ const PlacesPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 			loadingText="Loading places…"
 			emptyText="No places found. Photos need location data to appear here."
 		>
-			<Scroller direction="vertical" scrollMode="native" verticalScrollbar="visible" className={css.scroller}>
-				<div className={css.grid}>
-					{places?.map((place) => (
-						<PlaceCard key={place.city} place={place} onSelect={handleSelectPlace} />
-					))}
-				</div>
-			</Scroller>
+			<CollectionGrid title="Places" subtitle={places ? formatCount(places.length, 'place') : undefined}>
+				{places?.map((place) => (
+					<PlaceCard key={place.city} place={place} onSelect={handleSelectPlace} />
+				))}
+			</CollectionGrid>
 		</QueryStateView>
 	);
 };

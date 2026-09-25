@@ -2,6 +2,7 @@ import React, {useCallback, useMemo} from 'react';
 import {useRepository} from '../domain/RepositoryContext';
 import type {Album} from '../domain/types';
 import {ThumbnailCard} from './ThumbnailCard';
+import {formatCount} from '../utils/FormattingService';
 
 interface AlbumCardProps {
 	album: Album;
@@ -21,7 +22,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, onSelect}
 		<ThumbnailCard
 			thumbnailUrl={thumbnailUrl}
 			title={album.albumName}
-			secondaryLine={`${album.assetCount} items`}
+			secondaryLine={formatCount(album.assetCount, 'item')}
 			onClick={handleClick}
 		/>
 	);

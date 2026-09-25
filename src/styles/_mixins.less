@@ -1,11 +1,25 @@
 // Shared LESS mixins. Imported via @import in *.module.less consumers.
+@import './_theme.less';
+
+// Outer ring (box-shadow follows border-radius on every engine, unlike outline before Cr94).
+.focus-ring() {
+	box-shadow: 0 0 0 @focus-ring-width @focus-ring;
+}
 
 .spottable-card-focus() {
-	&:focus,
-	&:global(.spottable:focus) {
-		outline: 4px solid rgba(66, 80, 175, 0.8);
-		outline-offset: -4px;
-		transform: scale(1.05);
+	&:focus {
+		outline: none;
+		transform: scale(@focus-scale);
 		z-index: 5;
+		.focus-ring();
+	}
+}
+
+// Pills and list items: Sandstone-style light fill with dark content.
+.spottable-fill-focus() {
+	&:focus {
+		outline: none;
+		background: @focus-bg;
+		color: @focus-text;
 	}
 }

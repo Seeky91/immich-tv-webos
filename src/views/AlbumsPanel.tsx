@@ -1,11 +1,11 @@
 import React, {useCallback, useState} from 'react';
-import Scroller from '@enact/sandstone/Scroller';
 import {AlbumCard} from '../components/AlbumCard';
+import {CollectionGrid} from '../components/CollectionGrid/CollectionGrid';
 import {QueryStateView} from '../components/QueryStateView';
 import AlbumView from './AlbumView';
 import {useAlbums} from '../hooks/useAlbums';
 import type {RoutePanelProps} from '../types/navigation';
-import css from './AlbumsPanel.module.less';
+import {formatCount} from '../utils/FormattingService';
 
 const AlbumsPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
@@ -29,13 +29,11 @@ const AlbumsPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 			loadingText="Loading albums…"
 			emptyText="No albums found."
 		>
-			<Scroller direction="vertical" scrollMode="native" verticalScrollbar="visible" className={css.scroller}>
-				<div className={css.grid}>
-					{albums?.map((album) => (
-						<AlbumCard key={album.id} album={album} onSelect={handleSelectAlbum} />
-					))}
-				</div>
-			</Scroller>
+			<CollectionGrid title="Albums" subtitle={albums ? formatCount(albums.length, 'album') : undefined}>
+				{albums?.map((album) => (
+					<AlbumCard key={album.id} album={album} onSelect={handleSelectAlbum} />
+				))}
+			</CollectionGrid>
 		</QueryStateView>
 	);
 };
