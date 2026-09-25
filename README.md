@@ -23,6 +23,8 @@
 - 🔎 **Search** — smart text search powered by Immich's ML backend, plus face/person browsing through a People ribbon.
 - 👥 **Multiple accounts** — add several Immich servers or accounts and switch between them.
 - ▶️ **Video playback** — plays video assets with TV-friendly controls that auto-hide during playback.
+- 🎞️ **Slideshow** — crossfading slideshow from any photo, album or place, in order or shuffled, and it keeps the TV screen saver away while it runs.
+- 🖼️ **Photo viewer** — date, time and place at a glance, controls that fade out to leave the photo full screen, and a rotate button for sideways shots (a local viewing preference, nothing is written to your server).
 - 🎮 **Remote-first** — full D-pad navigation through the webOS Spotlight focus system; no mouse or touch assumed.
 
 ---
