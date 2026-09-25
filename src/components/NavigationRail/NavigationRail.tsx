@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import Icon from '@enact/sandstone/Icon';
 import {createSpotlightContainer, SpottableButton} from '../../utils/spotlight';
-import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../../utils/constants';
+import {NAVIGATION_RAIL_ID} from '../../utils/constants';
 import type {View} from '../../types/navigation';
 import css from './NavigationRail.module.less';
 
@@ -29,7 +29,10 @@ export const NavigationRail: React.FC<NavigationRailProps> = React.memo(({active
 	);
 
 	return (
-		<RailContainer className={css.rail} spotlightId={NAVIGATION_RAIL_SPOTLIGHT_ID}>
+		// Keep the DOM destination stable, but let Spotlight allocate an ID per mount. During
+		// an account switch Enact registers the new rail in render before removing the old one;
+		// sharing a Spotlight ID lets the old rail's cleanup unregister the replacement.
+		<RailContainer className={css.rail} id={NAVIGATION_RAIL_ID}>
 			{NAV_ITEMS.map(({view, icon, label}) => (
 				<SpottableButton
 					key={view}

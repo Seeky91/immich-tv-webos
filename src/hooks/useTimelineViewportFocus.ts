@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import type {RefObject} from 'react';
 import Spotlight, {getDirection} from '@enact/spotlight';
 import {spottableClass} from '@enact/spotlight/Spottable';
-import {NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
+import {NAVIGATION_RAIL_ID} from '../utils/constants';
 
 interface UseTimelineViewportFocusOptions {
 	enabled: boolean;
@@ -132,7 +132,7 @@ export const useTimelineViewportFocus = ({enabled, viewportRef, rightEdgeSpotlig
 				// At the first card of any row, make the rail the explicit destination. Relying on
 				// Spotlight's global geometry here is unreliable with the nested VirtualList.
 				spotlight.setPointerMode(false);
-				spotlight.focus(NAVIGATION_RAIL_SPOTLIGHT_ID);
+				spotlight.focus(`#${NAVIGATION_RAIL_ID}`);
 				consume(event);
 			} else if (dir === 'right') {
 				if (rightEdgeSpotlightId) {
@@ -250,15 +250,21 @@ function scrollCardIntoView(el: HTMLElement, viewport: HTMLElement): void {
 	}
 }
 
-// Focus a card without triggering Enact's (broken-for-us) scroll-on-focus, then scroll it into view
-// ourselves. Focusing while pointer mode is on makes Enact's handleFocus skip its scrollTo; we flip
-// straight back to 5-way so the focus ring shows.
+// Spotlight refuses programmatic focus while the pointer is visible (also on desktop). Enter
+// 5-way first, then suppress Enact's index-based scrolling only once native focus has begun.
+// The native focus event precedes React's bubbling focusin handler on the VirtualList.
 function focusCard(el: HTMLElement, viewport: HTMLElement): void {
 	ownFocusInFlight = true;
-	spotlight.setPointerMode(true);
-	spotlight.focus(el);
-	spotlight.setPointerMode(false);
-	ownFocusInFlight = false;
+	const suppressListScroll = () => spotlight.setPointerMode(true);
+	el.addEventListener('focus', suppressListScroll);
+	try {
+		spotlight.setPointerMode(false);
+		spotlight.focus(el);
+	} finally {
+		el.removeEventListener('focus', suppressListScroll);
+		spotlight.setPointerMode(false);
+		ownFocusInFlight = false;
+	}
 	scrollCardIntoView(el, viewport);
 }
 

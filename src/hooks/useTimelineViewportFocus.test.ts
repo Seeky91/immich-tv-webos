@@ -1,8 +1,8 @@
 import {act, renderHook} from '@testing-library/react';
 import Spotlight from '@enact/spotlight';
 import {spottableClass} from '@enact/spotlight/Spottable';
-import {DATE_SCRUBBER_SPOTLIGHT_ID, NAVIGATION_RAIL_SPOTLIGHT_ID} from '../utils/constants';
-import {useTimelineViewportFocus} from './useTimelineViewportFocus';
+import {DATE_SCRUBBER_SPOTLIGHT_ID, NAVIGATION_RAIL_ID} from '../utils/constants';
+import {focusTimelineViewport, useTimelineViewportFocus} from './useTimelineViewportFocus';
 
 function makeRect(left: number, top: number, width: number, height: number): DOMRect {
 	return {
@@ -23,6 +23,7 @@ function makeViewport(...cardRects: DOMRect[]) {
 	viewport.getBoundingClientRect = () => makeRect(180, 0, 840, 720);
 	const cards = cardRects.map(rect => {
 		const card = document.createElement('div');
+		card.tabIndex = -1;
 		card.className = spottableClass;
 		card.getBoundingClientRect = () => rect;
 		viewport.appendChild(card);
@@ -62,7 +63,7 @@ describe('useTimelineViewportFocus', () => {
 		const event = pressLeft();
 
 		expect(setPointerMode).toHaveBeenCalledWith(false);
-		expect(focus).toHaveBeenCalledWith(NAVIGATION_RAIL_SPOTLIGHT_ID);
+		expect(focus).toHaveBeenCalledWith(`#${NAVIGATION_RAIL_ID}`);
 		expect(event.defaultPrevented).toBe(true);
 	});
 
@@ -75,7 +76,47 @@ describe('useTimelineViewportFocus', () => {
 		pressLeft();
 
 		expect(focus).toHaveBeenCalledWith(cards[0]);
-		expect(focus).not.toHaveBeenCalledWith(NAVIGATION_RAIL_SPOTLIGHT_ID);
+		expect(focus).not.toHaveBeenCalledWith(`#${NAVIGATION_RAIL_ID}`);
+	});
+
+	test('establishes native focus after pointer mode without allowing the list to scroll on focus', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
+		let pointerMode = true;
+		jest.spyOn(Spotlight, 'getPointerMode').mockImplementation(() => pointerMode);
+		jest.spyOn(Spotlight, 'setPointerMode').mockImplementation((value) => { pointerMode = value; });
+		jest.spyOn(Spotlight, 'getCurrent').mockImplementation(() => document.activeElement as never);
+		jest.spyOn(Spotlight, 'focus').mockImplementation((target) => {
+			// Spotlight refuses programmatic focus while a Magic Remote pointer is visible.
+			if (pointerMode || !(target instanceof HTMLElement)) return false;
+			target.focus();
+			return true;
+		});
+		cards[1]!.focus();
+		const listFocus = jest.fn(() => expect(pointerMode).toBe(true));
+		viewport.addEventListener('focusin', listFocus);
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+
+		pressLeft();
+
+		expect(document.activeElement).toBe(cards[0]);
+		expect(listFocus).toHaveBeenCalledTimes(1);
+		expect(pointerMode).toBe(false);
+	});
+
+	test('restores focus to a visible card after pointer movement blurred the grid', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150));
+		let pointerMode = true;
+		jest.spyOn(Spotlight, 'setPointerMode').mockImplementation((value) => { pointerMode = value; });
+		jest.spyOn(Spotlight, 'focus').mockImplementation((target) => {
+			if (pointerMode || !(target instanceof HTMLElement)) return false;
+			target.focus();
+			return true;
+		});
+
+		act(() => { focusTimelineViewport(viewport); });
+
+		expect(document.activeElement).toBe(cards[0]);
+		expect(pointerMode).toBe(false);
 	});
 
 	test('moves focus to the date scrubber from the rightmost card in a row', () => {
