@@ -92,22 +92,30 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 
 	// Latest request wins: a slow load can't overwrite a newer one (e.g. rapid Right presses).
 	const advance = useCallback(
-		async (pick: () => Promise<TimelineAsset | null> | TimelineAsset | null) => {
+		(pick: () => Promise<TimelineAsset | null> | TimelineAsset | null) => {
 			const generation = ++generationRef.current;
-			try {
+			const loadNext = async () => {
 				for (let skips = 0; skips <= MAX_BROKEN_SKIPS; skips++) {
 					const asset = await (skips === 0 ? pick() : playlist.next());
-					if (generation !== generationRef.current) return;
-					if (!asset) {
-						if (!hasShownRef.current) setIsEmpty(true);
-						return;
-					}
+					if (generation !== generationRef.current) return undefined;
+					if (!asset) return null;
 					try {
 						await preload(repository.previewUrl(asset.id));
 					} catch {
 						continue;
 					}
-					if (generation !== generationRef.current) return;
+					return asset;
+				}
+				return undefined;
+			};
+			// Publish state from the load completion, including synchronous pick failures.
+			return loadNext().then(
+				(asset) => {
+					if (generation !== generationRef.current || asset === undefined) return;
+					if (!asset) {
+						if (!hasShownRef.current) setIsEmpty(true);
+						return;
+					}
 					hasShownRef.current = true;
 					setStage((prev) => {
 						if (prev.slots[prev.front]?.id === asset.id) return prev;
@@ -118,11 +126,11 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 						slots[back] = asset;
 						return {slots, front: prev.front, incoming: back};
 					});
-					return;
+				},
+				() => {
+					if (generation === generationRef.current) setRetryTick((tick) => tick + 1);
 				}
-			} catch {
-				if (generation === generationRef.current) setRetryTick((tick) => tick + 1);
-			}
+			);
 		},
 		[playlist, repository]
 	);
