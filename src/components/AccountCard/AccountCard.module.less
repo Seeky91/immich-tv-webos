@@ -3,7 +3,7 @@
 .card {
 	width: 12rem;
 	min-height: 12rem;
-	background: #1a1a1a;
+	background: @surface;
 	border-radius: 0.75rem;
 	padding: 1.25rem 0.75rem;
 	text-align: center;
@@ -13,23 +13,30 @@
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	transition: transform 0.2s ease, outline 0.1s ease;
+	box-sizing: border-box;
+	transition: transform 0.15s ease-out;
 
 	.spottable-card-focus();
 }
 
+// Current account: accent inset edge, distinct from the white outer focus ring.
 .active {
-	outline: 0.15rem solid #5fa8d3;
+	box-shadow: inset 0 0 0 4px @accent;
+
+	&:focus {
+		box-shadow: inset 0 0 0 4px @accent, 0 0 0 @focus-ring-width @focus-ring;
+	}
 }
 
 .badge {
 	position: absolute;
 	top: 0.5rem;
 	right: 0.5rem;
-	background: #5fa8d3;
-	color: white;
+	background: rgba(255, 255, 255, 0.12);
+	color: @text-muted;
 	font-size: 0.55rem;
-	font-weight: bold;
+	font-weight: 600;
+	letter-spacing: 0.06em;
 	padding: 0.1rem 0.4rem;
 	border-radius: 0.2rem;
 }
@@ -50,11 +57,14 @@
 .label {
 	font-size: 0.9rem;
 	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .host {
 	font-size: 0.7rem;
-	opacity: 0.5;
+	color: @text-subtle;
 	margin-top: 0.25rem;
 	overflow: hidden;
 	text-overflow: ellipsis;

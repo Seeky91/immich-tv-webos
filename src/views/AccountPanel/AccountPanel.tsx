@@ -147,7 +147,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
 				<img src={bannerImage} alt="Immich" className={css.banner} />
 				<h2 className={css.welcomeTitle}>Welcome to Immich for TV</h2>
 				<p className={css.welcomeSub}>Add your Immich account to start browsing.</p>
-				<Button autoFocus size="large" onClick={goForm} backgroundOpacity="opaque">+ Add account</Button>
+				<Button autoFocus size="large" icon="plus" onClick={goForm} backgroundOpacity="opaque">
+					Add account
+				</Button>
 			</div>
 		);
 	}

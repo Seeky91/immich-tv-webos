@@ -1,13 +1,13 @@
 @import '../../styles/_mixins.less';
 
 .wrap {
-	color: #eee;
+	color: @text;
 }
 
 .heading {
 	font-size: 1.4rem;
 	margin: 0 0 1.5rem;
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .grid {
@@ -15,8 +15,6 @@
 	flex-wrap: wrap;
 }
 
-// flex `gap` is Chrome 84+ and is dropped on webOS 6 (Chromium 79) — use margins so the
-// cards/tiles keep their spacing on older TVs (identical result on modern Chromium).
 .grid > * {
 	margin: 0 1rem 1rem 0;
 }
@@ -25,14 +23,16 @@
 	width: 12rem;
 	min-height: 12rem;
 	border-radius: 0.75rem;
-	border: 0.05rem dashed #444;
+	box-sizing: border-box;
+	border: 2px solid @hairline;
 	background: transparent;
-	color: #888;
+	color: @text-muted;
+	font-size: 0.9rem;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	transition: transform 0.2s ease, outline 0.1s ease;
+	transition: transform 0.15s ease-out;
 
 	.spottable-card-focus();
 }
@@ -42,11 +42,11 @@
 }
 
 .addIcon {
-	font-size: 2rem;
 	width: 4rem;
 	height: 4rem;
-	border: 0.1rem dashed #555;
 	border-radius: 50%;
+	background: @surface;
+	color: @text;
 	display: flex;
 	align-items: center;
 	justify-content: center;

@@ -1,5 +1,27 @@
-.app {
-	/* styles can be put here */
+@import '../styles/_theme.less';
+
+.boot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	background: linear-gradient(180deg, @bg-top 0%, @bg-bottom 100%);
+	color: @text-muted;
+	font-size: var(--font-body);
+}
+
+.toast {
+	position: fixed;
+	top: @page-inset-top;
+	right: @page-inset-x;
+	z-index: 200;
+	max-width: 1400px;
+	padding: 20px 32px;
+	border-radius: @radius-card;
+	border-left: 6px solid #f28b82;
+	background: @surface-raised;
+	color: @text;
+	font-size: var(--font-caption);
 }
 
 // Sandstone renders tooltips and popups in #floatLayer; keep it above the fullscreen overlays

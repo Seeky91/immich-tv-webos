@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import Icon from '@enact/sandstone/Icon';
 import Spotlight from '@enact/spotlight';
 import {AccountCard} from '../../components/AccountCard/AccountCard';
 import {AccountActionBar} from '../../components/AccountActionBar/AccountActionBar';
@@ -87,7 +88,9 @@ export const AccountGrid: React.FC<AccountGridProps> = ({
 					onClick={onAdd}
 					onFocus={handleAddFocus}
 				>
-					<span className={css.addIcon}>+</span>
+					<span className={css.addIcon}>
+						<Icon size="small">plus</Icon>
+					</span>
 					<span>Add account</span>
 				</SpottableDiv>
 			</div>

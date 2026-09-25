@@ -81,7 +81,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 	const tabs = [];
 	if (pairingDriver && onPairedLogin) {
 		tabs.push(
-			<Tab title="Phone" tabKey="phone" key="phone">
+			<Tab title="Phone" icon="mobile" tabKey="phone" key="phone">
 				{tabIndex === 0 ? (
 					<PairingTab
 						driver={pairingDriver}
@@ -94,7 +94,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 		);
 	}
 	tabs.push(
-		<Tab title="Email" tabKey="creds" key="creds">
+		<Tab title="Email" icon="profile" tabKey="creds" key="creds">
 			<div className={css.tabContent}>
 				<LabeledField label="Server URL">
 					<UrlInput
@@ -133,7 +133,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({initialUrl, onSubmit, onBack,
 		</Tab>,
 	);
 	tabs.push(
-		<Tab title="API Key" tabKey="apikey" key="apikey">
+		<Tab title="API Key" icon="lock" tabKey="apikey" key="apikey">
 			<div className={css.tabContent}>
 				<LabeledField label="Server URL">
 					<UrlInput

@@ -19,6 +19,12 @@ describe('AccountCard', () => {
 		expect(screen.getByText('immich.home.local')).toBeTruthy();
 	});
 
+	test('shows the host once when it is already the label', () => {
+		const apiKeyAccount: Account = {id: 'b', baseUrl: 'https://immich.home.local', method: AuthMethod.API_KEY, apiKey: 'k', addedAt: 1};
+		render(<AccountCard account={apiKeyAccount} isActive={false} isDefault={false} onSelect={() => {}} />);
+		expect(screen.getAllByText('immich.home.local')).toHaveLength(1);
+	});
+
 	test('shows DEFAULT badge when isDefault', () => {
 		render(<AccountCard account={acc} isActive={false} isDefault onSelect={() => {}} />);
 		expect(screen.getByText('DEFAULT')).toBeTruthy();

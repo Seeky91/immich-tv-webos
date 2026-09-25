@@ -43,7 +43,7 @@ const AppBase: React.FC = () => {
 	const activeAccount = accounts.find(a => a.id === activeAccountId) ?? null;
 
 	const accountLetter = activeAccount ? deriveInitial(activeAccount) : '?';
-	const accountGradient = activeAccount ? pickGradient(activeAccount.id) : '#333';
+	const accountGradient = activeAccount ? pickGradient(activeAccount.id) : '#3a3e46';
 
 	const handleSwitch = useCallback(
 		(id: string) => {
@@ -112,9 +112,7 @@ const AppBase: React.FC = () => {
 	// Branch 2: accounts exist but no repository yet
 	if (isValidating && !repository && !overlayOpen) {
 		return (
-			<div className={css.app} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-				<p>Loading…</p>
-			</div>
+			<div className={css.boot}>Loading…</div>
 		);
 	}
 
@@ -123,9 +121,7 @@ const AppBase: React.FC = () => {
 		return (
 			<div className={css.app}>
 				{validationError && (
-					<div style={{position: 'fixed', top: '1rem', right: '1rem', color: '#ff9999', background: 'rgba(40,0,0,0.8)', padding: '0.5rem 1rem', borderRadius: '0.3rem', zIndex: 200}}>
-						{validationError}
-					</div>
+					<div className={css.toast}>{validationError}</div>
 				)}
 				<Panels>
 					<AccountPanel
@@ -151,9 +147,7 @@ const AppBase: React.FC = () => {
 			<RepositoryProvider key={activeAccountId ?? undefined} repository={repository}>
 				<div className={css.app}>
 					{validationError && (
-						<div style={{position: 'fixed', top: '1rem', right: '1rem', color: '#ff9999', background: 'rgba(40,0,0,0.8)', padding: '0.5rem 1rem', borderRadius: '0.3rem', zIndex: 200}}>
-							{validationError}
-						</div>
+						<div className={css.toast}>{validationError}</div>
 					)}
 					<AppLayout
 						onOpenAccount={openOverlay}

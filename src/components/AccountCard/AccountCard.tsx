@@ -30,7 +30,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({account, isActive, isDe
 				{letter}
 			</div>
 			<div className={css.label}>{label}</div>
-			<div className={css.host}>{host}</div>
+			{host !== label && <div className={css.host}>{host}</div>}
 		</SpottableDiv>
 	);
 };
