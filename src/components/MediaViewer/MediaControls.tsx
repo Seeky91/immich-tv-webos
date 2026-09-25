@@ -4,6 +4,7 @@ import {MediaInfo} from '../MediaInfo/MediaInfo';
 import {RoundButton} from '../RoundButton';
 import {createSpotlightContainer} from '../../utils/spotlight';
 import type {TimelineAsset} from '../../domain/types';
+import chrome from '../MediaChrome.module.less';
 import css from './MediaViewer.module.less';
 
 export const CLOSE_BUTTON_SPOTLIGHT_ID = 'media-viewer-close';
@@ -37,14 +38,14 @@ export const MediaControls: React.FC<MediaControlsProps> = React.memo(
 		);
 
 		return (
-			<div className={controlsVisible ? css.controls : `${css.controls} ${css.controlsHidden}`}>
-				<div className={css.topBar}>
+			<div className={controlsVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
+				<div className={chrome.topBar}>
 					{/* Video has no action bar (Down opens the transport bar), so it keeps a close button here. */}
 					{isVideo && (
 						<Button icon="closex" size="small" backgroundOpacity="transparent" onClick={onClose} spotlightId={CLOSE_BUTTON_SPOTLIGHT_ID} />
 					)}
 					<MediaInfo asset={asset} />
-					<span className={css.position}>{position}</span>
+					<span className={chrome.pill}>{position}</span>
 				</div>
 
 				{/* Pointer-only: the D-pad pages with left/right directly. */}
@@ -56,8 +57,8 @@ export const MediaControls: React.FC<MediaControlsProps> = React.memo(
 				)}
 
 				{!isVideo && (
-					<div className={css.bottomBar}>
-						<ActionBar spotlightId={ACTION_BAR_SPOTLIGHT_ID} className={css.actionBar} onFocus={handleBarFocus} onBlur={handleBarBlur}>
+					<div className={chrome.bottomBar}>
+						<ActionBar spotlightId={ACTION_BAR_SPOTLIGHT_ID} className={chrome.actionBar} onFocus={handleBarFocus} onBlur={handleBarBlur}>
 							<RoundButton icon="rotate" tooltipText="Rotate" onClick={onRotate} />
 							<RoundButton icon="play" tooltipText="Slideshow" onClick={onStartSlideshow} />
 							<RoundButton icon="closex" tooltipText="Close" onClick={onClose} />

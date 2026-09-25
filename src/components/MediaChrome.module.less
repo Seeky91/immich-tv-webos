@@ -1,0 +1,70 @@
+// Fullscreen photo chrome shared by the viewer and the slideshow, so starting a slideshow
+// from the viewer keeps every element in place.
+@import '../styles/_theme.less';
+
+// Static, sizeless wrapper: its absolute children still resolve against the fullscreen
+// overlay, while opacity fades the whole subtree and visibility:hidden also drops the
+// buttons from Spotlight's focusable set.
+.chrome {
+	opacity: 1;
+	transition: opacity 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.hidden {
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	// Defer visibility:hidden until the fade-out has finished.
+	transition: opacity 150ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 150ms;
+}
+
+.topBar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	align-items: flex-start;
+	padding: 72px 112px 180px;
+	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+}
+
+.pill {
+	margin-left: auto;
+	padding: 12px 32px;
+	border-radius: @radius-pill;
+	background: rgba(0, 0, 0, 0.4);
+	color: rgba(255, 255, 255, 0.85);
+	font-size: var(--font-caption);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.bottomBar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+	padding: 200px 0 96px;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+}
+
+// Sandstone buttons bring their own inline margins, which space them without flex `gap`.
+.actionBar {
+	display: flex;
+	align-items: center;
+	padding: 16px 8px;
+	border-radius: @radius-pill;
+	background: @scrim;
+}
+
+// Reduce Motion (Chromium 74+; always animates on webOS 5, harmless).
+@media (prefers-reduced-motion: reduce) {
+	.chrome,
+	.hidden {
+		transition: none;
+	}
+}

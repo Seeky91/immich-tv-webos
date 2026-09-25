@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import Button from '@enact/sandstone/Button';
 import Spotlight from '@enact/spotlight';
 import {useRepository} from '../../domain/RepositoryContext';
 import {useAutoHideControls} from '../../hooks/useAutoHideControls';
@@ -12,6 +11,7 @@ import {RoundButton} from '../RoundButton';
 import {createSpotlightContainer, forceFocus} from '../../utils/spotlight';
 import {createSlideshowPlaylist, type SlideshowOrder, type SlideshowSource} from '../../domain/slideshow';
 import type {TimelineAsset} from '../../domain/types';
+import chrome from '../MediaChrome.module.less';
 import css from './Slideshow.module.less';
 
 interface SlideshowProps {
@@ -196,25 +196,27 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 				asset ? <SlideLayer key={slot} asset={asset} slot={slot as 0 | 1} isFront={slot === stage.front} onLoad={handleLayerLoad} /> : null
 			)}
 			{isEmpty && <div className={css.message}>No photos to show.</div>}
-			<div className={osdVisible ? css.osd : `${css.osd} ${css.osdHidden}`}>
-				<div className={css.info}>{current && <MediaInfo asset={current} />}</div>
-				<div className={css.actionBar}>
-					<RoundButton
-						icon={paused ? 'play' : 'pause'}
-						tooltipText={paused ? 'Play' : 'Pause'}
-						spotlightId={PLAY_BUTTON_SPOTLIGHT_ID}
-						data-spotlight-default-element
-						onClick={togglePaused}
-					/>
-					<RoundButton
-						icon={settings.order === 'shuffle' ? 'shuffleon' : 'shuffle'}
-						tooltipText={settings.order === 'shuffle' ? 'Shuffle on' : 'Shuffle off'}
-						onClick={toggleOrder}
-					/>
-					<Button size="small" backgroundOpacity="transparent" tooltipText="Interval" onClick={cycleInterval}>
-						{formatInterval(settings.intervalSeconds)}
-					</Button>
-					<RoundButton icon="closex" tooltipText="Exit" onClick={handleExit} />
+			<div className={osdVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
+				<div className={chrome.topBar}>{current && <MediaInfo asset={current} />}</div>
+				<div className={chrome.bottomBar}>
+					<div className={chrome.actionBar}>
+						<RoundButton
+							icon={paused ? 'play' : 'pause'}
+							tooltipText={paused ? 'Play' : 'Pause'}
+							spotlightId={PLAY_BUTTON_SPOTLIGHT_ID}
+							data-spotlight-default-element
+							onClick={togglePaused}
+						/>
+						<RoundButton
+							icon={settings.order === 'shuffle' ? 'shuffleon' : 'shuffle'}
+							tooltipText={settings.order === 'shuffle' ? 'Shuffle on' : 'Shuffle off'}
+							onClick={toggleOrder}
+						/>
+						<RoundButton tooltipText="Interval" onClick={cycleInterval}>
+							{formatInterval(settings.intervalSeconds)}
+						</RoundButton>
+						<RoundButton icon="closex" tooltipText="Exit" onClick={handleExit} />
+					</div>
 				</div>
 			</div>
 		</Container>

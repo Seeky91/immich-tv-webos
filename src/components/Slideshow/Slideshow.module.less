@@ -1,3 +1,5 @@
+@import '../../styles/_theme.less';
+
 .slideshow {
 	position: fixed;
 	top: 0;
@@ -39,48 +41,12 @@
 	left: 0;
 	right: 0;
 	text-align: center;
-	color: rgba(255, 255, 255, 0.7);
+	color: @text-muted;
 	font-size: var(--font-body);
 }
 
-.osd {
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	display: flex;
-	align-items: flex-end;
-	justify-content: space-between;
-	padding: 200px 112px 96px;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
-	opacity: 1;
-	transition: opacity 200ms cubic-bezier(0, 0, 0.2, 1);
-}
-
-// Same fade-out as the viewer chrome; visibility:hidden also drops the buttons from Spotlight.
-.osdHidden {
-	opacity: 0;
-	visibility: hidden;
-	pointer-events: none;
-	transition: opacity 150ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 150ms;
-}
-
-.info {
-	flex: 1;
-}
-
-.actionBar {
-	display: flex;
-	gap: 16px;
-	padding: 16px;
-	border-radius: 999px;
-	background: rgba(20, 20, 24, 0.72);
-}
-
 @media (prefers-reduced-motion: reduce) {
-	.layer,
-	.osd,
-	.osdHidden {
+	.layer {
 		transition: none;
 	}
 }
