@@ -25,6 +25,8 @@ interface MonthMirrors {
 	pending: Set<string>;
 }
 
+type OwnedMonths<T> = {repository: PhotoRepository; scope: string; months: T};
+
 const NO_LOADED_MONTHS: ReadonlyMap<string, DayGroup[]> = new Map();
 const NO_FAILED_MONTHS: ReadonlySet<string> = new Set();
 
@@ -52,10 +54,9 @@ export const useTimeline = (scopeInput: TimelineScope | null = MAIN_TIMELINE) =>
 	// Month state is tagged with its owning repository + scope and derives as empty after a
 	// switch — no reset effect (react-hooks/set-state-in-effect, Enact CI strict), and a late
 	// completion from the previous owner tags itself with it, so it can never surface here.
-	type Tagged<T> = {repository: PhotoRepository; scope: string; months: T};
-	const [loadedState, setLoadedState] = useState<Tagged<ReadonlyMap<string, DayGroup[]>> | null>(null);
-	const [failedState, setFailedState] = useState<Tagged<ReadonlySet<string>> | null>(null);
-	const owns = (state: Tagged<unknown> | null) => !!state && state.repository === repository && state.scope === key;
+	const [loadedState, setLoadedState] = useState<OwnedMonths<ReadonlyMap<string, DayGroup[]>> | null>(null);
+	const [failedState, setFailedState] = useState<OwnedMonths<ReadonlySet<string>> | null>(null);
+	const owns = (state: OwnedMonths<unknown> | null) => !!state && state.repository === repository && state.scope === key;
 	const loadedMonths = owns(loadedState) ? loadedState!.months : NO_LOADED_MONTHS;
 	const failedMonths = owns(failedState) ? failedState!.months : NO_FAILED_MONTHS;
 	const mirrorsRef = useRef<MonthMirrors | null>(null);

@@ -37,7 +37,3 @@ export function rotateClockwise(assetId: string): Rotation {
 	}
 	return next;
 }
-
-export function resetRotationCacheForTests(): void {
-	rotations = null;
-}

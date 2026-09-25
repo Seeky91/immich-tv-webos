@@ -71,7 +71,7 @@ export const AssetGridView: React.FC<AssetGridViewProps> = ({
 					<span className={css.title}>{title}</span>
 					<span className={css.count}>{subtitle}</span>
 					{hasContent && (
-						<Button icon="play" size="small" onClick={startSlideshow}>
+						<Button icon="play" size="small" backgroundOpacity="transparent" onClick={startSlideshow}>
 							Slideshow
 						</Button>
 					)}

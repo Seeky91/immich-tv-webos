@@ -181,7 +181,10 @@ export class ImmichRepository implements PhotoRepository {
 	}
 
 	public async searchRandomImages(scope: TimelineScope, size: number): Promise<TimelineAsset[]> {
-		const filter = scope.albumId ? {albumIds: [scope.albumId]} : {visibility: 'timeline', ...(scope.personId ? {personIds: [scope.personId]} : null)};
+		// Same visibility rules as timelineScopeParams.
+		const filter = scope.albumId
+			? {albumIds: [scope.albumId]}
+			: {visibility: 'timeline', personIds: scope.personId ? [scope.personId] : undefined};
 		const items = await this.client.fetch<ImmichAsset[]>('/search/random', {
 			method: 'POST',
 			body: JSON.stringify({...filter, type: 'IMAGE', size}),

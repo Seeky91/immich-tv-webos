@@ -95,11 +95,9 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 		// its buttons) and while the video transport bar is open (Sandstone seeks).
 		onArrowLeft: videoControlsOpen || inActionBar ? undefined : handlePrev,
 		onArrowRight: videoControlsOpen || inActionBar ? undefined : handleNext,
-		// Up/down must never reach Spotlight unhandled: it would look for a target above/below
-		// and leak focus to the grid behind the overlay (scrolling the VirtualList). With photo
-		// controls visible, Down enters the action bar and Up leaves it; hidden photo controls
-		// use them as reveal keys (useAutoHideControls), Down opens the Sandstone bar on video,
-		// and an open bar handles its own navigation.
+		// Up/down must never reach Spotlight unhandled, or it leaks focus to the grid behind the
+		// overlay. Unassigned here, they are reveal keys (useAutoHideControls) or belong to the
+		// Sandstone video bar.
 		onArrowUp: isVideo ? (videoControlsOpen ? undefined : swallowKey) : inActionBar ? focusStage : controlsVisible ? swallowKey : undefined,
 		onArrowDown: isVideo ? undefined : inActionBar ? swallowKey : controlsVisible ? focusActionBar : undefined,
 	});
