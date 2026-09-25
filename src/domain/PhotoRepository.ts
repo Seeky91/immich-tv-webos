@@ -13,6 +13,7 @@ export interface PhotoRepository {
 
 	searchSmart(query: string): Promise<TimelineAsset[]>;
 	searchByCity(city: string): Promise<TimelineAsset[]>;
+	searchRandomImages(scope: TimelineScope, size: number): Promise<TimelineAsset[]>;
 
 	thumbnailUrl(assetId: string): string;
 	previewUrl(assetId: string): string;

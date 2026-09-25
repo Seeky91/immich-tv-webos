@@ -176,8 +176,20 @@ export class ImmichRepository implements PhotoRepository {
 		return assets;
 	}
 
+	public async searchRandomImages(scope: TimelineScope, size: number): Promise<TimelineAsset[]> {
+		const filter = scope.albumId ? {albumIds: [scope.albumId]} : {visibility: 'timeline', ...(scope.personId ? {personIds: [scope.personId]} : null)};
+		const items = await this.client.fetch<ImmichAsset[]>('/search/random', {
+			method: 'POST',
+			body: JSON.stringify({...filter, type: 'IMAGE', size}),
+		});
+		return this.visibleAssets(items);
+	}
+
 	private searchItemsToAssets(response: ImmichSearchResponse): TimelineAsset[] {
-		const items = response.assets?.items;
+		return this.visibleAssets(response.assets?.items);
+	}
+
+	private visibleAssets(items: ImmichAsset[] | undefined): TimelineAsset[] {
 		if (!Array.isArray(items)) return [];
 		return items
 			// Search returns hidden assets (live-photo companion videos) whose thumbnails 404

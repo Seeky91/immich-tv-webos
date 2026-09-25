@@ -2,6 +2,7 @@ import type React from 'react';
 import Spottable from '@enact/spotlight/Spottable';
 import type {SpottableProps} from '@enact/spotlight/Spottable';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
+import Spotlight from '@enact/spotlight';
 
 type DivProps = React.HTMLAttributes<HTMLDivElement>;
 type SpottableDivProps = DivProps & SpottableProps;
@@ -20,6 +21,13 @@ interface SpotlightContainerProps extends DivProps {
 	spotlightRestrict?: 'none' | 'self-first' | 'self-only';
 	spotlightDisabled?: boolean;
 	spotlightMuted?: boolean;
+}
+
+// For handlers that consume a D-pad key before Spotlight sees it: Spotlight would have left
+// pointer mode on that key, and while the Magic Remote cursor shows it refuses to move focus.
+export function focusFromKey(spotlightId: string): void {
+	Spotlight.setPointerMode(false);
+	Spotlight.focus(spotlightId);
 }
 
 export function createSpotlightContainer(options: SpotlightContainerOptions = {}): React.ComponentType<SpotlightContainerProps> {

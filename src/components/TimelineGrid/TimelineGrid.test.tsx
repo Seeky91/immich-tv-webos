@@ -66,10 +66,12 @@ const buckets: TimelineBucket[] = [
 
 function makeTimeline(loadedMonths = new Map<string, DayGroup[]>()) {
 	return {
+		scope: {},
 		allBuckets: buckets,
 		loadedMonths,
 		failedMonths: new Set<string>(),
 		requestMonths: jest.fn(),
+		fetchMonth: jest.fn(),
 	};
 }
 

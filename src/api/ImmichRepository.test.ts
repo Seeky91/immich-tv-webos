@@ -187,6 +187,22 @@ describe('ImmichRepository.searchByCity', () => {
 	});
 });
 
+describe('ImmichRepository.searchRandomImages', () => {
+	test('filters random images by album, or by timeline visibility for the library and people', async () => {
+		const fetch = jest.fn().mockResolvedValue([{id: 'r1', type: 'IMAGE', fileCreatedAt: '2026-03-01T00:00:00.000Z', duration: null, width: 3, height: 2}]);
+		const repo = repoWithFetch(fetch);
+		const assets = await repo.searchRandomImages({albumId: 'al1'}, 50);
+		await repo.searchRandomImages({personId: 'p1'}, 50);
+		await repo.searchRandomImages({}, 50);
+		expect(assets).toEqual([{id: 'r1', type: 'IMAGE', ratio: 1.5, localDateTime: '2026-03-01T00:00:00.000Z', durationSeconds: null}]);
+		expect(fetch.mock.calls.map(([, init]) => JSON.parse(init.body))).toEqual([
+			{albumIds: ['al1'], type: 'IMAGE', size: 50},
+			{visibility: 'timeline', personIds: ['p1'], type: 'IMAGE', size: 50},
+			{visibility: 'timeline', type: 'IMAGE', size: 50},
+		]);
+	});
+});
+
 describe('ImmichRepository image URLs', () => {
 	test('request the edited rendition so Immich v3 crops/rotations show on the TV', () => {
 		const repo = new ImmichRepository(new APIClient(apiKeyConfig));

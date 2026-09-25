@@ -1,25 +1,29 @@
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {VirtualList} from '@enact/sandstone/VirtualList';
 import ri from '@enact/ui/resolution';
 import {AssetCard} from '../AssetCard';
 import {DateScrubber} from '../DateScrubber/DateScrubber';
 import {DateHeader} from '../DateHeader';
 import {MediaViewer} from '../MediaViewer/MediaViewer';
+import {Slideshow} from '../Slideshow/Slideshow';
 import {ErrorBoundary} from '../ErrorBoundary';
 import {useMediaViewer} from '../../hooks/useMediaViewer';
 import {useTimelineLayout} from '../../hooks/useTimelineLayout';
 import {focusTimelineViewport, useTimelineViewportFocus} from '../../hooks/useTimelineViewportFocus';
 import {monthKey} from '../../domain/transforms';
+import type {SlideshowSource} from '../../domain/slideshow';
 import {DATE_SCRUBBER_SPOTLIGHT_ID, DATE_SCRUBBER_WIDTH_PX, ESTIMATED_ROW_HEIGHT_PX} from '../../utils/constants';
 import type {RequestMonthsOptions} from '../../hooks/useTimeline';
-import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
+import type {DayGroup, TimelineAsset, TimelineBucket, TimelineScope} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
 export interface TimelineGridTimeline {
+	scope: TimelineScope;
 	allBuckets: TimelineBucket[];
 	loadedMonths: ReadonlyMap<string, DayGroup[]>;
 	failedMonths: ReadonlySet<string>;
 	requestMonths: (timeBuckets: string[], options?: RequestMonthsOptions) => void;
+	fetchMonth: (timeBucket: string) => Promise<DayGroup[]>;
 }
 
 interface TimelineGridProps {
@@ -27,6 +31,15 @@ interface TimelineGridProps {
 	contentWidth: number;
 	style?: React.CSSProperties;
 	timeline?: TimelineGridTimeline;
+}
+
+export interface TimelineGridHandle {
+	startSlideshow: () => void;
+}
+
+interface SlideshowState {
+	start: TimelineAsset | null;
+	fromViewer: boolean;
 }
 
 type GroupVirtualItem = DayGroup & {kind: 'group'; globalStartIndex: number};
@@ -103,7 +116,7 @@ function findTimelineScrollNode(viewport: HTMLElement): HTMLElement | null {
 	);
 }
 
-export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth, style, timeline}) => {
+export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({groups, contentWidth, style, timeline}, ref) => {
 	const dayGroups = useMemo(
 		() => (timeline ? timeline.allBuckets.flatMap((bucket) => timeline.loadedMonths.get(bucket.timeBucket) ?? []) : groups ?? EMPTY_GROUPS),
 		[groups, timeline]
@@ -112,6 +125,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	const totalCount = flatAssets.length;
 	const getAssetAt = useCallback((i: number): TimelineAsset | null => flatAssets[i] ?? null, [flatAssets]);
 	const viewer = useMediaViewer(flatAssets);
+	const [slideshow, setSlideshow] = useState<SlideshowState | null>(null);
 	const viewportRef = useRef<HTMLDivElement>(null);
 	const scrollTopRef = useRef(0);
 	const [activeBucketIndex, setActiveBucketIndex] = useState(0);
@@ -129,7 +143,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 	}, []);
 
 	useTimelineViewportFocus({
-		enabled: !viewer.state,
+		enabled: !viewer.state && !slideshow,
 		viewportRef,
 		rightEdgeSpotlightId: timeline ? DATE_SCRUBBER_SPOTLIGHT_ID : undefined,
 	});
@@ -281,6 +295,35 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 
 	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer]);
 
+	useImperativeHandle(ref, () => ({startSlideshow: () => setSlideshow({start: null, fromViewer: false})}), []);
+
+	const handleStartSlideshow = useCallback(() => {
+		setSlideshow({start: viewer.state ? flatAssets[viewer.state.assetIndex] ?? null : null, fromViewer: true});
+		// The viewer's capture-phase key handlers would otherwise preempt the slideshow's.
+		viewer.close();
+	}, [viewer, flatAssets]);
+
+	const slideshowSource = useMemo<SlideshowSource>(() => ({timeline, assets: flatAssets}), [timeline, flatAssets]);
+
+	const handleSlideshowExit = useCallback(
+		(last: TimelineAsset | null) => {
+			const returnTo = slideshow?.fromViewer ? last ?? slideshow.start : null;
+			setSlideshow(null);
+			if (!returnTo) {
+				const viewport = viewportRef.current;
+				if (viewport) focusTimelineViewport(viewport);
+				return;
+			}
+			if (timeline) {
+				const month = monthKey(returnTo.localDateTime);
+				const bucket = timeline.allBuckets.find((b) => monthKey(b.timeBucket) === month);
+				if (bucket) timeline.requestMonths([bucket.timeBucket]);
+			}
+			viewer.openById(returnTo.id);
+		},
+		[slideshow, timeline, viewer]
+	);
+
 	const renderItem = useCallback(
 		({index}: {index: number}) => {
 			const item = virtualItems[index];
@@ -369,11 +412,17 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({groups, contentWidth,
 						currentIndex={viewer.state.assetIndex}
 						onClose={viewer.close}
 						onNavigate={viewer.navigate}
+						onStartSlideshow={handleStartSlideshow}
 					/>
+				</ErrorBoundary>
+			)}
+			{slideshow && (
+				<ErrorBoundary>
+					<Slideshow start={slideshow.start} source={slideshowSource} onExit={handleSlideshowExit} />
 				</ErrorBoundary>
 			)}
 		</>
 	);
-};
+});
 
 TimelineGrid.displayName = 'TimelineGrid';

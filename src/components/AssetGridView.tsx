@@ -1,11 +1,11 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import Spotlight from '@enact/spotlight';
 import Button from '@enact/sandstone/Button';
 import ri from '@enact/ui/resolution';
 import {useWebOSKeys} from '../hooks/useWebOSKeys';
 import {createSpotlightContainer} from '../utils/spotlight';
 import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
-import {TimelineGrid, type TimelineGridTimeline} from './TimelineGrid/TimelineGrid';
+import {TimelineGrid, type TimelineGridHandle, type TimelineGridTimeline} from './TimelineGrid/TimelineGrid';
 import {QueryStateView} from './QueryStateView';
 import type {DayGroup} from '../domain/types';
 import css from './AssetGridView.module.less';
@@ -42,6 +42,8 @@ export const AssetGridView: React.FC<AssetGridViewProps> = ({
 	contentWidth,
 }) => {
 	useWebOSKeys({onBack});
+	const gridRef = useRef<TimelineGridHandle>(null);
+	const startSlideshow = useCallback(() => gridRef.current?.startSlideshow(), []);
 
 	// When assets finish loading, move focus into the photo grid so the user can start
 	// navigating photos right away. The back button remains reachable via remote Back (above)
@@ -68,9 +70,15 @@ export const AssetGridView: React.FC<AssetGridViewProps> = ({
 					<Button icon="arrowlargeleft" size="small" onClick={onBack} />
 					<span className={css.title}>{title}</span>
 					<span className={css.count}>{subtitle}</span>
+					{hasContent && (
+						<Button icon="play" size="small" onClick={startSlideshow}>
+							Slideshow
+						</Button>
+					)}
 				</div>
 				<GridContainer spotlightId={spotlightId} className={css.listContainer}>
 					<TimelineGrid
+						ref={gridRef}
 						groups={groups}
 						timeline={timeline}
 						contentWidth={contentWidth}

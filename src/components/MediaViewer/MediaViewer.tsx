@@ -3,9 +3,9 @@ import Spotlight from '@enact/spotlight';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
 import {useAutoHideControls} from '../../hooks/useAutoHideControls';
 import {useRepository} from '../../domain/RepositoryContext';
-import {createSpotlightContainer} from '../../utils/spotlight';
+import {createSpotlightContainer, focusFromKey} from '../../utils/spotlight';
 import type {TimelineAsset} from '../../domain/types';
-import {MediaControls, CLOSE_BUTTON_SPOTLIGHT_ID} from './MediaControls';
+import {MediaControls, CLOSE_BUTTON_SPOTLIGHT_ID, SLIDESHOW_BUTTON_SPOTLIGHT_ID} from './MediaControls';
 import {VideoPlayer, VideoPlayerApi} from './VideoPlayer';
 import css from './MediaViewer.module.less';
 
@@ -15,6 +15,7 @@ interface MediaViewerProps {
 	currentIndex: number;
 	onClose: () => void;
 	onNavigate: (direction: 'prev' | 'next') => void;
+	onStartSlideshow: () => void;
 }
 
 const VIEWER_SPOTLIGHT_ID = 'media-viewer';
@@ -25,8 +26,10 @@ const ViewerContainer = createSpotlightContainer({enterTo: 'last-focused'});
 // useWebOSKeys preventDefaults + stops propagation before calling the handler, so a no-op
 // is enough to fully swallow a key (Spotlight never sees it → focus can't leak).
 const swallowKey = () => {};
+const focusClose = () => focusFromKey(CLOSE_BUTTON_SPOTLIGHT_ID);
+const focusSlideshow = () => focusFromKey(SLIDESHOW_BUTTON_SPOTLIGHT_ID);
 
-export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, totalCount, currentIndex, onClose, onNavigate}) => {
+export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, totalCount, currentIndex, onClose, onNavigate, onStartSlideshow}) => {
 	const repository = useRepository();
 	const asset = getAssetAt(currentIndex);
 
@@ -81,13 +84,13 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 		// open (Sandstone keeps them for seek/focus there).
 		onArrowLeft: videoControlsOpen ? undefined : handlePrev,
 		onArrowRight: videoControlsOpen ? undefined : handleNext,
-		// Up/down have no role of their own in the viewer; unhandled, Spotlight looks for a
-		// target above/below and can leak focus to the grid behind the overlay (scrolling
-		// the VirtualList). Swallow them wherever they aren't delegated: hidden photo
-		// controls use them as reveal keys (useAutoHideControls), down opens the Sandstone
-		// bar on video, and an open bar handles its own navigation.
-		onArrowUp: isVideo ? (videoControlsOpen ? undefined : swallowKey) : controlsVisible ? swallowKey : undefined,
-		onArrowDown: isVideo ? undefined : controlsVisible ? swallowKey : undefined,
+		// Up/down must never reach Spotlight unhandled: it would look for a target above/below
+		// and leak focus to the grid behind the overlay (scrolling the VirtualList). Visible
+		// photo controls use them to move between ✕ (top) and Slideshow (bottom); hidden photo
+		// controls use them as reveal keys (useAutoHideControls), down opens the Sandstone bar
+		// on video, and an open bar handles its own navigation.
+		onArrowUp: isVideo ? (videoControlsOpen ? undefined : swallowKey) : controlsVisible ? focusClose : undefined,
+		onArrowDown: isVideo ? undefined : controlsVisible ? focusSlideshow : undefined,
 	});
 
 	useEffect(() => {
@@ -106,7 +109,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 			return;
 		}
 		if (controlsVisible && !isVideo) {
-			Spotlight.focus(CLOSE_BUTTON_SPOTLIGHT_ID);
+			focusClose();
 		}
 	}, [controlsVisible, isVideo]);
 
@@ -140,6 +143,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 				onPrev={handlePrev}
 				onNext={handleNext}
 				onClose={onClose}
+				onStartSlideshow={isVideo ? undefined : onStartSlideshow}
 				canGoPrev={currentIndex > 0}
 				canGoNext={currentIndex < totalCount - 1}
 				controlsVisible={controlsVisible}

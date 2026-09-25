@@ -35,10 +35,13 @@ const NO_FAILED_MONTHS: ReadonlySet<string> = new Set();
  * just a scroll; already-visited months never refetch.
  * `null` scope keeps it idle until the caller knows it (e.g. an album's order).
  */
-export const useTimeline = (scope: TimelineScope | null = MAIN_TIMELINE) => {
+export const useTimeline = (scopeInput: TimelineScope | null = MAIN_TIMELINE) => {
 	const repository = useRepository();
 	const queryClient = useQueryClient();
-	const key = scope ? scopeKey(scope) : '';
+	const key = scopeInput ? scopeKey(scopeInput) : '';
+	// Callers may pass a fresh-but-equal object each render; identity follows the key.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const scope = useMemo(() => scopeInput, [key]);
 	const {data: allBuckets, isLoading, isError, error} = useRepositoryQuery(['timeline-buckets', key], (r) => r.getBuckets(scope!), {
 		staleTime: 10 * 60 * 1000,
 		gcTime: 30 * 60 * 1000,
@@ -57,6 +60,19 @@ export const useTimeline = (scope: TimelineScope | null = MAIN_TIMELINE) => {
 	const failedMonths = owns(failedState) ? failedState!.months : NO_FAILED_MONTHS;
 	const mirrorsRef = useRef<MonthMirrors | null>(null);
 
+	const fetchMonth = useCallback(
+		(timeBucket: string): Promise<DayGroup[]> =>
+			queryClient.fetchQuery({
+				queryKey: ['timeline-bucket', key, timeBucket],
+				queryFn: ({signal}) =>
+					repository.getBucketAssets(timeBucket, scope ?? MAIN_TIMELINE, signal).then((assets) => groupAssetsByDay(assets, scope?.order)),
+				staleTime: Infinity,
+				gcTime: Infinity,
+				retry: ASSETS_QUERY_CONFIG.retry,
+			}),
+		[queryClient, repository, key, scope]
+	);
+
 	const requestMonths = useCallback(
 		(timeBuckets: string[], {retryFailed = false}: RequestMonthsOptions = {}) => {
 			if (!scope) return;
@@ -73,15 +89,7 @@ export const useTimeline = (scope: TimelineScope | null = MAIN_TIMELINE) => {
 					continue;
 				}
 				mirrors.pending.add(timeBucket);
-				queryClient
-					.fetchQuery({
-						queryKey: ['timeline-bucket', key, timeBucket],
-						queryFn: ({signal}) =>
-							repository.getBucketAssets(timeBucket, scope, signal).then((assets) => groupAssetsByDay(assets, scope.order)),
-						staleTime: Infinity,
-						gcTime: Infinity,
-						retry: ASSETS_QUERY_CONFIG.retry,
-					})
+				fetchMonth(timeBucket)
 					.then((dayGroups) => {
 						if (mirrorsRef.current !== mirrors) return;
 						mirrors.loaded.set(timeBucket, dayGroups);
@@ -95,14 +103,12 @@ export const useTimeline = (scope: TimelineScope | null = MAIN_TIMELINE) => {
 					.then(() => mirrors.pending.delete(timeBucket));
 			}
 		},
-		// `key` stands for scope: callers may pass a fresh-but-equal object each render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[queryClient, repository, key]
+		[repository, key, scope, fetchMonth]
 	);
 
 	const timeline = useMemo(
-		() => ({allBuckets: buckets, loadedMonths, failedMonths, requestMonths}),
-		[buckets, loadedMonths, failedMonths, requestMonths]
+		() => ({scope: scope ?? MAIN_TIMELINE, allBuckets: buckets, loadedMonths, failedMonths, requestMonths, fetchMonth}),
+		[scope, buckets, loadedMonths, failedMonths, requestMonths, fetchMonth]
 	);
 
 	return {
