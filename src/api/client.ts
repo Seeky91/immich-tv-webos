@@ -77,8 +77,9 @@ export class APIClient {
 		}
 	}
 
+	// Immich v3 serves the unedited original (ignoring crops/rotations) unless edited=true.
 	public getThumbnailUrl(assetId: string, size: 'preview' | 'thumbnail' = 'thumbnail'): string {
-		return this.buildMediaUrl(`/assets/${assetId}/thumbnail?size=${size}`);
+		return this.buildMediaUrl(`/assets/${assetId}/thumbnail?size=${size}&edited=true`);
 	}
 
 	public getFaceThumbnailUrl(personId: string): string {

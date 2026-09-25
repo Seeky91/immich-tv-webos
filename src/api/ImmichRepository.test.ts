@@ -153,6 +153,18 @@ describe('ImmichRepository.searchByCity', () => {
 	});
 });
 
+describe('ImmichRepository image URLs', () => {
+	test('request the edited rendition so Immich v3 crops/rotations show on the TV', () => {
+		const repo = new ImmichRepository(new APIClient(apiKeyConfig));
+		expect(repo.thumbnailUrl('a1')).toBe(
+			'https://immich.example.com/api/assets/a1/thumbnail?size=thumbnail&edited=true&apiKey=test-api-key',
+		);
+		expect(repo.previewUrl('a1')).toBe(
+			'https://immich.example.com/api/assets/a1/thumbnail?size=preview&edited=true&apiKey=test-api-key',
+		);
+	});
+});
+
 describe('ImmichRepository.videoPlaybackUrl', () => {
 	test('returns Immich /video/playback URL with apiKey query param (API_KEY auth)', () => {
 		const repo = new ImmichRepository(new APIClient(apiKeyConfig));
