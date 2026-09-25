@@ -32,9 +32,17 @@ export interface Album {
 export type AssetOrder = 'asc' | 'desc';
 
 export interface AlbumDetails extends Album {
-	assets: TimelineAsset[];
 	order: AssetOrder;
 }
+
+// The empty scope is the main library timeline.
+export interface TimelineScope {
+	albumId?: string;
+	personId?: string;
+	order?: AssetOrder;
+}
+
+export const MAIN_TIMELINE: TimelineScope = {};
 
 export interface Place {
 	city: string;

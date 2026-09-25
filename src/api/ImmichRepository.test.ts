@@ -37,7 +37,7 @@ describe('ImmichRepository timeline endpoints', () => {
 		});
 		const controller = new AbortController();
 
-		const assets = await repoWithFetch(fetch).getBucketAssets('2026-03-01', controller.signal);
+		const assets = await repoWithFetch(fetch).getBucketAssets('2026-03-01', undefined, controller.signal);
 
 		expect(fetch).toHaveBeenCalledWith('/timeline/bucket?timeBucket=2026-03-01&visibility=timeline&withPartners=true&withStacked=true', {
 			signal: controller.signal,
@@ -45,6 +45,16 @@ describe('ImmichRepository timeline endpoints', () => {
 		expect(assets).toEqual([
 			{id: 'march', type: 'IMAGE', ratio: 1.5, localDateTime: '2026-03-14T10:00:00.000Z', durationSeconds: null},
 		]);
+	});
+
+	test('album and person scopes use the web client filters for that page', async () => {
+		const fetch = jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce({id: [], isImage: [], ratio: [], fileCreatedAt: [], duration: []});
+		const repo = repoWithFetch(fetch);
+		await repo.getBuckets({albumId: 'al1', order: 'asc'});
+		await repo.getBucketAssets('2026-03-01', {personId: 'p1'});
+		// Albums stay unfiltered (archived assets show inside albums) and honor the album order.
+		expect(fetch).toHaveBeenNthCalledWith(1, '/timeline/buckets?albumId=al1&order=asc');
+		expect(fetch).toHaveBeenNthCalledWith(2, '/timeline/bucket?timeBucket=2026-03-01&personId=p1&visibility=timeline', {signal: undefined});
 	});
 
 	test('getBucketAssets reconstructs localDateTime from localOffsetHours', async () => {
@@ -144,6 +154,17 @@ describe('ImmichRepository.getPlaces', () => {
 });
 
 describe('ImmichRepository.searchByCity', () => {
+	test('walks metadata search pages until nextPage is null', async () => {
+		const item = (id: string) => ({id, type: 'IMAGE', fileCreatedAt: '2026-03-01T00:00:00.000Z', duration: null, width: 2, height: 1});
+		const fetch = jest
+			.fn()
+			.mockResolvedValueOnce({assets: {items: [item('a')], nextPage: '2'}})
+			.mockResolvedValueOnce({assets: {items: [item('b')], nextPage: null}});
+		const assets = await repoWithFetch(fetch).searchByCity('Paris');
+		expect(assets.map((a) => a.id)).toEqual(['a', 'b']);
+		expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({city: 'Paris', page: 2, size: 1000});
+	});
+
 	test('POSTs a city metadata search and maps items to timeline assets', async () => {
 		const fetch = jest.fn().mockResolvedValue({
 			assets: {
@@ -157,7 +178,7 @@ describe('ImmichRepository.searchByCity', () => {
 		const assets = await repoWithFetch(fetch).searchByCity('Paris');
 		expect(fetch).toHaveBeenCalledWith('/search/metadata', {
 			method: 'POST',
-			body: JSON.stringify({city: 'Paris', size: 500}),
+			body: JSON.stringify({city: 'Paris', page: 1, size: 1000}),
 		});
 		expect(assets).toEqual([
 			{id: 'a1', type: 'IMAGE', ratio: 2, localDateTime: '2025-09-19T11:18:30.838Z', durationSeconds: null},

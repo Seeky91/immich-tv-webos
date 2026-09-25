@@ -92,8 +92,6 @@ export interface ImmichAlbum {
 }
 
 export interface ImmichAlbumDetails extends ImmichAlbum {
-	// Embedded on Immich < v3 only; v3 serves album assets through the timeline endpoints
-	assets?: ImmichAsset[];
 	order?: AssetOrder;
 }
 

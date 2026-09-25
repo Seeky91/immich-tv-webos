@@ -15,7 +15,7 @@ import type {RequestMonthsOptions} from '../../hooks/useTimeline';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 import css from './TimelineGrid.module.less';
 
-interface TimelineGridTimeline {
+export interface TimelineGridTimeline {
 	allBuckets: TimelineBucket[];
 	loadedMonths: ReadonlyMap<string, DayGroup[]>;
 	failedMonths: ReadonlySet<string>;

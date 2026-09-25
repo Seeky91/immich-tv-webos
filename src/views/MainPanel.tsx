@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 import ri from '@enact/ui/resolution';
 import {QueryStateView} from '../components/QueryStateView';
 import {TimelineGrid} from '../components/TimelineGrid/TimelineGrid';
@@ -7,12 +7,7 @@ import {GRID_INSET_LEFT_PX, GRID_INSET_RIGHT_PX} from '../utils/constants';
 import type {RoutePanelProps} from '../types/navigation';
 
 const MainPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
-	const {allBuckets, isLoading, isError, error, loadedMonths, failedMonths, requestMonths} = useTimeline();
-
-	const timeline = useMemo(
-		() => ({allBuckets, loadedMonths, failedMonths, requestMonths}),
-		[allBuckets, loadedMonths, failedMonths, requestMonths]
-	);
+	const {timeline, isLoading, isError, error} = useTimeline();
 
 	return (
 		<QueryStateView isLoading={isLoading} error={isError ? error : null}>

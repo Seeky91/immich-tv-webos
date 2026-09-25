@@ -1,18 +1,28 @@
 import {APIError, type APIClient} from './client';
 import type {ColumnarAssetResponse, ImmichAlbum, ImmichAlbumDetails, ImmichAsset, ImmichPerson, PeopleResponse} from './types';
 import type {PhotoRepository} from '../domain/PhotoRepository';
-import type {Album, AlbumDetails, Person, Place, TimelineAsset, TimelineBucket} from '../domain/types';
+import {MAIN_TIMELINE, type Album, type AlbumDetails, type Person, type Place, type TimelineAsset, type TimelineBucket, type TimelineScope} from '../domain/types';
 import {toDurationSeconds} from '../utils/FormattingService';
 
 interface ImmichSearchResponse {
-	assets: {items: ImmichAsset[]};
+	assets: {items: ImmichAsset[]; nextPage?: string | null};
 }
 
 const PEOPLE_LIMIT = 50;
 const SEARCH_PAGE_SIZE = 500;
+// Pages are fetched sequentially and laid out in one go (cities have no timeline scope): keep it TV-sized.
+const METADATA_SEARCH_PAGE_SIZE = 1000;
+const METADATA_SEARCH_MAX_PAGES = 3;
 // Matches the official web client's main timeline: without visibility=timeline the server
 // defaults to ('archive','timeline') and archived assets leak in.
 const TIMELINE_FILTER_PARAMS = 'visibility=timeline&withPartners=true&withStacked=true';
+
+function timelineScopeParams(scope: TimelineScope): string {
+	// Unfiltered like the web client: archived assets stay visible inside albums.
+	if (scope.albumId) return `albumId=${scope.albumId}&order=${scope.order ?? 'desc'}`;
+	if (scope.personId) return `personId=${scope.personId}&visibility=timeline`;
+	return TIMELINE_FILTER_PARAMS;
+}
 
 const pad2 = (n: number): string => (n < 10 ? '0' + n : '' + n);
 const pad3 = (n: number): string => (n < 10 ? '00' + n : n < 100 ? '0' + n : '' + n);
@@ -84,22 +94,15 @@ export class ImmichRepository implements PhotoRepository {
 		return {id: p.id, name: p.name, assetCount: p.assetCount ?? 0};
 	}
 
-	public async getBuckets(): Promise<TimelineBucket[]> {
-		return this.client.fetch<TimelineBucket[]>(`/timeline/buckets?${TIMELINE_FILTER_PARAMS}`);
+	public async getBuckets(scope: TimelineScope = MAIN_TIMELINE): Promise<TimelineBucket[]> {
+		return this.client.fetch<TimelineBucket[]>(`/timeline/buckets?${timelineScopeParams(scope)}`);
 	}
 
-	public async getBucketAssets(timeBucket: string, signal?: AbortSignal): Promise<TimelineAsset[]> {
+	public async getBucketAssets(timeBucket: string, scope: TimelineScope = MAIN_TIMELINE, signal?: AbortSignal): Promise<TimelineAsset[]> {
 		const columnar = await this.client.fetch<ColumnarAssetResponse>(
-			`/timeline/bucket?timeBucket=${timeBucket}&${TIMELINE_FILTER_PARAMS}`,
+			`/timeline/bucket?timeBucket=${timeBucket}&${timelineScopeParams(scope)}`,
 			{signal}
 		);
-		return transformColumnarResponse(columnar);
-	}
-
-	// Album buckets are unfiltered on purpose: archived assets stay visible inside albums,
-	// mirroring the official web client.
-	private async fetchAlbumBucket(timeBucket: string, albumId: string): Promise<TimelineAsset[]> {
-		const columnar = await this.client.fetch<ColumnarAssetResponse>(`/timeline/bucket?timeBucket=${timeBucket}&albumId=${albumId}`);
 		return transformColumnarResponse(columnar);
 	}
 
@@ -108,24 +111,13 @@ export class ImmichRepository implements PhotoRepository {
 		return albums.map((a) => this.mapAlbum(a));
 	}
 
+	// Assets load through the album-scoped timeline; withoutAssets stops pre-v3 servers embedding them.
 	public async getAlbum(albumId: string): Promise<AlbumDetails> {
-		const details = await this.client.fetch<ImmichAlbumDetails>(`/albums/${albumId}`);
-		// Immich v3 no longer embeds assets in the album response; fetch them through the
-		// timeline endpoints filtered by albumId instead.
-		const assets = details.assets
-			? details.assets.map((a) => this.assetFromImmichAsset(a))
-			: await this.fetchAlbumAssetsViaTimeline(albumId);
+		const details = await this.client.fetch<ImmichAlbumDetails>(`/albums/${albumId}?withoutAssets=true`);
 		return {
 			...this.mapAlbum(details),
-			assets,
 			order: details.order ?? 'desc',
 		};
-	}
-
-	private async fetchAlbumAssetsViaTimeline(albumId: string): Promise<TimelineAsset[]> {
-		const buckets = await this.client.fetch<TimelineBucket[]>(`/timeline/buckets?albumId=${albumId}`);
-		const bucketAssets = await Promise.all(buckets.map((b) => this.fetchAlbumBucket(b.timeBucket, albumId)));
-		return bucketAssets.flat();
 	}
 
 	private assetFromImmichAsset(a: ImmichAsset): TimelineAsset {
@@ -170,20 +162,18 @@ export class ImmichRepository implements PhotoRepository {
 		return this.searchItemsToAssets(response);
 	}
 
-	public async searchByPerson(personId: string): Promise<TimelineAsset[]> {
-		const response = await this.client.fetch<ImmichSearchResponse>('/search/metadata', {
-			method: 'POST',
-			body: JSON.stringify({personIds: [personId], size: SEARCH_PAGE_SIZE}),
-		});
-		return this.searchItemsToAssets(response);
-	}
-
 	public async searchByCity(city: string): Promise<TimelineAsset[]> {
-		const response = await this.client.fetch<ImmichSearchResponse>('/search/metadata', {
-			method: 'POST',
-			body: JSON.stringify({city, size: SEARCH_PAGE_SIZE}),
-		});
-		return this.searchItemsToAssets(response);
+		const assets: TimelineAsset[] = [];
+		let page: string | null | undefined = '1';
+		for (let i = 0; page && i < METADATA_SEARCH_MAX_PAGES; i++) {
+			const response: ImmichSearchResponse = await this.client.fetch<ImmichSearchResponse>('/search/metadata', {
+				method: 'POST',
+				body: JSON.stringify({city, page: Number(page), size: METADATA_SEARCH_PAGE_SIZE}),
+			});
+			assets.push(...this.searchItemsToAssets(response));
+			page = response.assets?.nextPage;
+		}
+		return assets;
 	}
 
 	private searchItemsToAssets(response: ImmichSearchResponse): TimelineAsset[] {

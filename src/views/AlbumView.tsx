@@ -1,7 +1,8 @@
 import React, {useMemo} from 'react';
 import {useAlbumDetails} from '../hooks/useAlbumDetails';
-import {groupAssetsByDay} from '../domain/transforms';
+import {useTimeline} from '../hooks/useTimeline';
 import {AssetGridView} from '../components/AssetGridView';
+import type {TimelineScope} from '../domain/types';
 
 interface AlbumViewProps {
 	albumId: string;
@@ -10,18 +11,21 @@ interface AlbumViewProps {
 }
 
 const AlbumView: React.FC<AlbumViewProps> = ({albumId, onBack, contentWidth}) => {
-	const {data: album, isLoading, error} = useAlbumDetails(albumId);
+	const {data: album, isLoading: isAlbumLoading, error: albumError} = useAlbumDetails(albumId);
 
-	const loadedGroups = useMemo(() => groupAssetsByDay(album?.assets ?? [], album?.order), [album]);
+	// The timeline waits for the album's order, which drives the server-side sort.
+	const scope = useMemo<TimelineScope | null>(() => (album ? {albumId, order: album.order} : null), [albumId, album]);
+	const {timeline, isLoading: isTimelineLoading, error: timelineError} = useTimeline(scope);
 
 	return (
 		<AssetGridView
 			title={album?.albumName ?? ''}
 			subtitle={album ? `${album.assetCount} items` : ''}
-			groups={loadedGroups}
-			isLoading={isLoading}
-			error={error}
-			isEmpty={!album}
+			timeline={timeline}
+			isLoading={isAlbumLoading || isTimelineLoading}
+			error={albumError ?? timelineError}
+			isEmpty={!album || timeline.allBuckets.length === 0}
+			emptyText="This album is empty."
 			spotlightId="album-grid"
 			onBack={onBack}
 			contentWidth={contentWidth}

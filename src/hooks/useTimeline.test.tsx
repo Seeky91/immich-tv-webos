@@ -82,4 +82,30 @@ describe('useTimeline', () => {
 		await waitFor(() => expect(result.current.loadedMonths.has('2026-07-01')).toBe(true));
 		expect(result.current.failedMonths.size).toBe(0);
 	});
+
+	test('scopes buckets and months per album/person, never leaking one scope into another', async () => {
+		const repository = makeRepository();
+		const {result, rerender} = renderHook(({personId}) => useTimeline({personId}), {
+			wrapper: wrapperFor(repository),
+			initialProps: {personId: 'p1'},
+		});
+		await waitFor(() => expect(result.current.allBuckets).toHaveLength(2));
+		expect(repository.getBuckets).toHaveBeenCalledWith({personId: 'p1'});
+
+		act(() => result.current.requestMonths(['2026-07-01']));
+		await waitFor(() => expect(result.current.loadedMonths.has('2026-07-01')).toBe(true));
+		expect(repository.getBucketAssets).toHaveBeenCalledWith('2026-07-01', {personId: 'p1'}, expect.anything());
+
+		rerender({personId: 'p2'});
+		expect(result.current.loadedMonths.size).toBe(0);
+		await waitFor(() => expect(repository.getBuckets).toHaveBeenCalledWith({personId: 'p2'}));
+	});
+
+	test('stays idle until a scope is known', () => {
+		const repository = makeRepository();
+		const {result} = renderHook(() => useTimeline(null), {wrapper: wrapperFor(repository)});
+		act(() => result.current.requestMonths(['2026-07-01']));
+		expect(repository.getBuckets).not.toHaveBeenCalled();
+		expect(repository.getBucketAssets).not.toHaveBeenCalled();
+	});
 });
