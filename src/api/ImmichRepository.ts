@@ -33,13 +33,19 @@ function utcMillisToIso(ms: number): string {
 	);
 }
 
+// Immich v3 omits the zone on UTC timestamps, which Date would parse as TV-local time.
+function parseUtcMillis(iso: string): number {
+	const zoned = iso.endsWith('Z') || iso.indexOf('+', 19) >= 0 || iso.indexOf('-', 19) >= 0;
+	return new Date(zoned ? iso : iso + 'Z').getTime();
+}
+
 // The server buckets months on localDateTime but its columnar payload only carries UTC
 // fileCreatedAt (+ localOffsetHours on recent servers, localDateTime array on older ones).
 function columnarLocalDateTime(columnar: ColumnarAssetResponse, i: number): string {
 	const fileCreatedAt = columnar.fileCreatedAt[i]!;
 	const offsetHours = columnar.localOffsetHours?.[i];
 	if (typeof offsetHours === 'number') {
-		return utcMillisToIso(new Date(fileCreatedAt).getTime() + offsetHours * 3600 * 1000);
+		return utcMillisToIso(parseUtcMillis(fileCreatedAt) + offsetHours * 3600 * 1000);
 	}
 	return columnar.localDateTime?.[i] ?? fileCreatedAt;
 }

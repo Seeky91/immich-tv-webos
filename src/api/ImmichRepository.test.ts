@@ -64,6 +64,19 @@ describe('ImmichRepository timeline endpoints', () => {
 		expect(assets[0]?.localDateTime).toBe('2026-03-01T00:30:00.000Z');
 	});
 
+	test('treats zone-less v3 timestamps as UTC whatever the TV timezone', async () => {
+		const fetch = jest.fn().mockResolvedValue({
+			id: ['late', 'zoned'],
+			isImage: [true, true],
+			ratio: [1, 1],
+			fileCreatedAt: ['2026-08-21T00:14:11', '2026-08-21T00:14:11.000+00:00'],
+			localOffsetHours: [0, 0],
+			duration: [null, null],
+		});
+		const assets = await repoWithFetch(fetch).getBucketAssets('2026-08-01');
+		expect(assets.map((a) => a.localDateTime)).toEqual(['2026-08-21T00:14:11.000Z', '2026-08-21T00:14:11.000Z']);
+	});
+
 	test('getBucketAssets falls back to a localDateTime column on older servers', async () => {
 		const fetch = jest.fn().mockResolvedValue({
 			id: ['legacy'],
