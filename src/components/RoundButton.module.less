@@ -1,0 +1,8 @@
+// Merged into Sandstone Button through its `css` prop (public class names). Sandstone rounds
+// `.button.neutral .bg` and its ::before focus ring; the doubled class outranks it.
+.button.button:global(.neutral) {
+	&::before,
+	.bg {
+		border-radius: 50%;
+	}
+}

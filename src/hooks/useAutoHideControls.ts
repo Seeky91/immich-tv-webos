@@ -2,11 +2,15 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 
 interface UseAutoHideControlsOptions {
 	enabled: boolean;
+	// Keeps the controls up (no countdown), e.g. while focus is inside them.
+	hold?: boolean;
 	hideDelayMs?: number;
 }
 
 interface AutoHideControls {
 	visible: boolean;
+	show: () => void;
+	hide: () => void;
 }
 
 const DEFAULT_HIDE_DELAY_MS = 4000;
@@ -16,11 +20,12 @@ const DEFAULT_HIDE_DELAY_MS = 4000;
 // 'Enter' on our target webOS firmwares.
 const REVEAL_KEYS = new Set(['Enter', 'ArrowUp', 'ArrowDown']);
 
-export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_MS}: UseAutoHideControlsOptions): AutoHideControls => {
+export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAULT_HIDE_DELAY_MS}: UseAutoHideControlsOptions): AutoHideControls => {
 	const [visible, setVisible] = useState(true);
 	const [wasEnabled, setWasEnabled] = useState(enabled);
 	const timerRef = useRef<number | null>(null);
 	const visibleRef = useRef(visible);
+	const holdRef = useRef(hold);
 
 	// Reset to visible when auto-hide (re)enables (e.g. moving from a video back to a photo).
 	// This adjusts state on a prop change during render — not in an effect — which is the
@@ -38,6 +43,9 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 	useEffect(() => {
 		visibleRef.current = visible;
 	}, [visible]);
+	useEffect(() => {
+		holdRef.current = hold;
+	}, [hold]);
 
 	const clearTimer = useCallback(() => {
 		if (timerRef.current !== null) {
@@ -48,6 +56,7 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 
 	const startTimer = useCallback(() => {
 		clearTimer();
+		if (holdRef.current) return;
 		timerRef.current = window.setTimeout(() => {
 			setVisible(false);
 		}, hideDelayMs);
@@ -87,7 +96,23 @@ export const useAutoHideControls = ({enabled, hideDelayMs = DEFAULT_HIDE_DELAY_M
 		};
 	}, [enabled, startTimer, clearTimer]);
 
+	useEffect(() => {
+		if (!enabled) return;
+		if (hold) clearTimer();
+		else if (visibleRef.current) startTimer();
+	}, [enabled, hold, startTimer, clearTimer]);
+
+	const show = useCallback(() => {
+		setVisible(true);
+		startTimer();
+	}, [startTimer]);
+
+	const hide = useCallback(() => {
+		clearTimer();
+		setVisible(false);
+	}, [clearTimer]);
+
 	// Derive the disabled case instead of storing it: while auto-hide is off the controls are
 	// always shown, whatever internal `visible` state was left over from a previous photo.
-	return {visible: enabled ? visible : true};
+	return {visible: enabled ? visible : true, show, hide};
 };

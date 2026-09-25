@@ -5,9 +5,11 @@ import {useRepository} from '../../domain/RepositoryContext';
 import {useAutoHideControls} from '../../hooks/useAutoHideControls';
 import {SLIDESHOW_INTERVALS_S, useSlideshowSettings} from '../../hooks/useSlideshowSettings';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
-import {formatBucketDate} from '../../utils/FormattingService';
+import {getRotation} from '../../utils/rotationStore';
 import {holdScreenSaver} from '../../utils/screenSaver';
-import {createSpotlightContainer, focusFromKey} from '../../utils/spotlight';
+import {MediaInfo} from '../MediaInfo/MediaInfo';
+import {RoundButton} from '../RoundButton';
+import {createSpotlightContainer, forceFocus} from '../../utils/spotlight';
 import {createSlideshowPlaylist, type SlideshowOrder, type SlideshowSource} from '../../domain/slideshow';
 import type {TimelineAsset} from '../../domain/types';
 import css from './Slideshow.module.less';
@@ -54,7 +56,17 @@ interface SlideLayerProps {
 const SlideLayer: React.FC<SlideLayerProps> = ({asset, slot, isFront, onLoad}) => {
 	const repository = useRepository();
 	const handleLoad = useCallback(() => onLoad(slot), [onLoad, slot]);
-	return <img src={repository.previewUrl(asset.id)} alt="" className={isFront ? `${css.layer} ${css.front}` : css.layer} onLoad={handleLoad} />;
+	const rotation = getRotation(asset.id);
+	const className = [css.layer, isFront && css.front, rotation % 180 && css.quarterTurn].filter(Boolean).join(' ');
+	return (
+		<img
+			src={repository.previewUrl(asset.id)}
+			alt=""
+			className={className}
+			style={rotation ? {transform: `rotate(${rotation}deg)`} : undefined}
+			onLoad={handleLoad}
+		/>
+	);
 };
 
 const formatInterval = (seconds: number) => (seconds < 60 ? `${seconds} s` : `${seconds / 60} min`);
@@ -171,7 +183,7 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 	}, [togglePaused]);
 
 	useEffect(() => {
-		if (osdVisible) focusFromKey(PLAY_BUTTON_SPOTLIGHT_ID);
+		if (osdVisible) forceFocus(PLAY_BUTTON_SPOTLIGHT_ID);
 	}, [osdVisible]);
 
 	useEffect(() => {
@@ -185,19 +197,25 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 			)}
 			{isEmpty && <div className={css.message}>No photos to show.</div>}
 			<div className={osdVisible ? css.osd : `${css.osd} ${css.osdHidden}`}>
-				<span className={css.date}>{current ? formatBucketDate(current.localDateTime.slice(0, 10)) : ''}</span>
-				<Button
-					icon={paused ? 'play' : 'pause'}
-					size="small"
-					spotlightId={PLAY_BUTTON_SPOTLIGHT_ID}
-					data-spotlight-default-element
-					onClick={togglePaused}
-				/>
-				<Button icon={settings.order === 'shuffle' ? 'shuffleon' : 'shuffle'} size="small" selected={settings.order === 'shuffle'} onClick={toggleOrder} />
-				<Button size="small" onClick={cycleInterval}>
-					{formatInterval(settings.intervalSeconds)}
-				</Button>
-				<Button icon="closex" size="small" onClick={handleExit} />
+				<div className={css.info}>{current && <MediaInfo asset={current} />}</div>
+				<div className={css.actionBar}>
+					<RoundButton
+						icon={paused ? 'play' : 'pause'}
+						tooltipText={paused ? 'Play' : 'Pause'}
+						spotlightId={PLAY_BUTTON_SPOTLIGHT_ID}
+						data-spotlight-default-element
+						onClick={togglePaused}
+					/>
+					<RoundButton
+						icon={settings.order === 'shuffle' ? 'shuffleon' : 'shuffle'}
+						tooltipText={settings.order === 'shuffle' ? 'Shuffle on' : 'Shuffle off'}
+						onClick={toggleOrder}
+					/>
+					<Button size="small" backgroundOpacity="transparent" tooltipText="Interval" onClick={cycleInterval}>
+						{formatInterval(settings.intervalSeconds)}
+					</Button>
+					<RoundButton icon="closex" tooltipText="Exit" onClick={handleExit} />
+				</div>
 			</div>
 		</Container>
 	);

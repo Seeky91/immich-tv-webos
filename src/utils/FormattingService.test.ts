@@ -1,4 +1,4 @@
-import {formatDuration, toDurationSeconds} from './FormattingService';
+import {formatAssetDateTime, formatDuration, toDurationSeconds} from './FormattingService';
 
 describe('toDurationSeconds', () => {
 	it('parses legacy "H:MM:SS.mmm" strings (Immich < v3)', () => {
@@ -26,5 +26,11 @@ describe('formatDuration', () => {
 
 	it('formats hour-plus durations as H:MM:SS', () => {
 		expect(formatDuration(3723)).toBe('1:02:03');
+	});
+});
+
+describe('formatAssetDateTime', () => {
+	test('formats the wall-clock fields regardless of the TV timezone', () => {
+		expect(formatAssetDateTime('2016-08-30T23:49:37.000Z')).toEqual({date: 'Tuesday, Aug 30, 2016', time: '23:49'});
 	});
 });

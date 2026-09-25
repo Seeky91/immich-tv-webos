@@ -131,4 +131,25 @@ describe('useAutoHideControls', () => {
 		});
 		expect(result.current.visible).toBe(true);
 	});
+
+	test('hold suspends the countdown and resumes it once released', () => {
+		const {result, rerender} = renderHook(({hold}) => useAutoHideControls({enabled: true, hold, hideDelayMs: 4000}), {initialProps: {hold: true}});
+		act(() => {
+			jest.advanceTimersByTime(10000);
+		});
+		expect(result.current.visible).toBe(true);
+		rerender({hold: false});
+		act(() => {
+			jest.advanceTimersByTime(4000);
+		});
+		expect(result.current.visible).toBe(false);
+	});
+
+	test('hide and show toggle the controls imperatively', () => {
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		act(() => result.current.hide());
+		expect(result.current.visible).toBe(false);
+		act(() => result.current.show());
+		expect(result.current.visible).toBe(true);
+	});
 });

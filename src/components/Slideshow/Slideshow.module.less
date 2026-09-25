@@ -23,6 +23,16 @@
 	opacity: 1;
 }
 
+// Quarter turns lay the image out in a screen-rotated box centered on the screen, then rotate it.
+.quarterTurn {
+	top: 50%;
+	left: 50%;
+	width: 100vh;
+	height: 100vw;
+	margin-top: -50vw;
+	margin-left: -50vh;
+}
+
 .message {
 	position: absolute;
 	top: 50%;
@@ -39,10 +49,10 @@
 	right: 0;
 	bottom: 0;
 	display: flex;
-	align-items: center;
-	gap: 16px;
-	padding: 80px 80px 48px;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
+	align-items: flex-end;
+	justify-content: space-between;
+	padding: 200px 112px 96px;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
 	opacity: 1;
 	transition: opacity 200ms cubic-bezier(0, 0, 0.2, 1);
 }
@@ -55,11 +65,16 @@
 	transition: opacity 150ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 150ms;
 }
 
-.date {
+.info {
 	flex: 1;
-	color: #fff;
-	font-size: var(--font-body);
-	font-weight: 600;
+}
+
+.actionBar {
+	display: flex;
+	gap: 16px;
+	padding: 16px;
+	border-radius: 999px;
+	background: rgba(20, 20, 24, 0.72);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,9 @@
 .app {
 	/* styles can be put here */
 }
+
+// Sandstone renders tooltips and popups in #floatLayer; keep it above the fullscreen overlays
+// (viewer, slideshow) or their tooltips end up behind them.
+:global(#floatLayer) > div {
+	z-index: 2000;
+}

@@ -70,6 +70,8 @@ function transformColumnarResponse(columnar: ColumnarAssetResponse): TimelineAss
 		ratio: ratios ? ratios[i]! : 1,
 		localDateTime: columnarLocalDateTime(columnar, i),
 		durationSeconds: toDurationSeconds(columnar.duration[i]),
+		city: columnar.city?.[i],
+		country: columnar.country?.[i],
 	}));
 }
 
@@ -129,6 +131,8 @@ export class ImmichRepository implements PhotoRepository {
 			ratio: w && h ? w / h : 1,
 			localDateTime: a.localDateTime ?? a.fileCreatedAt,
 			durationSeconds: toDurationSeconds(a.duration),
+			city: a.exifInfo?.city,
+			country: a.exifInfo?.country,
 		};
 	}
 

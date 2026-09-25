@@ -23,9 +23,10 @@ interface SpotlightContainerProps extends DivProps {
 	spotlightMuted?: boolean;
 }
 
-// For handlers that consume a D-pad key before Spotlight sees it: Spotlight would have left
-// pointer mode on that key, and while the Magic Remote cursor shows it refuses to move focus.
-export function focusFromKey(spotlightId: string): void {
+// Spotlight.focus is a no-op while the Magic Remote cursor shows (pointer mode). Needed when a
+// handler consumes the D-pad key that would have left pointer mode, or when an overlay opened by
+// a pointer click must pull focus away from the element behind it.
+export function forceFocus(spotlightId: string): void {
 	Spotlight.setPointerMode(false);
 	Spotlight.focus(spotlightId);
 }

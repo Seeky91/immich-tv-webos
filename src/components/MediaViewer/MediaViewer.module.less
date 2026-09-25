@@ -4,8 +4,9 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.95);
+	background: #000;
 	z-index: 1000;
+	overflow: hidden;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -41,10 +42,20 @@
 	left: 0;
 	right: 0;
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 20px 40px;
-	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+	align-items: flex-start;
+	gap: 24px;
+	padding: 72px 112px 180px;
+	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent);
+}
+
+.position {
+	margin-left: auto;
+	padding: 12px 32px;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.35);
+	color: rgba(255, 255, 255, 0.85);
+	font-size: var(--font-caption);
+	font-weight: 600;
 }
 
 .bottomBar {
@@ -54,48 +65,52 @@
 	bottom: 0;
 	display: flex;
 	justify-content: center;
-	padding: 40px;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+	padding: 200px 0 96px;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
 }
 
-.closeButton {
-	background: rgba(255, 255, 255, 0.1);
-	border: none;
-
-	&:hover,
-	&:focus {
-		background: rgba(255, 255, 255, 0.2);
-	}
-}
-
-.counter {
-	color: #ffffff;
-	font-size: var(--font-body);
-	font-weight: 600;
+.actionBar {
+	display: flex;
+	gap: 16px;
+	padding: 16px;
+	border-radius: 999px;
+	background: rgba(20, 20, 24, 0.72);
 }
 
 .navButton {
 	position: absolute;
 	top: 50%;
 	transform: translateY(-50%);
-	background: rgba(255, 255, 255, 0.1);
-	backdrop-filter: blur(10px);
-	border: none;
+	background: rgba(0, 0, 0, 0.35);
 	border-radius: 50%;
 
-	&:hover,
-	&:focus {
-		background: rgba(66, 80, 175, 0.8);
-		transform: translateY(-50%) scale(1.1);
-	}
-
 	&.navButtonLeft {
-		left: 40px;
+		left: 80px;
 	}
 
 	&.navButtonRight {
-		right: 40px;
+		right: 80px;
 	}
+}
+
+// Transparent focus target behind the chrome: idle D-pad focus sits here (left/right page,
+// Down enters the action bar), and OK/click on it toggles the controls.
+.stage {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	outline: none;
+}
+
+// Quarter turns lay the image out in a screen-rotated box, then rotate it into place.
+.quarterTurn {
+	width: 100vh;
+	height: 100vw;
+	max-width: none;
+	max-height: none;
+	flex-shrink: 0;
 }
 
 // Wrapper around all MediaControls chrome (top bar + nav buttons). It is a STATIC,

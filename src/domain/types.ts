@@ -8,6 +8,8 @@ export interface TimelineAsset {
 	// which are cut on localDateTime, not UTC.
 	localDateTime: string;
 	durationSeconds: number | null;
+	city?: string | null;
+	country?: string | null;
 }
 
 export interface TimelineBucket {

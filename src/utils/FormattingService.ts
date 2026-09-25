@@ -44,3 +44,12 @@ export function formatBucketDate(timeBucket: string): string {
 
 	return date.toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'});
 }
+
+// localDateTime carries the wall-clock time in UTC fields, so it's formatted in UTC.
+export function formatAssetDateTime(localDateTime: string): {date: string; time: string} {
+	const date = new Date(localDateTime);
+	return {
+		date: date.toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'}),
+		time: date.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'}),
+	};
+}

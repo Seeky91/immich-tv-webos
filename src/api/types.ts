@@ -81,6 +81,9 @@ export interface ColumnarAssetResponse {
 	isFavorite: boolean[];
 	isTrashed: boolean[];
 	livePhotoVideoId: (string | null)[];
+	// Immich v3+
+	city?: (string | null)[];
+	country?: (string | null)[];
 }
 
 export interface ImmichAlbum {

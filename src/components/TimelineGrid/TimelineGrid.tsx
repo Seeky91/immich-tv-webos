@@ -295,6 +295,37 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 
 	const handleSelectAsset = useCallback((_a: TimelineAsset, i: number) => viewer.open(i), [viewer]);
 
+	// Timeline mode only holds loaded months, so the library-wide position comes from bucket
+	// counts: assets in earlier months + rank within the asset's own (loaded) month.
+	const monthOffsets = useMemo(() => {
+		if (!timeline) return null;
+		const before = new Map<string, number>();
+		const loadedStart = new Map<string, number>();
+		let total = 0;
+		let loaded = 0;
+		for (const bucket of timeline.allBuckets) {
+			const month = monthKey(bucket.timeBucket);
+			before.set(month, total);
+			total += bucket.count;
+			const monthGroups = timeline.loadedMonths.get(bucket.timeBucket);
+			if (!monthGroups) continue;
+			loadedStart.set(month, loaded);
+			for (const group of monthGroups) loaded += group.assets.length;
+		}
+		return {before, loadedStart, total};
+	}, [timeline]);
+
+	const viewerIndex = viewer.state?.assetIndex ?? -1;
+	const viewerPosition = useMemo(() => {
+		const index = viewerIndex;
+		if (index < 0) return '';
+		const asset = flatAssets[index];
+		if (!monthOffsets || !asset) return `${(index + 1).toLocaleString('en-US')} / ${totalCount.toLocaleString('en-US')}`;
+		const month = monthKey(asset.localDateTime);
+		const rank = (monthOffsets.before.get(month) ?? 0) + index - (monthOffsets.loadedStart.get(month) ?? index);
+		return `${(rank + 1).toLocaleString('en-US')} / ${monthOffsets.total.toLocaleString('en-US')}`;
+	}, [viewerIndex, flatAssets, monthOffsets, totalCount]);
+
 	useImperativeHandle(ref, () => ({startSlideshow: () => setSlideshow({start: null, fromViewer: false})}), []);
 
 	const handleStartSlideshow = useCallback(() => {
@@ -410,6 +441,7 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 						getAssetAt={getAssetAt}
 						totalCount={totalCount}
 						currentIndex={viewer.state.assetIndex}
+						position={viewerPosition}
 						onClose={viewer.close}
 						onNavigate={viewer.navigate}
 						onStartSlideshow={handleStartSlideshow}
