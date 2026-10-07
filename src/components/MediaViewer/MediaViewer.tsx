@@ -134,7 +134,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 					<img
 						src={mediaUrl}
 						alt=""
-						className={rotation % 180 ? `${css.viewerMedia} ${css.quarterTurn}` : css.viewerMedia}
+						className={rotation % 180 ? `${css.photo} ${css.quarterTurn}` : css.photo}
 						style={rotation ? {transform: `rotate(${rotation}deg)`} : undefined}
 					/>
 				)}

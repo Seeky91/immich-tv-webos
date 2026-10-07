@@ -26,6 +26,14 @@
 	object-fit: contain;
 }
 
+// Sized to the screen, not to the file: low-resolution photos (old cameras, small previews)
+// scale up to fill it like the slideshow does, instead of sitting small in the middle.
+.photo {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
 // Hide Sandstone VideoPlayer's built-in back button — duplicates our MediaControls X.
 // The sentinel aria-label is set on the VideoPlayer.tsx side (HIDDEN_BACK_LABEL).
 // :global() is required because:
@@ -67,7 +75,5 @@
 .quarterTurn {
 	width: 100vh;
 	height: 100vw;
-	max-width: none;
-	max-height: none;
 	flex-shrink: 0;
 }
