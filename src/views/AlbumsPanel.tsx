@@ -1,9 +1,10 @@
 import React, {useCallback, useState} from 'react';
-import {AlbumCard} from '../components/AlbumCard';
+import {AlbumCard, albumCardSpotlightId} from '../components/AlbumCard';
 import {CollectionGrid} from '../components/CollectionGrid/CollectionGrid';
 import {QueryStateView} from '../components/QueryStateView';
 import AlbumView from './AlbumView';
 import {useAlbums} from '../hooks/useAlbums';
+import {useFocusOnReturn} from '../hooks/useFocusOnReturn';
 import type {RoutePanelProps} from '../types/navigation';
 import {formatCount} from '../utils/FormattingService';
 
@@ -16,6 +17,7 @@ const AlbumsPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	}, []);
 
 	const handleBack = useCallback(() => setSelectedAlbumId(null), []);
+	useFocusOnReturn(selectedAlbumId, albumCardSpotlightId);
 
 	if (selectedAlbumId) {
 		return <AlbumView albumId={selectedAlbumId} onBack={handleBack} contentWidth={contentWidth} />;

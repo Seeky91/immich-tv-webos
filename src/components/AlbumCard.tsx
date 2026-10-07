@@ -9,6 +9,8 @@ interface AlbumCardProps {
 	onSelect?: (albumId: string) => void;
 }
 
+export const albumCardSpotlightId = (albumId: string): string => `album-card-${albumId}`;
+
 export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, onSelect}) => {
 	const repository = useRepository();
 	const thumbnailUrl = useMemo(
@@ -24,6 +26,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = React.memo(({album, onSelect}
 			title={album.albumName}
 			secondaryLine={formatCount(album.assetCount, 'item')}
 			onClick={handleClick}
+			spotlightId={albumCardSpotlightId(album.id)}
 		/>
 	);
 });

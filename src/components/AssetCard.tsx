@@ -52,7 +52,7 @@ export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, onSelect,
 	}, [asset, onSelect]);
 
 	return (
-		<SpottableDiv className={css.assetCard} style={style} onClick={handleClick}>
+		<SpottableDiv className={css.assetCard} style={style} onClick={handleClick} data-asset-id={asset.id}>
 			<AssetThumbnail key={thumbnailUrl} thumbnailUrl={thumbnailUrl} assetId={asset.id} />
 
 			{isVideo && (

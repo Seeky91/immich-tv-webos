@@ -133,10 +133,11 @@ export const useTimelineViewportFocus = ({enabled, viewportRef, rightEdgeSpotlig
 	}, [enabled, rightEdgeSpotlightId, viewportRef]);
 };
 
-export function focusTimelineViewport(viewport: HTMLElement): boolean {
+/** Focuses `preferred` when given and rendered, otherwise the card that best represents the view. */
+export function focusTimelineViewport(viewport: HTMLElement, preferred?: HTMLElement | null): boolean {
 	const viewportRect = viewport.getBoundingClientRect();
 	const cards = renderedCards(viewport);
-	const target = topLeftInView(cards, viewportRect) ?? nearestToView(cards, viewportRect);
+	const target = preferred ?? topLeftInView(cards, viewportRect) ?? nearestToView(cards, viewportRect);
 	if (!target) return false;
 	focusCard(target, viewport);
 	return true;

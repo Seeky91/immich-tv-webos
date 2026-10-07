@@ -239,6 +239,26 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 	const openViewer = viewer.open;
 	const handleSelectAsset = useCallback((asset: TimelineAsset) => openViewer(asset.id), [openViewer]);
 
+	// Back from the viewer lands on the photo last shown, even after paging far from the card
+	// that opened it: Spotlight would otherwise leave focus nowhere.
+	const viewedAssetId = viewer.state?.assetId;
+	const closeViewer = viewer.close;
+	const handleCloseViewer = useCallback(() => {
+		flushSync(closeViewer);
+		const node = scrollRef.current;
+		if (!node || !viewedAssetId) return;
+		const cardSelector = `[data-asset-id="${viewedAssetId}"]`;
+		if (!node.querySelector(cardSelector)) {
+			const day = geometry.days.find((candidate) => candidate.group.assets.some((a) => a.id === viewedAssetId));
+			if (!day) return;
+			const pos = layoutMap.get(day.group.timeBucket)?.assetLayouts[day.group.assets.findIndex((a) => a.id === viewedAssetId)];
+			const cardTop = day.top + headerHeight + (pos?.top ?? 0);
+			node.scrollTop = Math.max(0, cardTop - (node.clientHeight - (pos?.height ?? 0)) / 2);
+			flushSync(() => setScroll({top: node.scrollTop, geometry: committedGeometryRef.current}));
+		}
+		focusTimelineViewport(node, node.querySelector<HTMLElement>(cardSelector));
+	}, [closeViewer, viewedAssetId, geometry, layoutMap, headerHeight]);
+
 	// The inset lives on each block, inside the scroller's clip box, so focus rings and scaled
 	// cards at the row edges aren't cropped.
 	const insetStyle = useMemo(() => ({paddingLeft: ri.scale(GRID_INSET_LEFT_PX), paddingRight: ri.scale(GRID_INSET_RIGHT_PX)}), []);
@@ -323,7 +343,7 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 						totalCount={totalCount}
 						currentIndex={viewer.state.assetIndex}
 						position={viewerPosition}
-						onClose={viewer.close}
+						onClose={handleCloseViewer}
 						onNavigate={viewer.navigate}
 						onStartSlideshow={handleStartSlideshow}
 					/>

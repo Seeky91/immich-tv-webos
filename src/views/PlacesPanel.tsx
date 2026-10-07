@@ -1,9 +1,10 @@
 import React, {useCallback, useState} from 'react';
-import {PlaceCard} from '../components/PlaceCard';
+import {PlaceCard, placeCardSpotlightId} from '../components/PlaceCard';
 import {CollectionGrid} from '../components/CollectionGrid/CollectionGrid';
 import {QueryStateView} from '../components/QueryStateView';
 import PlaceView from './PlaceView';
 import {usePlaces} from '../hooks/usePlaces';
+import {useFocusOnReturn} from '../hooks/useFocusOnReturn';
 import type {RoutePanelProps} from '../types/navigation';
 import {formatCount} from '../utils/FormattingService';
 
@@ -16,6 +17,7 @@ const PlacesPanel: React.FC<RoutePanelProps> = ({contentWidth}) => {
 	}, []);
 
 	const handleBack = useCallback(() => setSelectedCity(null), []);
+	useFocusOnReturn(selectedCity, placeCardSpotlightId);
 
 	if (selectedCity) {
 		return <PlaceView city={selectedCity} onBack={handleBack} contentWidth={contentWidth} />;
