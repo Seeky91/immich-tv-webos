@@ -46,15 +46,12 @@ export const AssetGridView: React.FC<AssetGridViewProps> = ({
 	const startSlideshow = useCallback(() => gridRef.current?.startSlideshow(), []);
 
 	// When assets finish loading, move focus into the photo grid so the user can start
-	// navigating photos right away. The back button remains reachable via remote Back (above)
-	// and via D-pad up from the top row. rAF defers focus to after VirtualList paints its first
-	// items — calling Spotlight.focus before they mount silently no-ops. Keyed on a boolean so
-	// later month loads don't steal focus mid-scroll.
+	// navigating photos right away (its cards mount in the same commit as the data). The back
+	// button remains reachable via remote Back (above) and via D-pad up from the top row. Keyed
+	// on a boolean so later month loads don't steal focus mid-scroll.
 	const hasContent = timeline ? timeline.loadedMonths.size > 0 : !!groups?.length;
 	useEffect(() => {
-		if (!hasContent) return;
-		const raf = requestAnimationFrame(() => Spotlight.focus(spotlightId));
-		return () => cancelAnimationFrame(raf);
+		if (hasContent) Spotlight.focus(spotlightId);
 	}, [hasContent, spotlightId]);
 
 	// Empty or failed collections have no grid to land on: rest focus on the back button.

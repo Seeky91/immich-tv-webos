@@ -1,16 +1,9 @@
 import React from 'react';
-import {act, render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen} from '@testing-library/react';
+import ri from '@enact/ui/resolution';
 import {TimelineGrid} from './TimelineGrid';
 import type {DayGroup, TimelineAsset, TimelineBucket} from '../../domain/types';
 
-interface MockVirtualListProps {
-	className?: string;
-	dataSize: number;
-	itemRenderer: (props: {index: number}) => React.ReactNode;
-	onScroll?: () => void;
-}
-
-let virtualListProps: MockVirtualListProps | undefined;
 let scrubberProps: {activeIndex: number; onJump: (timeBucket: string) => void} | undefined;
 let mockLayout: {
 	layoutMap: Map<string, unknown>;
@@ -19,13 +12,6 @@ let mockLayout: {
 	bucketOffsets: number[];
 };
 
-jest.mock('@enact/sandstone/VirtualList', () => ({
-	VirtualList: (props: MockVirtualListProps) => {
-		virtualListProps = props;
-		return <div className={props.className} style={{overflowY: 'auto'}} data-testid="scroll-node" />;
-	},
-}));
-
 jest.mock('../DateScrubber/DateScrubber', () => ({
 	DateScrubber: (props: {activeIndex: number; onJump: (timeBucket: string) => void}) => {
 		scrubberProps = props;
@@ -33,8 +19,13 @@ jest.mock('../DateScrubber/DateScrubber', () => ({
 	},
 }));
 
+const mockCardStyles = new Map<string, unknown>();
+
 jest.mock('../AssetCard', () => ({
-	AssetCard: ({asset}: {asset: TimelineAsset}) => <div data-testid="asset">{asset.id}</div>,
+	AssetCard: ({asset, style}: {asset: TimelineAsset; style?: unknown}) => {
+		mockCardStyles.set(asset.id, style);
+		return <button data-testid="asset">{asset.id}</button>;
+	},
 }));
 
 jest.mock('../DateHeader', () => ({
@@ -50,6 +41,8 @@ jest.mock('../../hooks/useTimelineViewportFocus', () => ({
 	focusTimelineViewport: jest.fn(),
 }));
 
+const VIEWPORT_HEIGHT = 1000;
+
 const asset = (id: string, localDateTime: string): TimelineAsset => ({id, type: 'IMAGE', ratio: 1.5, localDateTime, durationSeconds: null});
 
 const dayGroup = (timeBucket: string, ids: string[]): DayGroup => ({
@@ -62,6 +55,7 @@ const buckets: TimelineBucket[] = [
 	{timeBucket: '2026-07-01', count: 5},
 	{timeBucket: '2026-06-01', count: 5},
 	{timeBucket: '2026-05-01', count: 5},
+	{timeBucket: '2026-04-01', count: 5},
 ];
 
 function makeTimeline(loadedMonths = new Map<string, DayGroup[]>()) {
@@ -75,70 +69,130 @@ function makeTimeline(loadedMonths = new Map<string, DayGroup[]>()) {
 	};
 }
 
-function enableScrolling() {
-	const scrollNode = screen.getByTestId('scroll-node');
-	Object.defineProperty(scrollNode, 'scrollHeight', {value: 30000, configurable: true});
-	Object.defineProperty(scrollNode, 'clientHeight', {value: 1000, configurable: true});
-	return scrollNode;
+// Unloaded months are 10000 px estimates; loaded ones are the sum of their day heights.
+function layoutFor(loaded: Map<string, DayGroup[]>, dayHeight: number) {
+	const heightMap = new Map<string, number>();
+	const bucketHeights = buckets.map((bucket) => {
+		const groups = loaded.get(bucket.timeBucket);
+		if (!groups) return 10000;
+		groups.forEach((group) => heightMap.set(group.timeBucket, dayHeight));
+		return groups.length * dayHeight;
+	});
+	const bucketOffsets = bucketHeights.map((_, index) => bucketHeights.slice(0, index).reduce((sum, height) => sum + height, 0));
+	return {layoutMap: new Map(), heightMap, bucketHeights, bucketOffsets};
 }
 
+function scroller(container: HTMLElement): HTMLElement {
+	const node = container.querySelector<HTMLElement>('.scroller')!;
+	Object.defineProperty(node, 'clientHeight', {value: VIEWPORT_HEIGHT, configurable: true});
+	return node;
+}
+
+function scrollTo(node: HTMLElement, top: number) {
+	node.scrollTop = top;
+	fireEvent.scroll(node);
+}
+
+const renderedIds = () => screen.queryAllByTestId('asset').map((card) => card.textContent);
+
 beforeEach(() => {
-	virtualListProps = undefined;
 	scrubberProps = undefined;
-	mockLayout = {
-		layoutMap: new Map(),
-		heightMap: new Map(),
-		bucketHeights: [10000, 10000, 10000],
-		bucketOffsets: [0, 10000, 20000],
-	};
+	mockCardStyles.clear();
+	window.innerHeight = VIEWPORT_HEIGHT;
+	mockLayout = layoutFor(new Map(), 0);
 });
 
 describe('TimelineGrid month skeleton', () => {
-	test('renders loaded day groups and one placeholder per unloaded month', () => {
-		const loaded = new Map([['2026-07-01', [dayGroup('2026-07-14', ['a', 'b']), dayGroup('2026-07-13', ['c'])]]]);
-		render(<TimelineGrid contentWidth={1920} timeline={makeTimeline(loaded)} />);
+	test('mounts only the days around the viewport', () => {
+		const june = [dayGroup('2026-06-20', ['a']), dayGroup('2026-06-10', ['b'])];
+		const loaded = new Map([['2026-06-01', june]]);
+		mockLayout = layoutFor(loaded, 3000);
+		const {container} = render(<TimelineGrid contentWidth={1920} timeline={makeTimeline(loaded)} />);
 
-		expect(virtualListProps?.dataSize).toBe(4);
-		render(<>{virtualListProps?.itemRenderer({index: 0})}</>);
-		expect(screen.getByRole('heading').textContent).toBe('2026-07-14');
-		const placeholder = virtualListProps?.itemRenderer({index: 2}) as React.ReactElement<{'aria-hidden': string}>;
-		expect(placeholder.props['aria-hidden']).toBe('true');
+		// June starts at 10000, under a 10000 px July estimate: one viewport of overscan doesn't reach it.
+		expect(renderedIds()).toEqual([]);
+		scrollTo(scroller(container), 12000);
+		expect(renderedIds()).toEqual(['a', 'b']);
+		expect(screen.getAllByRole('heading').map((heading) => heading.textContent)).toEqual(['2026-06-20', '2026-06-10']);
 	});
 
-	test('requests the months intersecting the viewport on mount and on scroll', () => {
+	test('requests the months around the viewport, plus one each way', () => {
 		const timeline = makeTimeline();
-		render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
-		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-07-01'], undefined);
+		const {container} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-07-01', '2026-06-01'], undefined);
 
-		const scrollNode = enableScrolling();
-		scrollNode.scrollTop = 25000;
-		act(() => virtualListProps?.onScroll?.());
-		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-05-01'], undefined);
+		scrollTo(scroller(container), 25000);
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-06-01', '2026-05-01', '2026-04-01'], undefined);
 		expect(screen.getByTestId('active-bucket').textContent).toBe('2');
 	});
 
 	test('scrubber jump scrolls to the month offset immediately and retries failed months', () => {
 		const timeline = makeTimeline();
-		render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
-		const scrollNode = enableScrolling();
+		const {container} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
+		const node = scroller(container);
 
 		act(() => scrubberProps?.onJump('2026-05-01'));
 
-		expect(scrollNode.scrollTop).toBe(20000);
-		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-06-01', '2026-05-01'], {retryFailed: true});
+		expect(node.scrollTop).toBe(20000);
+		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-07-01', '2026-06-01', '2026-05-01', '2026-04-01'], {retryFailed: true});
 		expect(screen.getByTestId('active-bucket').textContent).toBe('2');
 	});
 
-	test('compensates scroll position when months above the viewport change height', () => {
-		const timeline = makeTimeline();
-		const {rerender} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
-		const scrollNode = enableScrolling();
-		scrollNode.scrollTop = 21000; // 10% into the third month
+	test('a month loading above keeps the on-screen content in place', () => {
+		const may = [dayGroup('2026-05-20', ['m1']), dayGroup('2026-05-10', ['m2'])];
+		let loaded = new Map([['2026-05-01', may]]);
+		mockLayout = layoutFor(loaded, 5000);
+		const timeline = makeTimeline(loaded);
+		const {container, rerender} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
+		const node = scroller(container);
+		scrollTo(node, 21000); // 1000 px into May's first day
 
-		// First month loads and turns out much smaller than its estimate (10000 → 4000).
-		mockLayout = {...mockLayout, bucketHeights: [4000, 10000, 10000], bucketOffsets: [0, 4000, 14000]};
-		rerender(<TimelineGrid contentWidth={1920} timeline={makeTimeline()} />);
+		// July loads and is much shorter than its 10000 px estimate.
+		loaded = new Map([...loaded, ['2026-07-01', [dayGroup('2026-07-04', ['j1'])]]]);
+		mockLayout = layoutFor(loaded, 5000);
+		rerender(<TimelineGrid contentWidth={1920} timeline={makeTimeline(loaded)} />);
 
-		expect(scrollNode.scrollTop).toBe(15000); // still 10% into the third month
+		expect(node.scrollTop).toBe(16000); // still 1000 px into May's first day
+	});
+
+	test('keeps the focused card mounted while a month loads above it', () => {
+		const may = [dayGroup('2026-05-20', ['m1'])];
+		let loaded = new Map([['2026-05-01', may]]);
+		mockLayout = layoutFor(loaded, 3000);
+		const {container, rerender} = render(<TimelineGrid contentWidth={1920} timeline={makeTimeline(loaded)} />);
+		scrollTo(scroller(container), 20500);
+		const card = screen.getByText('m1');
+		card.focus();
+
+		loaded = new Map([...loaded, ['2026-07-01', [dayGroup('2026-07-04', ['j1'])]]]);
+		mockLayout = layoutFor(loaded, 3000);
+		rerender(<TimelineGrid contentWidth={1920} timeline={makeTimeline(loaded)} />);
+
+		expect(screen.getByText('m1')).toBe(card);
+		expect(document.activeElement).toBe(card);
+	});
+
+	test('mounts only the rows of a long day that are around the viewport, with stable card styles', () => {
+		const ids = Array.from({length: 20}, (_, i) => `r${i}`);
+		const day = dayGroup('2026-06-20', ids);
+		const assetLayouts = ids.map((_, i) => ({top: i * 500, left: 0, width: 300, height: 400}));
+		mockLayout = {
+			layoutMap: new Map([['2026-06-20', {totalHeight: 10000, assetLayouts}]]),
+			heightMap: new Map([['2026-06-20', ri.scale(128) + 10000]]),
+			bucketHeights: [],
+			bucketOffsets: [],
+		};
+		const {container} = render(<TimelineGrid contentWidth={1920} groups={[day]} />);
+		expect(renderedIds()).toEqual(['r0', 'r1', 'r2', 'r3']);
+
+		const node = scroller(container);
+		scrollTo(node, 3000);
+		expect(renderedIds()).toContain('r9');
+		expect(renderedIds()).not.toContain('r1');
+		const style = mockCardStyles.get('r6');
+
+		scrollTo(node, 3200);
+		expect(renderedIds()).toContain('r10');
+		expect(mockCardStyles.get('r6')).toBe(style);
 	});
 });

@@ -8,9 +8,8 @@ interface ViewerState {
 
 interface MediaViewerControls {
 	state: ViewerState | null;
-	open: (index: number) => void;
 	// The asset may not be loaded yet: the viewer shows up once it lands in `assets`.
-	openById: (assetId: string) => void;
+	open: (assetId: string) => void;
 	close: () => void;
 	navigate: (direction: 'prev' | 'next') => void;
 }
@@ -19,14 +18,6 @@ export const useMediaViewer = (assets: TimelineAsset[]): MediaViewerControls => 
 	const [assetId, setAssetId] = useState<string | null>(null);
 	const assetIndex = assetId ? assets.findIndex((asset) => asset.id === assetId) : -1;
 	const state = assetId && assetIndex >= 0 ? {assetId, assetIndex} : null;
-
-	const open = useCallback(
-		(index: number) => {
-			const asset = assets[index];
-			if (asset) setAssetId(asset.id);
-		},
-		[assets]
-	);
 
 	const close = useCallback(() => setAssetId(null), []);
 
@@ -43,5 +34,5 @@ export const useMediaViewer = (assets: TimelineAsset[]): MediaViewerControls => 
 		[assets]
 	);
 
-	return {state, open, openById: setAssetId, close, navigate};
+	return {state, open: setAssetId, close, navigate};
 };

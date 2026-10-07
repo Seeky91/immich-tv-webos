@@ -13,7 +13,7 @@ const repository = {
 
 const card = (item = asset, onSelect = jest.fn(), repo = repository) => (
 	<RepositoryProvider repository={repo}>
-		<AssetCard asset={item} index={3} onSelect={onSelect} />
+		<AssetCard asset={item} onSelect={onSelect} />
 	</RepositoryProvider>
 );
 
@@ -40,7 +40,7 @@ describe('AssetCard image failures', () => {
 		fireEvent.error(screen.getByAltText(''));
 		expect(screen.queryByAltText('')).toBeNull();
 		fireEvent.click(screen.getByLabelText('Preview unavailable'));
-		expect(onSelect).toHaveBeenCalledWith(asset, 3);
+		expect(onSelect).toHaveBeenCalledWith(asset);
 		expect(screen.getByText('0:27')).toBeTruthy();
 	});
 

@@ -37,7 +37,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({onOpenAccount, accountLetter, acco
 				accountGradient={accountGradient}
 			/>
 			{/*
-				MainPanel reste mounté (CSS-hidden) pour préserver la position de scroll de la VirtualList
+				MainPanel reste mounté (CSS-hidden) pour préserver la position de scroll
 				du timeline. Le cache TanStack survit déjà via QueryClientProvider en haut, donc l'unmount
 				ne perdrait que la position scroll. Albums/Search réinitialisent leur navigation interne à
 				chaque retour, ce qui est désiré côté UX.

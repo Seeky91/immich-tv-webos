@@ -8,8 +8,7 @@ import css from './AssetCard.module.less';
 
 interface AssetCardProps {
 	asset: TimelineAsset;
-	index: number;
-	onSelect?: (asset: TimelineAsset, index: number) => void;
+	onSelect?: (asset: TimelineAsset) => void;
 	style?: React.CSSProperties;
 }
 
@@ -41,16 +40,16 @@ const AssetThumbnail: React.FC<{thumbnailUrl: string; assetId: string}> = ({thum
 	);
 };
 
-export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, index, onSelect, style}) => {
+export const AssetCard: React.FC<AssetCardProps> = React.memo(({asset, onSelect, style}) => {
 	const repository = useRepository();
 	const isVideo = asset.type === 'VIDEO';
 	const thumbnailUrl = useMemo(() => repository.thumbnailUrl(asset.id), [repository, asset.id]);
 
 	const handleClick = useCallback(() => {
 		if (onSelect) {
-			onSelect(asset, index);
+			onSelect(asset);
 		}
-	}, [asset, index, onSelect]);
+	}, [asset, onSelect]);
 
 	return (
 		<SpottableDiv className={css.assetCard} style={style} onClick={handleClick}>

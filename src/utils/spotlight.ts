@@ -14,6 +14,9 @@ export const SpottableButton = Spottable('button') as React.ComponentType<Spotta
 
 interface SpotlightContainerOptions {
 	enterTo?: 'last-focused' | 'default-element' | 'topmost';
+	// Content scrolls inside the container: Spotlight focuses without native scroll-into-view
+	// and only enters on elements visible within the container's bounds.
+	overflow?: boolean;
 }
 
 interface SpotlightContainerProps extends DivProps {

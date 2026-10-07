@@ -15,7 +15,7 @@ describe('useMediaViewer', () => {
 		const initialAssets = [asset('b'), asset('c')];
 		const {result, rerender} = renderHook(({assets}) => useMediaViewer(assets), {initialProps: {assets: initialAssets}});
 
-		act(() => result.current.open(0));
+		act(() => result.current.open('b'));
 		expect(result.current.state).toEqual({assetId: 'b', assetIndex: 0});
 
 		rerender({assets: [asset('a'), ...initialAssets]});

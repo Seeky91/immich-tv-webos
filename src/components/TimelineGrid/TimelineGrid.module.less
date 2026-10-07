@@ -1,3 +1,5 @@
+@import '../../styles/_theme.less';
+
 .timelineShell {
 	display: flex;
 	width: 100%;
@@ -11,13 +13,48 @@
 	height: 100%;
 }
 
-.virtualList {
+// The grid compensates its own scroll position when months load: native scroll anchoring
+// would apply a second, conflicting correction.
+.scroller {
+	position: relative;
 	width: 100%;
 	height: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overflow-anchor: none;
+
+	&::-webkit-scrollbar {
+		width: 12px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.24);
+	}
 }
 
-// Spacing between days comes from the reserved item size (BUCKET_HEADER_MARGIN_PX), not margins.
+// The date scrubber stands in for the scrollbar on month timelines.
+.noScrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+.content {
+	position: relative;
+	width: 100%;
+}
+
+// Spacing between days comes from the reserved item height (BUCKET_HEADER_MARGIN_PX), not margins.
+// Positioned by a 3D transform, as in Enact's VirtualList: each day is its own compositor layer,
+// so scrolling and months loading above move layers instead of repainting the list (TV GPUs).
 .dateGroup {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
 	display: flex;
 	flex-direction: column;
 }

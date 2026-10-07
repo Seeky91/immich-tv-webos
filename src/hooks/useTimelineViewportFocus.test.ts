@@ -40,6 +40,13 @@ function pressLeft(): KeyboardEvent {
 	return event;
 }
 
+function pressKey(key: string, keyCode: number): KeyboardEvent {
+	const event = new KeyboardEvent('keydown', {key, bubbles: true, cancelable: true});
+	Object.defineProperty(event, 'keyCode', {value: keyCode});
+	act(() => window.dispatchEvent(event));
+	return event;
+}
+
 function pressRight(): KeyboardEvent {
 	const event = new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true});
 	Object.defineProperty(event, 'keyCode', {value: 39});
@@ -79,10 +86,9 @@ describe('useTimelineViewportFocus', () => {
 		expect(focus).not.toHaveBeenCalledWith(`#${NAVIGATION_RAIL_ID}`);
 	});
 
-	test('establishes native focus after pointer mode without allowing the list to scroll on focus', () => {
+	test('establishes native focus after pointer mode', () => {
 		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
 		let pointerMode = true;
-		jest.spyOn(Spotlight, 'getPointerMode').mockImplementation(() => pointerMode);
 		jest.spyOn(Spotlight, 'setPointerMode').mockImplementation((value) => { pointerMode = value; });
 		jest.spyOn(Spotlight, 'getCurrent').mockImplementation(() => document.activeElement as never);
 		jest.spyOn(Spotlight, 'focus').mockImplementation((target) => {
@@ -92,14 +98,11 @@ describe('useTimelineViewportFocus', () => {
 			return true;
 		});
 		cards[1]!.focus();
-		const listFocus = jest.fn(() => expect(pointerMode).toBe(true));
-		viewport.addEventListener('focusin', listFocus);
 		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
 
 		pressLeft();
 
 		expect(document.activeElement).toBe(cards[0]);
-		expect(listFocus).toHaveBeenCalledTimes(1);
 		expect(pointerMode).toBe(false);
 	});
 
@@ -139,10 +142,9 @@ describe('useTimelineViewportFocus', () => {
 		expect(event.defaultPrevented).toBe(true);
 	});
 
-	test('suppresses Enact scroll-on-focus when focus enters the grid from outside', async () => {
-		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150));
-		jest.spyOn(Spotlight, 'getPointerMode').mockReturnValue(false);
-		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+	test('scrolls a card focused from outside the grid into view', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 900, 200, 150));
+		viewport.scrollTop = 1000;
 
 		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
 		const outside = document.createElement('button');
@@ -151,21 +153,70 @@ describe('useTimelineViewportFocus', () => {
 			cards[0]!.dispatchEvent(new FocusEvent('focusin', {bubbles: true, relatedTarget: outside}));
 		});
 
-		// Pointer mode is flipped on for the dispatch (Enact skips its scrollTo), restored after.
-		expect(setPointerMode).toHaveBeenCalledWith(true);
-		await act(async () => Promise.resolve());
-		expect(setPointerMode).toHaveBeenLastCalledWith(false);
+		// Bottom edge 1050 brought 16 px above the viewport's 720.
+		expect(viewport.scrollTop).toBe(1346);
 	});
 
-	test('leaves in-grid focus moves alone (no pointer-mode toggling)', () => {
-		const {viewport, cards} = makeViewport(makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
-		const setPointerMode = jest.spyOn(Spotlight, 'setPointerMode');
+	test('re-anchors on the visible cards instead of navigating from a card scrolled off screen', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, -900, 200, 150), makeRect(240, 100, 200, 150), makeRect(448, 100, 200, 150));
+		viewport.scrollTop = 5000;
+		jest.spyOn(Spotlight, 'getCurrent').mockReturnValue(cards[0] as never);
+		const focus = jest.spyOn(Spotlight, 'focus').mockReturnValue(true);
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		const event = pressKey('ArrowDown', 40);
+
+		expect(focus).toHaveBeenCalledWith(cards[1]);
+		expect(viewport.scrollTop).toBe(5000);
+		expect(event.defaultPrevented).toBe(true);
+	});
+
+	test('keeps Down inside the grid when no row below is there yet', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 500, 200, 150));
+		viewport.scrollTop = 5000;
+		jest.spyOn(Spotlight, 'getCurrent').mockReturnValue(cards[0] as never);
+		const focus = jest.spyOn(Spotlight, 'focus').mockReturnValue(true);
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		const event = pressKey('ArrowDown', 40);
+
+		expect(focus).not.toHaveBeenCalled();
+		expect(viewport.scrollTop).toBe(5000);
+		expect(event.defaultPrevented).toBe(true);
+	});
+
+	test('waits on Up when the rows above are not rendered yet', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 16, 200, 150));
+		viewport.scrollTop = 5000;
+		jest.spyOn(Spotlight, 'getCurrent').mockReturnValue(cards[0] as never);
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		const event = pressKey('ArrowUp', 38);
+
+		expect(viewport.scrollTop).toBe(5000);
+		expect(event.defaultPrevented).toBe(true);
+	});
+
+	test('reveals the first date header on Up, then lets Spotlight leave the grid', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 16, 200, 150));
+		viewport.scrollTop = 48;
+		jest.spyOn(Spotlight, 'getCurrent').mockReturnValue(cards[0] as never);
+
+		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
+		expect(pressKey('ArrowUp', 38).defaultPrevented).toBe(true);
+		expect(viewport.scrollTop).toBe(0);
+		expect(pressKey('ArrowUp', 38).defaultPrevented).toBe(false);
+	});
+
+	test('leaves in-grid focus moves to the key handler', () => {
+		const {viewport, cards} = makeViewport(makeRect(240, 900, 200, 150), makeRect(448, 900, 200, 150));
+		viewport.scrollTop = 1000;
 
 		renderHook(() => useTimelineViewportFocus({enabled: true, viewportRef: {current: viewport}}));
 		act(() => {
 			cards[1]!.dispatchEvent(new FocusEvent('focusin', {bubbles: true, relatedTarget: cards[0]}));
 		});
 
-		expect(setPointerMode).not.toHaveBeenCalled();
+		expect(viewport.scrollTop).toBe(1000);
 	});
 });
