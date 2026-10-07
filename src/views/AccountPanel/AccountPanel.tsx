@@ -7,7 +7,7 @@ import {createSpotlightContainer} from '../../utils/spotlight';
 import {useWebOSKeys} from '../../hooks/useWebOSKeys';
 import type {Account} from '../../utils/accountsStore';
 import type {PairingDriver, PairedAccountResult} from '../../pairing/types';
-import bannerImage from '../../assets/immich-banner.png';
+import bannerImage from '../../assets/immich-banner.webp';
 import css from './AccountPanel.module.less';
 
 export type AccountPanelMode = 'first-launch' | 'overlay';
