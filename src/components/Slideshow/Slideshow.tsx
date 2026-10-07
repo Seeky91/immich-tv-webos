@@ -88,7 +88,8 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 	const hasShownRef = useRef(false);
 	const current = stage.slots[stage.front];
 
-	const {visible: osdVisible} = useAutoHideControls({enabled: true});
+	const osdRef = useRef<HTMLDivElement>(null);
+	const {visible: osdVisible} = useAutoHideControls({enabled: true, controlsRef: osdRef});
 
 	// Latest request wins: a slow load can't overwrite a newer one (e.g. rapid Right presses).
 	const advance = useCallback(
@@ -204,7 +205,7 @@ export const Slideshow: React.FC<SlideshowProps> = ({start, source, onExit}) => 
 				asset ? <SlideLayer key={slot} asset={asset} slot={slot as 0 | 1} isFront={slot === stage.front} onLoad={handleLayerLoad} /> : null
 			)}
 			{isEmpty && <div className={css.message}>No photos to show.</div>}
-			<div className={osdVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
+			<div ref={osdRef} className={osdVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
 				<div className={chrome.topBar}>{current && <MediaInfo asset={current} />}</div>
 				<div className={chrome.bottomBar}>
 					<div className={chrome.actionBar}>

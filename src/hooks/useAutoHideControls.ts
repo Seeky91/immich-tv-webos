@@ -1,9 +1,10 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
+import type {RefObject} from 'react';
 
 interface UseAutoHideControlsOptions {
 	enabled: boolean;
-	// Keeps the controls up (no countdown), e.g. while focus is inside them.
-	hold?: boolean;
+	// The controls' container: input aimed at it (focus inside, pointer over it) is activity.
+	controlsRef: RefObject<HTMLElement | null>;
 	hideDelayMs?: number;
 }
 
@@ -20,12 +21,16 @@ const DEFAULT_HIDE_DELAY_MS = 4000;
 // 'Enter' on our target webOS firmwares.
 const REVEAL_KEYS = new Set(['Enter', 'ArrowUp', 'ArrowDown']);
 
-export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAULT_HIDE_DELAY_MS}: UseAutoHideControlsOptions): AutoHideControls => {
+/**
+ * Controls that fade out after `hideDelayMs` of inactivity. While they are shown, any key
+ * pressed on them (moving between buttons included) and any pointer movement over them
+ * restarts the countdown, so they never vanish under a user who is still using them.
+ */
+export const useAutoHideControls = ({enabled, controlsRef, hideDelayMs = DEFAULT_HIDE_DELAY_MS}: UseAutoHideControlsOptions): AutoHideControls => {
 	const [visible, setVisible] = useState(true);
 	const [wasEnabled, setWasEnabled] = useState(enabled);
 	const timerRef = useRef<number | null>(null);
 	const visibleRef = useRef(visible);
-	const holdRef = useRef(hold);
 
 	// Reset to visible when auto-hide (re)enables (e.g. moving from a video back to a photo).
 	// This adjusts state on a prop change during render — not in an effect — which is the
@@ -37,15 +42,12 @@ export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAUL
 		if (enabled) setVisible(true);
 	}
 
-	// Mirror `visible` into a ref so the once-installed window listener always reads the
+	// Mirror `visible` into a ref so the once-installed window listeners always read the
 	// current value without re-subscribing. Synced in an effect — never written during render
 	// (Enact CI strict forbids ref.current writes in render).
 	useEffect(() => {
 		visibleRef.current = visible;
 	}, [visible]);
-	useEffect(() => {
-		holdRef.current = hold;
-	}, [hold]);
 
 	const clearTimer = useCallback(() => {
 		if (timerRef.current !== null) {
@@ -56,7 +58,6 @@ export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAUL
 
 	const startTimer = useCallback(() => {
 		clearTimer();
-		if (holdRef.current) return;
 		timerRef.current = window.setTimeout(() => {
 			setVisible(false);
 		}, hideDelayMs);
@@ -70,13 +71,15 @@ export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAUL
 
 		startTimer();
 
+		const isOnControls = (target: EventTarget | null) => target instanceof Node && !!controlsRef.current?.contains(target);
+
 		const handleKeyDown = (event: KeyboardEvent) => {
-			if (!REVEAL_KEYS.has(event.key)) return;
 			if (visibleRef.current) {
-				// Already visible: keep it alive, let Spotlight handle the key (move focus / activate).
-				startTimer();
+				// Shown: keep them alive and let Spotlight handle the key (move focus / activate).
+				if (REVEAL_KEYS.has(event.key) || isOnControls(event.target)) startTimer();
 				return;
 			}
+			if (!REVEAL_KEYS.has(event.key)) return;
 			// Hidden: summon controls and swallow the press so Spotlight doesn't act on a
 			// control that is still visually hidden underneath.
 			setVisible(true);
@@ -85,22 +88,22 @@ export const useAutoHideControls = ({enabled, hold = false, hideDelayMs = DEFAUL
 			event.stopImmediatePropagation();
 		};
 
+		const handlePointerMove = (event: MouseEvent) => {
+			if (visibleRef.current && isOnControls(event.target)) startTimer();
+		};
+
 		// Capture phase + the stopImmediatePropagation above are load-bearing: Spotlight listens
 		// for keydown on window in the BUBBLE phase, so swallowing in the capture phase is what
 		// stops it from activating the (hidden) focused control on a reveal press. Do not switch
 		// this to the bubble phase or to stopPropagation.
 		window.addEventListener('keydown', handleKeyDown, {capture: true});
+		window.addEventListener('mousemove', handlePointerMove);
 		return () => {
 			window.removeEventListener('keydown', handleKeyDown, {capture: true});
+			window.removeEventListener('mousemove', handlePointerMove);
 			clearTimer();
 		};
-	}, [enabled, startTimer, clearTimer]);
-
-	useEffect(() => {
-		if (!enabled) return;
-		if (hold) clearTimer();
-		else if (visibleRef.current) startTimer();
-	}, [enabled, hold, startTimer, clearTimer]);
+	}, [enabled, controlsRef, startTimer, clearTimer]);
 
 	const show = useCallback(() => {
 		setVisible(true);

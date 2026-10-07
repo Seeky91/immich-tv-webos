@@ -1,13 +1,24 @@
 import {renderHook, act} from '@testing-library/react';
 import {useAutoHideControls} from './useAutoHideControls';
 
-function pressKey(key: string): KeyboardEvent {
-	const event = new KeyboardEvent('keydown', {key, cancelable: true});
+// Keys reach window from the focused element: dispatch on `target` so it bubbles there.
+function pressKey(key: string, target: EventTarget = window): KeyboardEvent {
+	const event = new KeyboardEvent('keydown', {key, cancelable: true, bubbles: true});
 	act(() => {
-		window.dispatchEvent(event);
+		target.dispatchEvent(event);
 	});
 	return event;
 }
+
+function makeControls() {
+	const controls = document.createElement('div');
+	const button = document.createElement('button');
+	controls.appendChild(button);
+	document.body.appendChild(controls);
+	return {controlsRef: {current: controls}, button};
+}
+
+const controlsRef = {current: null};
 
 describe('useAutoHideControls', () => {
 	beforeEach(() => {
@@ -18,10 +29,11 @@ describe('useAutoHideControls', () => {
 			jest.runOnlyPendingTimers();
 		});
 		jest.useRealTimers();
+		document.body.replaceChildren();
 	});
 
 	test('starts visible and hides after the delay', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		expect(result.current.visible).toBe(true);
 		act(() => {
 			jest.advanceTimersByTime(4000);
@@ -30,7 +42,7 @@ describe('useAutoHideControls', () => {
 	});
 
 	test('disabled keeps controls always visible with no timer', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: false, hideDelayMs: 4000}));
+		const {result} = renderHook(() => useAutoHideControls({enabled: false, controlsRef, hideDelayMs: 4000}));
 		expect(result.current.visible).toBe(true);
 		act(() => {
 			jest.advanceTimersByTime(10000);
@@ -39,7 +51,7 @@ describe('useAutoHideControls', () => {
 	});
 
 	test('a reveal key re-shows controls when hidden and restarts the timer', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		act(() => {
 			jest.advanceTimersByTime(4000);
 		});
@@ -58,8 +70,8 @@ describe('useAutoHideControls', () => {
 		expect(result.current.visible).toBe(false);
 	});
 
-	test('navigation keys (Left/Right) never touch visibility or the timer', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+	test('paging with Left/Right outside the controls neither reveals nor keeps them up', () => {
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		act(() => {
 			jest.advanceTimersByTime(3000);
 		});
@@ -69,10 +81,49 @@ describe('useAutoHideControls', () => {
 			jest.advanceTimersByTime(1000);
 		});
 		expect(result.current.visible).toBe(false);
+		pressKey('ArrowRight');
+		expect(result.current.visible).toBe(false);
+	});
+
+	test('moving between the controls keeps them up until the user goes idle', () => {
+		const {controlsRef: ref, button} = makeControls();
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef: ref, hideDelayMs: 4000}));
+		for (const key of ['ArrowRight', 'ArrowRight', 'ArrowLeft']) {
+			act(() => {
+				jest.advanceTimersByTime(3000);
+			});
+			const event = pressKey(key, button);
+			expect(event.defaultPrevented).toBe(false);
+		}
+		expect(result.current.visible).toBe(true);
+		act(() => {
+			jest.advanceTimersByTime(4000);
+		});
+		expect(result.current.visible).toBe(false);
+	});
+
+	test('pointer movement over the controls keeps them up', () => {
+		const {controlsRef: ref, button} = makeControls();
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef: ref, hideDelayMs: 4000}));
+		act(() => {
+			jest.advanceTimersByTime(3000);
+		});
+		act(() => {
+			button.dispatchEvent(new MouseEvent('mousemove', {bubbles: true}));
+		});
+		act(() => {
+			jest.advanceTimersByTime(3000);
+		});
+		expect(result.current.visible).toBe(true);
+		act(() => {
+			window.dispatchEvent(new MouseEvent('mousemove'));
+			jest.advanceTimersByTime(1000);
+		});
+		expect(result.current.visible).toBe(false);
 	});
 
 	test('swallows the reveal key only when hidden', () => {
-		renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		const whileVisible = pressKey('Enter');
 		expect(whileVisible.defaultPrevented).toBe(false);
 		act(() => {
@@ -84,7 +135,7 @@ describe('useAutoHideControls', () => {
 
 	test('ArrowUp and ArrowDown also act as reveal keys', () => {
 		['ArrowUp', 'ArrowDown'].forEach((key) => {
-			const {result, unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+			const {result, unmount} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 			act(() => {
 				jest.advanceTimersByTime(4000);
 			});
@@ -97,14 +148,14 @@ describe('useAutoHideControls', () => {
 
 	test('removes its keydown listener on unmount', () => {
 		const removeSpy = jest.spyOn(window, 'removeEventListener');
-		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		unmount();
 		expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function), expect.objectContaining({capture: true}));
 		removeSpy.mockRestore();
 	});
 
 	test('clears the pending timer on unmount', () => {
-		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		const {unmount} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		unmount();
 		// The in-flight timer must be cancelled — elapsing it should not fire a state update.
 		expect(() =>
@@ -116,7 +167,7 @@ describe('useAutoHideControls', () => {
 
 	test('disabling mid-lifecycle restores visibility and stops the timer', () => {
 		let enabled = true;
-		const {result, rerender} = renderHook(() => useAutoHideControls({enabled, hideDelayMs: 4000}));
+		const {result, rerender} = renderHook(() => useAutoHideControls({enabled, controlsRef, hideDelayMs: 4000}));
 		act(() => {
 			jest.advanceTimersByTime(4000);
 		});
@@ -132,21 +183,8 @@ describe('useAutoHideControls', () => {
 		expect(result.current.visible).toBe(true);
 	});
 
-	test('hold suspends the countdown and resumes it once released', () => {
-		const {result, rerender} = renderHook(({hold}) => useAutoHideControls({enabled: true, hold, hideDelayMs: 4000}), {initialProps: {hold: true}});
-		act(() => {
-			jest.advanceTimersByTime(10000);
-		});
-		expect(result.current.visible).toBe(true);
-		rerender({hold: false});
-		act(() => {
-			jest.advanceTimersByTime(4000);
-		});
-		expect(result.current.visible).toBe(false);
-	});
-
 	test('hide and show toggle the controls imperatively', () => {
-		const {result} = renderHook(() => useAutoHideControls({enabled: true, hideDelayMs: 4000}));
+		const {result} = renderHook(() => useAutoHideControls({enabled: true, controlsRef, hideDelayMs: 4000}));
 		act(() => result.current.hide());
 		expect(result.current.visible).toBe(false);
 		act(() => result.current.show());

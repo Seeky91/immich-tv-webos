@@ -13,6 +13,7 @@ export const ACTION_BAR_SPOTLIGHT_ID = 'media-viewer-actions';
 const ActionBar = createSpotlightContainer({enterTo: 'last-focused'});
 
 interface MediaControlsProps {
+	rootRef: React.Ref<HTMLDivElement>;
 	asset: TimelineAsset;
 	position: string;
 	isVideo: boolean;
@@ -28,7 +29,7 @@ interface MediaControlsProps {
 }
 
 export const MediaControls: React.FC<MediaControlsProps> = React.memo(
-	({asset, position, isVideo, controlsVisible, canGoPrev, canGoNext, onPrev, onNext, onClose, onRotate, onStartSlideshow, onActionBarFocusChange}) => {
+	({rootRef, asset, position, isVideo, controlsVisible, canGoPrev, canGoNext, onPrev, onNext, onClose, onRotate, onStartSlideshow, onActionBarFocusChange}) => {
 		const handleBarFocus = useCallback(() => onActionBarFocusChange(true), [onActionBarFocusChange]);
 		const handleBarBlur = useCallback(
 			(event: React.FocusEvent<HTMLDivElement>) => {
@@ -38,7 +39,7 @@ export const MediaControls: React.FC<MediaControlsProps> = React.memo(
 		);
 
 		return (
-			<div className={controlsVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
+			<div ref={rootRef} className={controlsVisible ? chrome.chrome : `${chrome.chrome} ${chrome.hidden}`}>
 				<div className={chrome.topBar}>
 					{/* Video has no action bar (Down opens the transport bar), so it keeps a close button here. */}
 					{isVideo && (

@@ -47,14 +47,18 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 
 	const [actionBarFocused, setActionBarFocused] = useState(false);
 	const [rotation, rotate] = useAssetRotation(isVideo ? undefined : asset?.id);
+	const controlsRef = useRef<HTMLDivElement>(null);
 
 	// Auto-hide is for still images only. Video keeps its always-visible MediaControls and
 	// relies on Sandstone VideoPlayer's own auto-hide (OK/Select is play/pause there).
-	const {visible: controlsVisible, show: showControls, hide: hideControls} = useAutoHideControls({
-		enabled: !isVideo,
-		hold: !isVideo && actionBarFocused,
-	});
+	const {visible: controlsVisible, show: showControls, hide: hideControls} = useAutoHideControls({enabled: !isVideo, controlsRef});
 	const inActionBar = !isVideo && controlsVisible && actionBarFocused;
+
+	// The bar faded out under an idle focus: hand it back to the stage rather than leave it on
+	// a hidden button.
+	useEffect(() => {
+		if (!controlsVisible && actionBarFocused) focusStage();
+	}, [controlsVisible, actionBarFocused]);
 
 	// Sandstone transport-bar visibility (video) drives arrow-key semantics: hidden →
 	// left/right page between media; visible → Sandstone seeks.
@@ -141,6 +145,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = React.memo(({getAssetAt, 
 			</div>
 			{!isVideo && <SpottableDiv spotlightId={STAGE_SPOTLIGHT_ID} className={css.stage} onClick={handleStageClick} />}
 			<MediaControls
+				rootRef={controlsRef}
 				asset={asset}
 				position={position}
 				isVideo={isVideo}
