@@ -56,4 +56,17 @@ describe('AssetCard image failures', () => {
 		rerender(card({...asset, id: 'next'}, jest.fn(), otherRepository));
 		expect(screen.getByAltText('').getAttribute('src')).toBe('/other-account/next');
 	});
+
+	test('cancels a thumbnail still downloading when its card unmounts, keeps a loaded one', () => {
+		const {unmount} = render(card());
+		const pending = screen.getByAltText('');
+		unmount();
+		expect(pending.hasAttribute('src')).toBe(false);
+
+		const {unmount: unmountLoaded} = render(card());
+		const loaded = screen.getByAltText('');
+		Object.defineProperty(loaded, 'complete', {value: true});
+		unmountLoaded();
+		expect(loaded.getAttribute('src')).toBe('/thumbnail/video');
+	});
 });

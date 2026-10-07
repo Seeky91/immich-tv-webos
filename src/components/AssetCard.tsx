@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Icon from '@enact/sandstone/Icon';
 import {formatDuration} from '../utils/FormattingService';
 import {SpottableDiv} from '../utils/spotlight';
@@ -17,9 +17,18 @@ interface AssetCardProps {
 const AssetThumbnail: React.FC<{thumbnailUrl: string; assetId: string}> = ({thumbnailUrl, assetId}) => {
 	const repository = useRepository();
 	const [attempt, setAttempt] = useState<'thumbnail' | 'preview' | 'unavailable'>('thumbnail');
+	const imgRef = useRef<HTMLImageElement>(null);
 	const handleError = useCallback(() => {
 		setAttempt((current) => current === 'thumbnail' ? 'preview' : 'unavailable');
 	}, []);
+	// A card scrolled out of the window keeps downloading its thumbnail, holding a connection
+	// ahead of the cards now on screen; dropping src cancels the request.
+	useEffect(() => {
+		const img = imgRef.current;
+		return () => {
+			if (img && !img.complete) img.removeAttribute('src');
+		};
+	}, [attempt]);
 	if (attempt === 'unavailable') {
 		return (
 			<div className={css.unavailable} role="img" aria-label="Preview unavailable">
@@ -28,13 +37,15 @@ const AssetThumbnail: React.FC<{thumbnailUrl: string; assetId: string}> = ({thum
 			</div>
 		);
 	}
+	// Not loading="lazy": the grid only mounts cards within a screen of the viewport, and lazy
+	// loading would hold each request until its card is visible, so cards would scroll in blank.
 	return (
 		<img
 			key={attempt}
+			ref={imgRef}
 			src={attempt === 'thumbnail' ? thumbnailUrl : repository.previewUrl(assetId)}
 			alt=""
 			className={css.thumbnail}
-			loading="lazy"
 			onError={handleError}
 		/>
 	);
