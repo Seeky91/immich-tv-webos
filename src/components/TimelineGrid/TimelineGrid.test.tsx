@@ -138,6 +138,17 @@ describe('TimelineGrid month skeleton', () => {
 		expect(screen.getByTestId('active-bucket').textContent).toBe('2');
 	});
 
+	test('a jump the DOM rounds a pixel short of the month still reports that month', () => {
+		mockLayout = {layoutMap: new Map(), heightMap: new Map(), bucketHeights: [10000.5, 10000.5, 10000.5, 10000.5], bucketOffsets: [0, 10000.5, 20001, 30001.5]};
+		const {container} = render(<TimelineGrid contentWidth={1920} timeline={makeTimeline()} />);
+		const node = scroller(container);
+
+		act(() => scrubberProps?.onJump('2026-06-01'));
+		scrollTo(node, 10000);
+
+		expect(screen.getByTestId('active-bucket').textContent).toBe('1');
+	});
+
 	test('a month loading above keeps the on-screen content in place', () => {
 		const may = [dayGroup('2026-05-20', ['m1']), dayGroup('2026-05-10', ['m2'])];
 		let loaded = new Map([['2026-05-01', may]]);

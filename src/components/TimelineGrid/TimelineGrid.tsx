@@ -56,6 +56,9 @@ const EMPTY_GROUPS: DayGroup[] = [];
 // whole layout and geometry each time.
 const EMPTY_BUCKETS: TimelineBucket[] = [];
 const EMPTY_MONTHS: ReadonlyMap<string, DayGroup[]> = new Map();
+// Scroll offsets snap to whole pixels while month offsets are fractional, so a jump or a
+// re-anchor can leave the previous month's last few pixels at the very top of the viewport.
+const ACTIVE_MONTH_PROBE_PX = 8;
 
 // Spotlight treats the scroller as an overflow container: it focuses cards without native
 // scroll-into-view (useTimelineViewportFocus owns scrolling) and only enters on visible cards.
@@ -294,7 +297,7 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 		[slideshow, timeline, viewer]
 	);
 
-	const activeBucketIndex = timeline ? bucketIndexAtOffset(bucketOffsets, bucketHeights, scrollTop) : 0;
+	const activeBucketIndex = timeline ? bucketIndexAtOffset(bucketOffsets, bucketHeights, scrollTop + ACTIVE_MONTH_PROBE_PX) : 0;
 	const activeBucket = timeline?.allBuckets[activeBucketIndex];
 	const isActiveMonthLoading =
 		!!timeline && !!activeBucket && !timeline.loadedMonths.has(activeBucket.timeBucket) && !timeline.failedMonths.has(activeBucket.timeBucket);
