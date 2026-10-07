@@ -177,24 +177,35 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 		if (Math.abs(target - node.scrollTop) > 0.5) node.scrollTop = target;
 	}, [geometry]);
 
-	const requestMonthsAround = useCallback(
-		(top: number, options?: RequestMonthsOptions) => {
-			if (!timeline || bucketOffsets.length === 0) return;
-			const first = bucketIndexAtOffset(bucketOffsets, bucketHeights, Math.max(0, top - viewportHeight));
-			const last = bucketIndexAtOffset(bucketOffsets, bucketHeights, top + 2 * viewportHeight);
-			// Plus one month each way: a held D-pad key crosses a viewport faster than a month
-			// takes to arrive on a TV.
-			timeline.requestMonths(
-				timeline.allBuckets.slice(Math.max(0, first - 1), last + 2).map((bucket) => bucket.timeBucket),
-				options
-			);
+	const monthsBetween = useCallback(
+		(top: number, bottom: number, extraEachWay = 0) => {
+			if (!timeline || bucketOffsets.length === 0) return [];
+			const first = bucketIndexAtOffset(bucketOffsets, bucketHeights, Math.max(0, top));
+			const last = bucketIndexAtOffset(bucketOffsets, bucketHeights, bottom);
+			return timeline.allBuckets.slice(Math.max(0, first - extraEachWay), last + 1 + extraEachWay).map((bucket) => bucket.timeBucket);
 		},
-		[timeline, bucketOffsets, bucketHeights, viewportHeight]
+		[timeline, bucketOffsets, bucketHeights]
 	);
 
+	// After a scrubber jump the months on screen are fetched before their neighbours: on a
+	// connection-limited link, a neighbour arriving first would mount its overscan cards and
+	// their thumbnails would take the connections ahead of the visible ones.
+	const screenFirstRef = useRef(false);
+
 	useEffect(() => {
-		requestMonthsAround(scrollTop);
-	}, [requestMonthsAround, scrollTop]);
+		if (!timeline) return;
+		if (screenFirstRef.current) {
+			const onScreen = monthsBetween(scrollTop, scrollTop + viewportHeight);
+			if (onScreen.some((month) => !timeline.loadedMonths.has(month) && !timeline.failedMonths.has(month))) {
+				timeline.requestMonths(onScreen);
+				return;
+			}
+			screenFirstRef.current = false;
+		}
+		// Plus one month each way: a held D-pad key crosses a viewport faster than a month takes
+		// to arrive on a TV.
+		timeline.requestMonths(monthsBetween(scrollTop - viewportHeight, scrollTop + 2 * viewportHeight, 1));
+	}, [timeline, monthsBetween, scrollTop, viewportHeight]);
 
 	const handleScroll = useCallback(() => {
 		const node = scrollRef.current;
@@ -217,9 +228,10 @@ export const TimelineGrid = forwardRef<TimelineGridHandle, TimelineGridProps>(({
 			if (node) node.scrollTop = target;
 			// Render the destination in this key event rather than after the async scroll event.
 			setScroll({top: target, geometry: committedGeometryRef.current});
-			requestMonthsAround(target, {retryFailed: true});
+			screenFirstRef.current = true;
+			timeline.requestMonths(monthsBetween(target, target + viewportHeight), {retryFailed: true});
 		},
-		[timeline, bucketOffsets, requestMonthsAround]
+		[timeline, bucketOffsets, monthsBetween, viewportHeight]
 	);
 
 	const handleExitScrubber = useCallback(() => {

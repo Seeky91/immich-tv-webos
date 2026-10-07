@@ -119,10 +119,10 @@ describe('TimelineGrid month skeleton', () => {
 	test('requests the months around the viewport, plus one each way', () => {
 		const timeline = makeTimeline();
 		const {container} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
-		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-07-01', '2026-06-01'], undefined);
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-07-01', '2026-06-01']);
 
 		scrollTo(scroller(container), 25000);
-		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-06-01', '2026-05-01', '2026-04-01'], undefined);
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-06-01', '2026-05-01', '2026-04-01']);
 		expect(screen.getByTestId('active-bucket').textContent).toBe('2');
 	});
 
@@ -134,8 +134,21 @@ describe('TimelineGrid month skeleton', () => {
 		act(() => scrubberProps?.onJump('2026-05-01'));
 
 		expect(node.scrollTop).toBe(20000);
-		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-07-01', '2026-06-01', '2026-05-01', '2026-04-01'], {retryFailed: true});
+		expect(timeline.requestMonths).toHaveBeenCalledWith(['2026-05-01'], {retryFailed: true});
 		expect(screen.getByTestId('active-bucket').textContent).toBe('2');
+	});
+
+	test('a jump fetches the months on screen before their neighbours', () => {
+		const timeline = makeTimeline();
+		const {rerender} = render(<TimelineGrid contentWidth={1920} timeline={timeline} />);
+
+		act(() => scrubberProps?.onJump('2026-05-01'));
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-05-01']);
+
+		const loaded = new Map([['2026-05-01', [dayGroup('2026-05-20', ['m1'])]]]);
+		mockLayout = layoutFor(loaded, 3000);
+		rerender(<TimelineGrid contentWidth={1920} timeline={{...timeline, loadedMonths: loaded}} />);
+		expect(timeline.requestMonths).toHaveBeenLastCalledWith(['2026-07-01', '2026-06-01', '2026-05-01', '2026-04-01']);
 	});
 
 	test('a jump the DOM rounds a pixel short of the month still reports that month', () => {
