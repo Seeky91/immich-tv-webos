@@ -23,6 +23,8 @@ interface ScrubberMarker {
 }
 
 const MAX_YEAR_LABELS = 14;
+// A label's line height plus a little air on a 1080p rail: closer year labels overprint.
+const MIN_YEAR_LABEL_GAP_PERCENT = 2.5;
 const RAIL_PADDING_PERCENT = 3;
 const RAIL_CONTENT_PERCENT = 100 - RAIL_PADDING_PERCENT * 2;
 
@@ -49,7 +51,7 @@ export function buildScrubberMarkers(buckets: TimelineBucket[], bucketHeights: n
 	const labelStride = Math.max(1, Math.ceil(years.length / MAX_YEAR_LABELS));
 	let offset = 0;
 	let previousYear = '';
-	return buckets.map((bucket, index) => {
+	const markers = buckets.map((bucket, index) => {
 		const height = bucketHeights[index] ?? 0;
 		const year = bucket.timeBucket.slice(0, 4);
 		const yearIndex = years.indexOf(year);
@@ -60,6 +62,16 @@ export function buildScrubberMarkers(buckets: TimelineBucket[], bucketHeights: n
 		offset += height;
 		return {index, topPercent, year, showYear};
 	});
+	// Sparse early years squeeze together at the bottom of the rail. Walk up from the oldest
+	// year (always labelled) and drop the labels that would collide with the one below.
+	let labelBelow = Infinity;
+	for (let index = markers.length - 1; index >= 0; index--) {
+		const marker = markers[index]!;
+		if (!marker.showYear) continue;
+		if (labelBelow - marker.topPercent < MIN_YEAR_LABEL_GAP_PERCENT) marker.showYear = false;
+		else labelBelow = marker.topPercent;
+	}
+	return markers;
 }
 
 export const DateScrubber: React.FC<DateScrubberProps> = React.memo(

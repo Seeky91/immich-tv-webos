@@ -24,6 +24,17 @@ describe('DateScrubber', () => {
 		expect(markers.map((marker) => marker.showYear)).toEqual([true, false, true]);
 	});
 
+	test('drops year labels that would overprint the one below, keeping the oldest year', () => {
+		const sparse: TimelineBucket[] = [
+			{timeBucket: '2026-01-01', count: 900},
+			{timeBucket: '2006-01-01', count: 1},
+			{timeBucket: '2004-01-01', count: 1},
+			{timeBucket: '2002-01-01', count: 1},
+		];
+		const markers = buildScrubberMarkers(sparse, [9700, 100, 100, 100]);
+		expect(markers.filter((marker) => marker.showYear).map((marker) => marker.year)).toEqual(['2026', '2002']);
+	});
+
 	test('uses Up and Down to select a month, Enter to jump, and Left to exit', () => {
 		const onJump = jest.fn();
 		const onExit = jest.fn();
